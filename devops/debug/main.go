@@ -24,8 +24,8 @@ import (
 
 	"github.com/cloudwego/eino-ext/devops"
 
-	"github.com/cloudwego/eino-examples/einodev/chain"
-	"github.com/cloudwego/eino-examples/einodev/graph"
+	"github.com/cloudwego/eino-examples/devops/debug/chain"
+	graph2 "github.com/cloudwego/eino-examples/devops/debug/graph"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
@@ -41,10 +41,10 @@ func main() {
 
 	// Register chain, graph and state_graph for demo use
 	chain.RegisterSimpleChain(ctx)
-	graph.RegisterSimpleGraph(ctx)
-	graph.RegisterSimpleStateGraph(ctx)
+	graph2.RegisterSimpleGraph(ctx)
+	graph2.RegisterSimpleStateGraph(ctx)
 
-	// This part has nothing to do with einodev debugging, just wanting the demo service exits only when the user actively closes the process.
+	// This part has nothing to do with eino devops debugging, just wanting the demo service exits only when the user actively closes the process.
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
