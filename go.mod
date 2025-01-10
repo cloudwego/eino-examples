@@ -7,12 +7,12 @@ toolchain go1.22.1
 replace github.com/apache/thrift => github.com/apache/thrift v0.13.0
 
 require (
-	github.com/cloudwego/eino v0.3.4
-	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250103071650-0c38eea04df7
-	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250103071650-0c38eea04df7
-	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250106073650-ed838398894a
-	github.com/cloudwego/eino-ext/components/tool/googlesearch v0.0.0-20250103071650-0c38eea04df7
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250109073820-fb2d91009583
+	github.com/cloudwego/eino v0.3.5
+	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250110031740-2b102ddbf6ee
+	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250110031740-2b102ddbf6ee
+	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250108030439-1493aa120cb1
+	github.com/cloudwego/eino-ext/components/tool/googlesearch v0.0.0-20250110031740-2b102ddbf6ee
+	github.com/cloudwego/eino-ext/devops v0.0.0-20250110031740-2b102ddbf6ee
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/ollama/ollama v0.3.0
@@ -26,7 +26,7 @@ require (
 	github.com/bytedance/sonic/loader v0.2.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20241224084133-4395591bc455 // indirect
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250106073650-ed838398894a // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
