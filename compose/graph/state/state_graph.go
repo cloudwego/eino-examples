@@ -180,7 +180,7 @@ func main() {
 			break
 		}
 
-		logs.Tokenf(chunk)
+		logs.Tokenf("%v", chunk)
 	}
 	stream.Close()
 

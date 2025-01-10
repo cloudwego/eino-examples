@@ -93,5 +93,5 @@ func main() {
 	}
 
 	logs.Infof("below is chat model's output:")
-	logs.Tokenf(response.Content)
+	logs.Tokenf("%v", response.Content)
 }

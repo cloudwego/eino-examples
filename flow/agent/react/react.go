@@ -119,7 +119,7 @@ func main() {
 		}
 
 		// 打字机打印
-		logs.Tokenf(msg.Content)
+		logs.Tokenf("%v", msg.Content)
 	}
 
 	logs.Infof("\n\n===== finished =====\n")
