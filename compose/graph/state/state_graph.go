@@ -205,7 +205,7 @@ func main() {
 			break
 		}
 
-		logs.Infof(chunk)
+		logs.Infof("%v", chunk)
 	}
 	stream.Close()
 }
