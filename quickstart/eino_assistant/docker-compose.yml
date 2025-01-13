@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   redis-stack:
@@ -17,4 +17,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-

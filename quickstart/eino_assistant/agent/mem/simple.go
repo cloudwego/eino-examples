@@ -170,6 +170,10 @@ func (c *Conversation) load() error {
 		c.Messages = append(c.Messages, &msg)
 	}
 
+	if err := scanner.Err(); err != nil {
+		return fmt.Errorf("scanner error: %w", err)
+	}
+
 	return nil
 }
 

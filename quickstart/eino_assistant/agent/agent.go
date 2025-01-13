@@ -3,49 +3,49 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
+	"github.com/cloudwego/eino-examples/agent/mem"
+	eino_agent "github.com/cloudwego/eino-examples/eino_agentx"
 	"github.com/cloudwego/eino/callbacks"
-	"github.com/cloudwego/eino/components/model"
-	"github.com/cloudwego/eino/components/tool"
-
-	"github.com/cloudwego/eino-examples/agent/tool/einotool"
-	"github.com/cloudwego/eino-examples/agent/tool/gitclone"
-	"github.com/cloudwego/eino-examples/agent/tool/open"
-	"github.com/cloudwego/eino-examples/agent/tool/todo"
+	"github.com/cloudwego/eino/compose"
+	"github.com/cloudwego/eino/schema"
 )
 
-// 1. 可联网查询
-// 2. 可下载 github 项目
-// 3. 可打开 web 页面
-// 4. 可打开文件
-// 5. eino 助手(eino 项目信息、eino 文档、eino 示例项目)
-// 6. todo 工具
-// func NewAgent(ctx context.Context) (compose.Runnable[*eino_agent.UserMessage, *schema.Message], error) {
-// 	// 	AgentGraph: &eino_agent.AgentGraphBuildConfig{
-// 	// 		EinoRetriveKeyOfRetriever: &eino_agent.EinoRetrieverConfig{
-// 	// 			RedisVectorStoreConfig: redis.RedisVectorStoreConfig{
-// 	// 				RedisAddr:      "127.0.0.1:6379",
-// 	// 				Embedding:      embedding,
-// 	// 				RedisKeyPrefix: "doc:",
-// 	// 				Dimension:      1536,
-// 	// 				TopK:           3,
-// 	// 				MinScore:       0.1,
-// 	// 			},
-// 	// 		},
-// 	// 		PromptTemplateKeyOfChatTemplate: &eino_agent.PromptTemplateConfig{
-// 	// 			FormatType: schema.FString,
-// 	// 			Templates: []schema.MessagesTemplate{
-// 	// 				schema.SystemMessage("{documents}"),
-// 	// 				schema.MessagesPlaceholder("history", true),
-// 	// 				schema.UserMessage("{content}"),
-// 	// 			},
-// 	// 		},
-// 	// 	},
+var memory = mem.GetDefaultMemory()
+
+var cbHandler callbacks.Handler
+
+var once sync.Once
+
+func Init() error {
+	var err error
+	once.Do(func() {
+		os.MkdirAll("log", 0755)
+		var f *os.File
+		f, err = os.OpenFile("log/eino.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+		if err != nil {
+			return
+		}
+
+		cbConfig := &LogCallbackConfig{
+			Detail: true,
+			Writer: f,
+		}
+		if os.Getenv("DEBUG") == "true" {
+			cbConfig.Debug = true
+		}
+
+		cbHandler = LogCallback(cbConfig)
+	})
+	return err
+}
+
+// func Run(ctx context.Context, userMessage *eino_agent.UserMessage) (*schema.StreamReader[*schema.Message], error) {
 // 	graph, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{})
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
@@ -56,90 +56,79 @@ import (
 // 		return nil, fmt.Errorf("failed to compile agent graph: %w", err)
 // 	}
 
-// 	return runner, nil
+// 	// conversation := memory.GetConversation(id, true)
+// 	// userMsg := schema.UserMessage(msg)
+// 	// conversation.Append(userMsg)
+
+// 	// msgs := conversation.GetMessages()
+
+// 	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(cbHandler))
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to stream: %w", err)
+// 	}
+
+// 	return sr, nil
 // }
 
-// func NewAgent(ctx context.Context, persona string, modelName string, apiKey string) (*react.Agent, error) {
-// 	model, err := PrepareChatModel(ctx, modelName, apiKey)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to prepare chat model: %w", err)
-// 	}
+func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
 
-// 	tools, err := PreloadTools(ctx)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to preload tools: %w", err)
-// 	}
-
-// 	reactAgent, err := react.NewAgent(ctx, &react.AgentConfig{
-// 		Model: model,
-// 		ToolsConfig: compose.ToolsNodeConfig{
-// 			Tools: tools,
-// 		},
-// 		MessageModifier: react.NewPersonaModifier(persona),
-// 	})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to create react agent: %w", err)
-// 	}
-
-// 	return reactAgent, nil
-// }
-
-func PrepareChatModel(ctx context.Context, modelName string, apiKey string) (model.ChatModel, error) {
-	model, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		Model:  modelName,
-		APIKey: apiKey,
+	runner, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{
+		AgentGraph: &eino_agent.AgentGraphBuildConfig{},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create chat model: %w", err)
+		return nil, fmt.Errorf("failed to build agent graph: %w", err)
 	}
-	return model, nil
-}
 
-func PreloadTools(ctx context.Context) ([]tool.BaseTool, error) {
-	tools := []tool.BaseTool{}
+	conversation := memory.GetConversation(id, true)
+	userMsg := schema.UserMessage(msg)
+	conversation.Append(userMsg)
 
-	// 可打开本地文件/文件夹/web url
-	openFileTool, err := open.NewOpenFileTool(ctx, &open.OpenFileToolConfig{})
+	userMessage := &eino_agent.UserMessage{
+		ID:      id,
+		Query:   msg,
+		History: conversation.GetMessages(),
+	}
+
+	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(cbHandler))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create open file tool: %w", err)
+		return nil, fmt.Errorf("failed to stream: %w", err)
 	}
-	tools = append(tools, openFileTool)
 
-	// 可下载 github 项目
-	gitCloneTool, err := gitclone.NewGitCloneFile(ctx, &gitclone.GitCloneFileConfig{
-		BaseDir: "./data",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create git clone tool: %w", err)
-	}
-	tools = append(tools, gitCloneTool)
+	srs := sr.Copy(2)
 
-	// 可联网查询
-	ddg, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create duckduckgo tool: %w", err)
-	}
-	tools = append(tools, ddg)
+	go func() {
+		// for save to memory
+		fullMsgs := make([]*schema.Message, 0)
 
-	// eino 助手
-	etTool, err := einotool.NewEinoAssistantTool(ctx, &einotool.EinoAssistantToolConfig{
-		BaseDir: "./data/",
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create eino tool: %w", err)
-	}
-	tools = append(tools, etTool)
+		defer func() {
+			srs[1].Close()
+			fullMsg, err := schema.ConcatMessages(fullMsgs)
+			if err != nil {
+				fmt.Println("error concatenating messages: ", err.Error())
+			}
+			conversation.Append(fullMsg)
+		}()
 
-	// todo 工具
-	todoTool, err := todo.NewTodoTool(ctx, &todo.TodoToolConfig{
-		Storage: todo.GetDefaultStorage(),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create todo tool: %w", err)
-	}
-	tools = append(tools, todoTool)
+	outter:
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("context done", ctx.Err())
+				return
+			default:
+				chunk, err := srs[1].Recv()
+				if err != nil {
+					if errors.Is(err, io.EOF) {
+						break outter
+					}
+				}
 
-	return tools, nil
+				fullMsgs = append(fullMsgs, chunk)
+			}
+		}
+	}()
+
+	return srs[0], nil
 }
 
 type LogCallbackConfig struct {

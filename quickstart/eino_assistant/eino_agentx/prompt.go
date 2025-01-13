@@ -16,7 +16,7 @@ func defaultPromptTemplateConfig(ctx context.Context) (*PromptTemplateConfig, er
 	config := &PromptTemplateConfig{
 		FormatType: schema.FString,
 		Templates: []schema.MessagesTemplate{
-			schema.SystemMessage("{documents}"),
+			schema.SystemMessage("### info\ndate: {date}\n\n{documents}\n"),
 			schema.MessagesPlaceholder("history", true),
 			schema.UserMessage("{content}"),
 		},

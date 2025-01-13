@@ -2,6 +2,7 @@ package eino_agent
 
 import (
 	"context"
+	"time"
 
 	"github.com/cloudwego/eino/schema"
 )
@@ -37,5 +38,6 @@ func NewInputConvertor(ctx context.Context, input *UserMessage) (output map[stri
 	return map[string]any{
 		"content": input.Query,
 		"history": input.History,
+		"date":    time.Now().Format("2006-01-02 15:04:05"),
 	}, nil
 }
