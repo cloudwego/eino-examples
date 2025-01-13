@@ -444,14 +444,14 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 appendMessage('Error: Failed to send message. Please try again.', false);
             }
-            
-            // 重新启用输入框和发送按钮，隐藏取消按钮
+        
+            abortController = null;
+        } finally {
             messageInput.disabled = false;
             sendButton.disabled = false;
             sendButton.classList.remove('opacity-50');
             sendButton.classList.remove('hidden');
             cancelButton.classList.add('hidden');
-            abortController = null;
         }
     }
 

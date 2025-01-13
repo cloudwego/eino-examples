@@ -8,9 +8,20 @@ import (
 
 	"github.com/cloudwego/eino-examples/cmd/server/agent"
 	"github.com/cloudwego/eino-examples/cmd/server/todo"
+	"github.com/cloudwego/eino-ext/devops"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 )
+
+func init() {
+	if os.Getenv("EINO_DEBUG") == "true" {
+		err := devops.Init(context.Background())
+		if err != nil {
+			log.Printf("[eino dev] init failed, err=%v", err)
+		}
+	}
+}
 
 func main() {
 

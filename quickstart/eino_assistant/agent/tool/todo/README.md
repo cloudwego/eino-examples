@@ -30,7 +30,7 @@ PORT=3000 go run cmd/web/main.go
 ### 添加 Todo
 
 ```bash
-curl -X POST http://localhost:8080/todo/api \
+curl -X POST http://127.0.0.1:8080/todo/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "add",
@@ -45,7 +45,7 @@ curl -X POST http://localhost:8080/todo/api \
 ### 更新 Todo
 
 ```bash
-curl -X POST http://localhost:8080/todo/api \
+curl -X POST http://127.0.0.1:8080/todo/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "update",
@@ -59,7 +59,7 @@ curl -X POST http://localhost:8080/todo/api \
 ### 删除 Todo
 
 ```bash
-curl -X POST http://localhost:8080/todo/api \
+curl -X POST http://127.0.0.1:8080/todo/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "delete",
@@ -72,7 +72,7 @@ curl -X POST http://localhost:8080/todo/api \
 ### 列出所有 Todo
 
 ```bash
-curl -X POST http://localhost:8080/todo/api \
+curl -X POST http://127.0.0.1:8080/todo/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "list",
@@ -83,7 +83,7 @@ curl -X POST http://localhost:8080/todo/api \
 ### 搜索和筛选 Todo
 
 ```bash
-curl -X POST http://localhost:8080/todo/api \
+curl -X POST http://127.0.0.1:8080/todo/api \
   -H "Content-Type: application/json" \
   -d '{
     "action": "list",

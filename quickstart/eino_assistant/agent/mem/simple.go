@@ -13,19 +13,27 @@ import (
 )
 
 func GetDefaultMemory() *SimpleMemory {
-	return NewSimpleMemory("data/memory")
+	return NewSimpleMemory(SimpleMemoryConfig{
+		Dir:           "data/memory",
+		MaxWindowSize: 10,
+	})
 }
 
-func NewSimpleMemory(dir string) *SimpleMemory {
-	if dir == "" {
-		dir = "/tmp/eino/memory"
+type SimpleMemoryConfig struct {
+	Dir           string
+	MaxWindowSize int
+}
+
+func NewSimpleMemory(cfg SimpleMemoryConfig) *SimpleMemory {
+	if cfg.Dir == "" {
+		cfg.Dir = "/tmp/eino/memory"
 	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(cfg.Dir, 0755); err != nil {
 		return nil
 	}
 
 	return &SimpleMemory{
-		dir:           dir,
+		dir:           cfg.Dir,
 		conversations: make(map[string]*Conversation),
 	}
 }
@@ -34,6 +42,7 @@ func NewSimpleMemory(dir string) *SimpleMemory {
 type SimpleMemory struct {
 	mu            sync.Mutex
 	dir           string
+	maxWindowSize int
 	conversations map[string]*Conversation
 }
 
@@ -51,17 +60,19 @@ func (m *SimpleMemory) GetConversation(id string, createIfNotExist bool) *Conver
 					return nil
 				}
 				m.conversations[id] = &Conversation{
-					ID:       id,
-					Messages: make([]*schema.Message, 0),
-					filePath: filePath,
+					ID:            id,
+					Messages:      make([]*schema.Message, 0),
+					filePath:      filePath,
+					maxWindowSize: m.maxWindowSize,
 				}
 			}
 		}
 
 		con := &Conversation{
-			ID:       id,
-			Messages: make([]*schema.Message, 0),
-			filePath: filePath,
+			ID:            id,
+			Messages:      make([]*schema.Message, 0),
+			filePath:      filePath,
+			maxWindowSize: m.maxWindowSize,
 		}
 		con.load()
 		m.conversations[id] = con
@@ -110,6 +121,8 @@ type Conversation struct {
 	Messages []*schema.Message `json:"messages"`
 
 	filePath string
+
+	maxWindowSize int
 }
 
 func (c *Conversation) Append(msg *schema.Message) {
@@ -121,9 +134,21 @@ func (c *Conversation) Append(msg *schema.Message) {
 	c.save(msg)
 }
 
+func (c *Conversation) GetFullMessages() []*schema.Message {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.Messages
+}
+
+// get messages with max window size
 func (c *Conversation) GetMessages() []*schema.Message {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if len(c.Messages) > c.maxWindowSize {
+		return c.Messages[len(c.Messages)-c.maxWindowSize:]
+	}
 
 	return c.Messages
 }

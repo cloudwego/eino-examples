@@ -25,14 +25,20 @@ export ARK_EMBEDDING_MODEL=xxx
 ### 启动 server
 
 ```bash
-go run cmd/server/main.go
+go build -o einoagent cmd/server/main.go && ./einoagent
 ```
 
 ### 访问
 
-访问 http://localhost:8080/ 即可看到效果
+访问 http://127.0.0.1:8080/ 即可看到效果
 
-### [optional] 命令行启动 agent
+### 命令行运行 index (可选)
+
+```bash
+go run cmd/index/main.go
+```
+
+### 命令行运行 agent (可选)
 
 ```bash
 go run cmd/agent/main.go

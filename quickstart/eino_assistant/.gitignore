@@ -157,6 +157,8 @@ fabric.properties
 .idea/caches/build_file_checksums.ser
 
 .vscode/
-data/
 log/
 __debug_bin*
+/einoagent
+.DS_Store
+/data

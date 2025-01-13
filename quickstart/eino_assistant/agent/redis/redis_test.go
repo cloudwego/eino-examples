@@ -13,11 +13,11 @@ import (
 type MockEmbedder struct{}
 
 func (m *MockEmbedder) EmbedStrings(ctx context.Context, texts []string, opts ...embedding.Option) ([][]float64, error) {
-	// Return mock embeddings with dimension 1536 for testing
+	// Return mock embeddings with dimension 4096 for testing
 	embeddings := make([][]float64, len(texts))
 	for i := range texts {
-		// Create a vector with 1536 dimensions
-		vector := make([]float64, 1536)
+		// Create a vector with 4096 dimensions
+		vector := make([]float64, 4096)
 		for j := range vector {
 			vector[j] = 0.1 // Simple value for testing
 		}
@@ -30,10 +30,10 @@ func TestRedisVectorStore(t *testing.T) {
 	ctx := context.Background()
 
 	// Create Redis vector store with mock embedder
-	store, err := NewRedisVectorStore(ctx, &Config{
-		RedisAddr: "localhost:6379",
+	store, err := NewRedisVectorStore(ctx, &RedisVectorStoreConfig{
+		RedisAddr: "127.0.0.1:6379",
 		Embedding: &MockEmbedder{},
-		Dimension: 1536,
+		Dimension: 4096,
 		TopK:      3,
 	})
 	assert.NoError(t, err)
@@ -91,10 +91,10 @@ func TestRedisVectorStore(t *testing.T) {
 func TestRedisVectorStoreEmptyInput(t *testing.T) {
 	ctx := context.Background()
 
-	store, err := NewRedisVectorStore(ctx, &Config{
-		RedisAddr: "localhost:6379",
+	store, err := NewRedisVectorStore(ctx, &RedisVectorStoreConfig{
+		RedisAddr: "127.0.0.1:6379",
 		Embedding: &MockEmbedder{},
-		Dimension: 1536,
+		Dimension: 4096,
 		TopK:      3,
 	})
 	assert.NoError(t, err)
@@ -114,10 +114,10 @@ func TestRedisVectorStoreInvalidConfig(t *testing.T) {
 	ctx := context.Background()
 
 	// Test invalid Redis address
-	_, err := NewRedisVectorStore(ctx, &Config{
+	_, err := NewRedisVectorStore(ctx, &RedisVectorStoreConfig{
 		RedisAddr: "invalid:6379",
 		Embedding: &MockEmbedder{},
-		Dimension: 1536,
+		Dimension: 4096,
 		TopK:      3,
 	})
 	assert.Error(t, err)

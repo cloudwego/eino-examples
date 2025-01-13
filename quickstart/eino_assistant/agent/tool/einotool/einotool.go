@@ -21,18 +21,34 @@ action:
 - init_template: init the eino project template, to create files from template
 `
 
-type Config struct {
+type EinoAssistantToolImpl struct {
+	config *EinoAssistantToolConfig
+}
+
+type EinoAssistantToolConfig struct {
 	BaseDir string
 }
 
-func NewEinoTool(ctx context.Context, config *Config) *EinoTool {
-	return &EinoTool{
-		config: config,
+func defaultEinoAssistantToolConfig(ctx context.Context) (*EinoAssistantToolConfig, error) {
+	config := &EinoAssistantToolConfig{
+		BaseDir: "./data/eino",
 	}
+	return config, nil
 }
 
-type EinoTool struct {
-	config *Config
+func NewEinoAssistantTool(ctx context.Context, config *EinoAssistantToolConfig) (tn tool.BaseTool, err error) {
+	if config == nil {
+		config, err = defaultEinoAssistantToolConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	t := &EinoAssistantToolImpl{config: config}
+	tn, err = t.ToEinoTool()
+	if err != nil {
+		return nil, err
+	}
+	return tn, nil
 }
 
 var (
@@ -65,11 +81,11 @@ var (
 	}
 )
 
-func (e *EinoTool) ToEinoTool() (tool.BaseTool, error) {
+func (e *EinoAssistantToolImpl) ToEinoTool() (tool.BaseTool, error) {
 	return utils.InferTool("eino_tool", desc, e.Invoke)
 }
 
-func (e *EinoTool) Invoke(ctx context.Context, req *EinoToolRequest) (res *EinoToolResponse, err error) {
+func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest) (res *EinoToolResponse, err error) {
 	res = &EinoToolResponse{}
 
 	switch req.Action {

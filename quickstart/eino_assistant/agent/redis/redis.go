@@ -19,65 +19,66 @@ import (
 
 const (
 	defaultRedisKeyPrefix = "doc:"
-	_indexName            = "vector_idx"
+	indexNamePrefix       = "vector_idx"
 	contentField          = "content"
 	metadataField         = "metadata"
 	vectorField           = "content_vector"
 	topK                  = 3
 )
 
-// RedisVectorStore implements both indexer.Indexer and retriever.Retriever interfaces
-type RedisVectorStore struct {
-	client    *redis.Client
-	embedding embedding.Embedder
-	prefix    string
-	dimension int
-	topK      int
-	minScore  float64
+type RedisVectorStoreConfig struct {
+	RedisAddr      string             `json:"redis_addr"`
+	Embedding      embedding.Embedder `json:"-"`
+	RedisKeyPrefix string             `json:"redis_key_prefix"`
+	Dimension      int                `json:"dimension"`
+	TopK           int                `json:"top_k"`
+	MinScore       float64            `json:"min_score"`
 }
 
-type Config struct {
-	RedisAddr      string
-	Embedding      embedding.Embedder
-	RedisKeyPrefix string
-	Dimension      int
-	TopK           int
-	MinScore       float64
+func defaultRedisVectorStoreConfig(ctx context.Context) (*RedisVectorStoreConfig, error) {
+	config := &RedisVectorStoreConfig{}
+	return config, nil
 }
 
-// float64ArrayToFloat32Bytes converts a float64 array to float32 bytes
-func float64ArrayToFloat32Bytes(arr []float64) []byte {
-	float32Arr := make([]float32, len(arr))
-	for i, v := range arr {
-		float32Arr[i] = float32(v)
-	}
+// RedisVectorStoreConfigImpl implements both indexer.Indexer and retriever.Retriever interfaces
+type RedisVectorStoreConfigImpl struct {
+	config *RedisVectorStoreConfig
 
-	bytes := make([]byte, len(float32Arr)*4)
-
-	for i, v := range float32Arr {
-		binary.LittleEndian.PutUint32(bytes[i*4:], math.Float32bits(v))
-	}
-
-	return bytes
+	client *redis.Client
+	prefix string
 }
 
 // NewRedisVectorStore creates a new Redis vector store
-func NewRedisVectorStore(ctx context.Context, config *Config) (store *RedisVectorStore, err error) {
+func NewRedisVectorStore(ctx context.Context, config *RedisVectorStoreConfig) (store *RedisVectorStoreConfigImpl, err error) {
 	if config == nil {
-		return nil, fmt.Errorf("config cannot be nil")
+		config, err = defaultRedisVectorStoreConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	if config.Embedding == nil {
-		return nil, fmt.Errorf("embedding cannot be nil")
+	impl := &RedisVectorStoreConfigImpl{config: config}
+
+	err = impl.init(ctx)
+	if err != nil {
+		return nil, err
 	}
-	if config.Dimension <= 0 {
-		return nil, fmt.Errorf("dimension must be positive")
+
+	return impl, nil
+}
+
+func (impl *RedisVectorStoreConfigImpl) init(ctx context.Context) (err error) {
+	if impl.config.Embedding == nil {
+		return fmt.Errorf("embedding cannot be nil")
 	}
-	if config.TopK <= 0 {
-		config.TopK = topK
+	if impl.config.Dimension <= 0 {
+		return fmt.Errorf("dimension must be positive")
+	}
+	if impl.config.TopK <= 0 {
+		impl.config.TopK = topK
 	}
 
 	client := redis.NewClient(&redis.Options{
-		Addr: config.RedisAddr,
+		Addr: impl.config.RedisAddr,
 	})
 
 	// 确保在错误时关闭连接
@@ -88,33 +89,28 @@ func NewRedisVectorStore(ctx context.Context, config *Config) (store *RedisVecto
 	}()
 
 	if err = client.Ping(ctx).Err(); err != nil {
-		return nil, fmt.Errorf("failed to connect to Redis: %w", err)
+		return fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
 	prefix := defaultRedisKeyPrefix
-	if config.RedisKeyPrefix != "" {
-		prefix = config.RedisKeyPrefix
+	if impl.config.RedisKeyPrefix != "" {
+		prefix = impl.config.RedisKeyPrefix
 	}
 
-	store = &RedisVectorStore{
-		client:    client,
-		embedding: config.Embedding,
-		prefix:    prefix,
-		dimension: config.Dimension,
-		topK:      config.TopK,
-	}
+	impl.client = client
+	impl.prefix = prefix
 
-	indexName := fmt.Sprintf("%s:%s", prefix, _indexName)
+	indexName := fmt.Sprintf("%s:%s", prefix, indexNamePrefix)
 
 	// 检查是否存在索引
 	exists, err := client.Do(ctx, "FT.INFO", indexName).Result()
 	if err != nil {
 		if !strings.Contains(err.Error(), "Unknown index name") {
-			return nil, fmt.Errorf("failed to check if index exists: %w", err)
+			return fmt.Errorf("failed to check if index exists: %w", err)
 		}
 		err = nil
 	} else if exists != nil {
-		return store, nil
+		return nil
 	}
 
 	// Create new index
@@ -128,43 +124,43 @@ func NewRedisVectorStore(ctx context.Context, config *Config) (store *RedisVecto
 		vectorField, "VECTOR", "FLAT",
 		"6",
 		"TYPE", "FLOAT32",
-		"DIM", config.Dimension,
+		"DIM", impl.config.Dimension,
 		"DISTANCE_METRIC", "COSINE",
 	}
 
 	if err = client.Do(ctx, createIndexArgs...).Err(); err != nil {
-		return nil, fmt.Errorf("failed to create index: %w", err)
+		return fmt.Errorf("failed to create index: %w", err)
 	}
 
 	// 验证索引是否创建成功
 	if _, err = client.Do(ctx, "FT.INFO", indexName).Result(); err != nil {
-		return nil, fmt.Errorf("failed to verify index creation: %w", err)
+		return fmt.Errorf("failed to verify index creation: %w", err)
 	}
 
-	return store, nil
+	return nil
 }
 
 // Store implements the indexer.Indexer interface
-func (r *RedisVectorStore) Store(ctx context.Context, docs []*schema.Document, opts ...indexer.Option) ([]string, error) {
+func (impl *RedisVectorStoreConfigImpl) Store(ctx context.Context, docs []*schema.Document, opts ...indexer.Option) ([]string, error) {
 	if len(docs) == 0 {
 		return []string{}, nil
 	}
 
 	ids := make([]string, len(docs))
-	pipe := r.client.Pipeline()
+	pipe := impl.client.Pipeline()
 
 	for i, doc := range docs {
 		docID := uuid.New().String()
 		ids[i] = docID
 
-		vectors, err := r.embedding.EmbedStrings(ctx, []string{doc.Content})
+		vectors, err := impl.config.Embedding.EmbedStrings(ctx, []string{doc.Content})
 		if err != nil {
 			return nil, fmt.Errorf("failed to get embedding for document: %w", err)
 		}
 		vector := vectors[0]
 
-		if len(vector) != r.dimension {
-			return nil, fmt.Errorf("vector dimension mismatch: got %d, want %d", len(vector), r.dimension)
+		if len(vector) != impl.config.Dimension {
+			return nil, fmt.Errorf("vector dimension mismatch: got %d, want %d", len(vector), impl.config.Dimension)
 		}
 
 		vectorBytes := float64ArrayToFloat32Bytes(vector)
@@ -175,7 +171,7 @@ func (r *RedisVectorStore) Store(ctx context.Context, docs []*schema.Document, o
 			return nil, fmt.Errorf("failed to marshal metadata: %w", err)
 		}
 
-		key := r.prefix + docID
+		key := impl.prepareKey(docID)
 		pipe.HSet(ctx, key, map[string]interface{}{
 			contentField:  doc.Content,
 			metadataField: string(metadataBytes),
@@ -191,28 +187,28 @@ func (r *RedisVectorStore) Store(ctx context.Context, docs []*schema.Document, o
 }
 
 // Retrieve implements the retriever.Retriever interface
-func (r *RedisVectorStore) Retrieve(ctx context.Context, query string, opts ...retriever.Option) ([]*schema.Document, error) {
+func (impl *RedisVectorStoreConfigImpl) Retrieve(ctx context.Context, query string, opts ...retriever.Option) ([]*schema.Document, error) {
 	if query == "" {
 		return []*schema.Document{}, nil
 	}
 
-	vectors, err := r.embedding.EmbedStrings(ctx, []string{query})
+	vectors, err := impl.config.Embedding.EmbedStrings(ctx, []string{query})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get embedding for query: %w", err)
 	}
 	queryVector := vectors[0]
 
-	if len(queryVector) != r.dimension {
-		return nil, fmt.Errorf("query vector dimension mismatch: got %d, want %d", len(queryVector), r.dimension)
+	if len(queryVector) != impl.config.Dimension {
+		return nil, fmt.Errorf("query vector dimension mismatch: got %d, want %d", len(queryVector), impl.config.Dimension)
 	}
 
-	indexName := fmt.Sprintf("%s:%s", r.prefix, _indexName)
+	indexName := fmt.Sprintf("%s:%s", impl.prefix, indexNamePrefix)
 
 	vectorBytes := float64ArrayToFloat32Bytes(queryVector)
 
 	searchArgs := []interface{}{
 		"FT.SEARCH", indexName,
-		fmt.Sprintf("*=>[KNN %d @%s $BLOB AS distance]", r.topK, vectorField),
+		fmt.Sprintf("*=>[KNN %d @%s $BLOB AS distance]", impl.config.TopK, vectorField),
 		"PARAMS", "2",
 		"BLOB", vectorBytes,
 		"RETURN", "4", contentField, metadataField, "distance", "id",
@@ -220,7 +216,7 @@ func (r *RedisVectorStore) Retrieve(ctx context.Context, query string, opts ...r
 		"DIALECT", "2",
 	}
 
-	results, err := r.client.Do(ctx, searchArgs...).Result()
+	results, err := impl.client.Do(ctx, searchArgs...).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to search documents: %w", err)
 	}
@@ -274,7 +270,7 @@ func (r *RedisVectorStore) Retrieve(ctx context.Context, query string, opts ...r
 
 		id, _ := resultMap["id"].(string)
 		if id != "" {
-			id = strings.TrimPrefix(id, r.prefix)
+			id = strings.TrimPrefix(id, impl.prefix)
 		}
 
 		if content != "" {
@@ -303,7 +299,7 @@ func (r *RedisVectorStore) Retrieve(ctx context.Context, query string, opts ...r
 				score = 1.0 - distance
 			}
 
-			if score < r.minScore {
+			if score < impl.config.MinScore {
 				continue
 			}
 
@@ -314,4 +310,23 @@ func (r *RedisVectorStore) Retrieve(ctx context.Context, query string, opts ...r
 	}
 
 	return docs, nil
+}
+
+func (impl *RedisVectorStoreConfigImpl) prepareKey(docID string) string {
+	return impl.prefix + docID
+}
+
+func float64ArrayToFloat32Bytes(arr []float64) []byte {
+	float32Arr := make([]float32, len(arr))
+	for i, v := range arr {
+		float32Arr[i] = float32(v)
+	}
+
+	bytes := make([]byte, len(float32Arr)*4)
+
+	for i, v := range float32Arr {
+		binary.LittleEndian.PutUint32(bytes[i*4:], math.Float32bits(v))
+	}
+
+	return bytes
 }

@@ -6,13 +6,24 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log"
 	"math/rand/v2"
 	"os"
 	"strconv"
 	"strings"
 
 	"github.com/cloudwego/eino-examples/agent"
+	"github.com/cloudwego/eino-ext/devops"
 )
+
+func init() {
+	if os.Getenv("EINO_DEBUG") == "true" {
+		err := devops.Init(context.Background())
+		if err != nil {
+			log.Printf("[eino dev] init failed, err=%v", err)
+		}
+	}
+}
 
 var id = flag.String("id", "", "conversation id")
 

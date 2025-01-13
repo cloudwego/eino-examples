@@ -50,21 +50,64 @@ type TodoResponse struct {
 	Error string `json:"error" jsonschema:"description:error message"`
 }
 
-type TodoTool struct {
-	storage *Storage
+type TodoToolImpl struct {
+	config *TodoToolConfig
 }
 
-func NewTodoTool(s *Storage) (*TodoTool, error) {
-	return &TodoTool{
-		storage: s,
-	}, nil
+type TodoToolConfig struct {
+	Storage *Storage
 }
 
-func (t *TodoTool) ToEinoTool() (tool.BaseTool, error) {
+func defaultTodoToolConfig(ctx context.Context) (*TodoToolConfig, error) {
+	config := &TodoToolConfig{
+		Storage: GetDefaultStorage(),
+	}
+	return config, nil
+}
+
+func NewTodoToolImpl(ctx context.Context, config *TodoToolConfig) (*TodoToolImpl, error) {
+	var err error
+	if config == nil {
+		config, err = defaultTodoToolConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if config.Storage == nil {
+		return nil, fmt.Errorf("storage cannot be empty")
+	}
+
+	t := &TodoToolImpl{config: config}
+
+	return t, nil
+}
+
+func NewTodoTool(ctx context.Context, config *TodoToolConfig) (tn tool.BaseTool, err error) {
+	if config == nil {
+		config, err = defaultTodoToolConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if config.Storage == nil {
+		return nil, fmt.Errorf("storage cannot be empty")
+	}
+
+	t := &TodoToolImpl{config: config}
+	tn, err = t.ToEinoTool()
+	if err != nil {
+		return nil, err
+	}
+	return tn, nil
+}
+
+func (t *TodoToolImpl) ToEinoTool() (tool.BaseTool, error) {
 	return utils.InferTool("todo", "todo tool, you can add, get, update, delete, list todos", t.Invoke)
 }
 
-func (t *TodoTool) Invoke(ctx context.Context, req *TodoRequest) (res *TodoResponse, err error) {
+func (t *TodoToolImpl) Invoke(ctx context.Context, req *TodoRequest) (res *TodoResponse, err error) {
 	res = &TodoResponse{}
 
 	switch req.Action {
@@ -80,7 +123,7 @@ func (t *TodoTool) Invoke(ctx context.Context, req *TodoRequest) (res *TodoRespo
 			return res, nil
 		}
 		req.Todo.ID = uuid.New().String()
-		if err := t.storage.Add(req.Todo); err != nil {
+		if err := t.config.Storage.Add(req.Todo); err != nil {
 			res.Status = "error"
 			res.Error = fmt.Sprintf("failed to add todo: %v", err)
 			return res, nil
@@ -98,7 +141,7 @@ func (t *TodoTool) Invoke(ctx context.Context, req *TodoRequest) (res *TodoRespo
 			res.Error = "id is required"
 			return res, nil
 		}
-		if err := t.storage.Update(req.Todo); err != nil {
+		if err := t.config.Storage.Update(req.Todo); err != nil {
 			res.Status = "error"
 			res.Error = fmt.Sprintf("failed to update todo: %v", err)
 			return res, nil
@@ -111,7 +154,7 @@ func (t *TodoTool) Invoke(ctx context.Context, req *TodoRequest) (res *TodoRespo
 			res.Error = "todo id is required for delete action"
 			return res, nil
 		}
-		if err := t.storage.Delete(req.Todo.ID); err != nil {
+		if err := t.config.Storage.Delete(req.Todo.ID); err != nil {
 			res.Status = "error"
 			res.Error = fmt.Sprintf("failed to delete todo: %v", err)
 			return res, nil
@@ -121,7 +164,7 @@ func (t *TodoTool) Invoke(ctx context.Context, req *TodoRequest) (res *TodoRespo
 		if req.List == nil {
 			req.List = &ListParams{}
 		}
-		todos, err := t.storage.List(req.List)
+		todos, err := t.config.Storage.List(req.List)
 		if err != nil {
 			res.Status = "error"
 			res.Error = fmt.Sprintf("failed to list todos: %v", err)

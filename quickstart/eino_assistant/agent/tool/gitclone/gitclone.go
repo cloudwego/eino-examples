@@ -12,33 +12,44 @@ import (
 	"github.com/cloudwego/eino/components/tool/utils"
 )
 
-type Config struct {
+type GitCloneFileImpl struct {
+	config *GitCloneFileConfig
+}
+
+type GitCloneFileConfig struct {
 	BaseDir string
 }
 
-func NewGitCloneTool(ctx context.Context, config *Config) (*GitCloneTool, error) {
-	if config == nil {
-		config = &Config{}
+func defaultGitCloneFileConfig(ctx context.Context) (*GitCloneFileConfig, error) {
+	config := &GitCloneFileConfig{
+		BaseDir: "./data/repos",
 	}
+	return config, nil
+}
 
+func NewGitCloneFile(ctx context.Context, config *GitCloneFileConfig) (tn tool.BaseTool, err error) {
+	if config == nil {
+		config, err = defaultGitCloneFileConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if config.BaseDir == "" {
 		return nil, fmt.Errorf("base dir cannot be empty")
 	}
-
-	return &GitCloneTool{
-		BaseDir: config.BaseDir,
-	}, nil
+	t := &GitCloneFileImpl{config: config}
+	tn, err = t.ToEinoTool()
+	if err != nil {
+		return nil, err
+	}
+	return tn, nil
 }
 
-type GitCloneTool struct {
-	BaseDir string
-}
-
-func (g *GitCloneTool) ToEinoTool() (tool.BaseTool, error) {
+func (g *GitCloneFileImpl) ToEinoTool() (tool.BaseTool, error) {
 	return utils.InferTool("gitclone", "git clone or pull a repository", g.Invoke)
 }
 
-func (g *GitCloneTool) Invoke(ctx context.Context, req *GitCloneRequest) (res *GitCloneResponse, err error) {
+func (g *GitCloneFileImpl) Invoke(ctx context.Context, req *GitCloneRequest) (res *GitCloneResponse, err error) {
 	res = &GitCloneResponse{}
 
 	if req.Url == "" {
@@ -53,10 +64,10 @@ func (g *GitCloneTool) Invoke(ctx context.Context, req *GitCloneRequest) (res *G
 	}
 
 	repoDir, repoName := extractRepoDir(cloneURL)
-	repoDir = filepath.Join(g.BaseDir, repoDir)
+	repoDir = filepath.Join(g.config.BaseDir, repoDir)
 	repoPath := filepath.Join(repoDir, repoName)
 
-	if err := os.MkdirAll(g.BaseDir, 0755); err != nil {
+	if err := os.MkdirAll(g.config.BaseDir, 0755); err != nil {
 		res.Error = fmt.Sprintf("Failed to create directory: %v", err)
 		return res, nil
 	}

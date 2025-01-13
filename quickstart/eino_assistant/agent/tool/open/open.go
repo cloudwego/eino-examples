@@ -11,14 +11,38 @@ import (
 	"github.com/cloudwego/eino/components/tool/utils"
 )
 
-type Open struct {
+type OpenFileToolImpl struct {
+	config *OpenFileToolConfig
 }
 
-func (of *Open) ToEinoTool() (tool.InvokableTool, error) {
+type OpenFileToolConfig struct {
+}
+
+func defaultOpenFileToolConfig(ctx context.Context) (*OpenFileToolConfig, error) {
+	config := &OpenFileToolConfig{}
+	return config, nil
+}
+
+func NewOpenFileTool(ctx context.Context, config *OpenFileToolConfig) (tn tool.BaseTool, err error) {
+	if config == nil {
+		config, err = defaultOpenFileToolConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	t := &OpenFileToolImpl{config: config}
+	tn, err = t.ToEinoTool()
+	if err != nil {
+		return nil, err
+	}
+	return tn, nil
+}
+
+func (of *OpenFileToolImpl) ToEinoTool() (tool.InvokableTool, error) {
 	return utils.InferTool("open", "open a file/dir/web url in the system by default application", of.Invoke)
 }
 
-func (of *Open) Invoke(ctx context.Context, req OpenReq) (res OpenRes, err error) {
+func (of *OpenFileToolImpl) Invoke(ctx context.Context, req OpenReq) (res OpenRes, err error) {
 	if req.URI == "" {
 		res.Message = "uri is required"
 		return res, nil

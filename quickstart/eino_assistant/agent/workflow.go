@@ -1,64 +1,54 @@
 package agent
 
-import (
-	"context"
-	"os"
+// type UserMessage struct {
+// 	ID string `json:"id"`
 
-	"github.com/cloudwego/eino-ext/components/embedding/ark"
-	"github.com/cloudwego/eino/components/prompt"
-	"github.com/cloudwego/eino/compose"
-	"github.com/cloudwego/eino/schema"
-)
+// 	Content string            `json:"content"`
+// 	History []*schema.Message `json:"history"`
+// }
 
-type UserMessage struct {
-	ID string `json:"id"`
+// func BuildEinoAssistant(ctx context.Context) (*compose.Graph[*UserMessage, *schema.Message], error) {
+// 	graph := compose.NewGraph[*UserMessage, *schema.Message]()
 
-	Content string            `json:"content"`
-	History []*schema.Message `json:"history"`
-}
+// 	graph.AddLambdaNode("convert", compose.InvokableLambda(func(ctx context.Context, msg *UserMessage) (map[string]any, error) {
+// 		return map[string]any{
+// 			"id":      msg.ID,
+// 			"content": msg.Content,
+// 			"history": msg.History,
+// 		}, nil
+// 	}))
 
-func NewGraph(ctx context.Context) (*compose.Graph[*UserMessage, *schema.Message], error) {
-	graph := compose.NewGraph[*UserMessage, *schema.Message]()
+// 	template := prompt.FromMessages(
+// 		schema.FString,
+// 		schema.MessagesPlaceholder("history", true),
+// 		schema.UserMessage("{content}"),
+// 	)
 
-	graph.AddLambdaNode("convert", compose.InvokableLambda(func(ctx context.Context, msg *UserMessage) (map[string]any, error) {
-		return map[string]any{
-			"id":      msg.ID,
-			"content": msg.Content,
-			"history": msg.History,
-		}, nil
-	}))
+// 	embedding, err := ark.NewEmbedder(ctx, &ark.EmbeddingConfig{
+// 		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
+// 		APIKey: os.Getenv("ARK_API_KEY"),
+// 	})
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	template := prompt.FromMessages(
-		schema.FString,
-		schema.MessagesPlaceholder("history", true),
-		schema.UserMessage("{content}"),
-	)
+// 	retrieverNode := Retriever(ctx, embedding)
 
-	embedding, err := ark.NewEmbedder(ctx, &ark.EmbeddingConfig{
-		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
-		APIKey: os.Getenv("ARK_API_KEY"),
-	})
-	if err != nil {
-		return nil, err
-	}
+// 	graph.AddRetrieverNode("retriever", retrieverNode)
 
-	retrieverNode := Retriever(ctx, embedding)
+// 	graph.AddChatTemplateNode("template", template)
 
-	graph.AddRetrieverNode("retriever", retrieverNode)
+// 	graph.AddLambdaNode("react_agent", compose.StreamableLambda(func(ctx context.Context, msgs []*schema.Message) (*schema.StreamReader[*schema.Message], error) {
+// 		model := os.Getenv("ARK_CHAT_MODEL")
+// 		apiKey := os.Getenv("ARK_API_KEY")
 
-	graph.AddChatTemplateNode("template", template)
+// 		agent, err := NewAgent(ctx, `You are a helpful assistant.`, model, apiKey)
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-	graph.AddLambdaNode("react_agent", compose.StreamableLambda(func(ctx context.Context, msgs []*schema.Message) (*schema.StreamReader[*schema.Message], error) {
-		model := os.Getenv("ARK_CHAT_MODEL")
-		apiKey := os.Getenv("ARK_API_KEY")
+// 		return agent.Stream(ctx, msgs)
+// 	}))
 
-		agent, err := NewAgent(ctx, `You are a helpful assistant.`, model, apiKey)
-		if err != nil {
-			return nil, err
-		}
-
-		return agent.Stream(ctx, msgs)
-	}))
-
-	return graph, nil
-}
+// 	return graph, nil
+// }

@@ -12,8 +12,6 @@ import (
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/compose"
-	"github.com/cloudwego/eino/flow/agent/react"
 
 	"github.com/cloudwego/eino-examples/agent/tool/einotool"
 	"github.com/cloudwego/eino-examples/agent/tool/gitclone"
@@ -27,30 +25,64 @@ import (
 // 4. 可打开文件
 // 5. eino 助手(eino 项目信息、eino 文档、eino 示例项目)
 // 6. todo 工具
-func NewAgent(ctx context.Context, persona string, modelName string, apiKey string) (*react.Agent, error) {
-	model, err := PrepareChatModel(ctx, modelName, apiKey)
-	if err != nil {
-		return nil, fmt.Errorf("failed to prepare chat model: %w", err)
-	}
+// func NewAgent(ctx context.Context) (compose.Runnable[*eino_agent.UserMessage, *schema.Message], error) {
+// 	// 	AgentGraph: &eino_agent.AgentGraphBuildConfig{
+// 	// 		EinoRetriveKeyOfRetriever: &eino_agent.EinoRetrieverConfig{
+// 	// 			RedisVectorStoreConfig: redis.RedisVectorStoreConfig{
+// 	// 				RedisAddr:      "127.0.0.1:6379",
+// 	// 				Embedding:      embedding,
+// 	// 				RedisKeyPrefix: "doc:",
+// 	// 				Dimension:      1536,
+// 	// 				TopK:           3,
+// 	// 				MinScore:       0.1,
+// 	// 			},
+// 	// 		},
+// 	// 		PromptTemplateKeyOfChatTemplate: &eino_agent.PromptTemplateConfig{
+// 	// 			FormatType: schema.FString,
+// 	// 			Templates: []schema.MessagesTemplate{
+// 	// 				schema.SystemMessage("{documents}"),
+// 	// 				schema.MessagesPlaceholder("history", true),
+// 	// 				schema.UserMessage("{content}"),
+// 	// 			},
+// 	// 		},
+// 	// 	},
+// 	graph, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
+// 	}
 
-	tools, err := PreloadTools(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to preload tools: %w", err)
-	}
+// 	runner, err := graph.Compile(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to compile agent graph: %w", err)
+// 	}
 
-	reactAgent, err := react.NewAgent(ctx, &react.AgentConfig{
-		Model: model,
-		ToolsConfig: compose.ToolsNodeConfig{
-			Tools: tools,
-		},
-		MessageModifier: react.NewPersonaModifier(persona),
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create react agent: %w", err)
-	}
+// 	return runner, nil
+// }
 
-	return reactAgent, nil
-}
+// func NewAgent(ctx context.Context, persona string, modelName string, apiKey string) (*react.Agent, error) {
+// 	model, err := PrepareChatModel(ctx, modelName, apiKey)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to prepare chat model: %w", err)
+// 	}
+
+// 	tools, err := PreloadTools(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to preload tools: %w", err)
+// 	}
+
+// 	reactAgent, err := react.NewAgent(ctx, &react.AgentConfig{
+// 		Model: model,
+// 		ToolsConfig: compose.ToolsNodeConfig{
+// 			Tools: tools,
+// 		},
+// 		MessageModifier: react.NewPersonaModifier(persona),
+// 	})
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to create react agent: %w", err)
+// 	}
+
+// 	return reactAgent, nil
+// }
 
 func PrepareChatModel(ctx context.Context, modelName string, apiKey string) (model.ChatModel, error) {
 	model, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
@@ -67,18 +99,16 @@ func PreloadTools(ctx context.Context) ([]tool.BaseTool, error) {
 	tools := []tool.BaseTool{}
 
 	// 可打开本地文件/文件夹/web url
-	of := open.Open{}
-	openFileTool, err := of.ToEinoTool()
+	openFileTool, err := open.NewOpenFileTool(ctx, &open.OpenFileToolConfig{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create open file tool: %w", err)
 	}
 	tools = append(tools, openFileTool)
 
 	// 可下载 github 项目
-	gc := gitclone.GitCloneTool{
+	gitCloneTool, err := gitclone.NewGitCloneFile(ctx, &gitclone.GitCloneFileConfig{
 		BaseDir: "./data",
-	}
-	gitCloneTool, err := gc.ToEinoTool()
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create git clone tool: %w", err)
 	}
@@ -92,21 +122,18 @@ func PreloadTools(ctx context.Context) ([]tool.BaseTool, error) {
 	tools = append(tools, ddg)
 
 	// eino 助手
-	et := einotool.NewEinoTool(ctx, &einotool.Config{
+	etTool, err := einotool.NewEinoAssistantTool(ctx, &einotool.EinoAssistantToolConfig{
 		BaseDir: "./data/",
 	})
-	etTool, err := et.ToEinoTool()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create eino tool: %w", err)
 	}
 	tools = append(tools, etTool)
 
 	// todo 工具
-	tt, err := todo.NewTodoTool(todo.GetDefaultStorage())
-	if err != nil {
-		return nil, fmt.Errorf("failed to create todo tool: %w", err)
-	}
-	todoTool, err := tt.ToEinoTool()
+	todoTool, err := todo.NewTodoTool(ctx, &todo.TodoToolConfig{
+		Storage: todo.GetDefaultStorage(),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create todo tool: %w", err)
 	}

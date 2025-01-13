@@ -17,50 +17,54 @@ var webContent embed.FS
 
 // BindRoutes 注册路由
 func BindRoutes(r *route.RouterGroup) error {
-	todoTool, err := todo.NewTodoTool(todo.GetDefaultStorage())
+	ctx := context.Background()
+
+	todoTool, err := todo.NewTodoToolImpl(ctx, &todo.TodoToolConfig{
+		Storage: todo.GetDefaultStorage(),
+	})
 	if err != nil {
 		return err
 	}
 
 	// API 处理
-	r.POST("/api", func(c context.Context, ctx *app.RequestContext) {
+	r.POST("/api", func(ctx context.Context, c *app.RequestContext) {
 		var req todo.TodoRequest
-		if err := ctx.Bind(&req); err != nil {
-			ctx.JSON(consts.StatusBadRequest, map[string]string{
+		if err := c.Bind(&req); err != nil {
+			c.JSON(consts.StatusBadRequest, map[string]string{
 				"status": "error",
 				"error":  err.Error(),
 			})
 			return
 		}
 
-		resp, err := todoTool.Invoke(c, &req)
+		resp, err := todoTool.Invoke(ctx, &req)
 		if err != nil {
-			ctx.JSON(consts.StatusInternalServerError, map[string]string{
+			c.JSON(consts.StatusInternalServerError, map[string]string{
 				"status": "error",
 				"error":  err.Error(),
 			})
 			return
 		}
 
-		ctx.JSON(consts.StatusOK, resp)
+		c.JSON(consts.StatusOK, resp)
 	})
 
 	// 静态文件服务
-	r.GET("/", func(c context.Context, ctx *app.RequestContext) {
+	r.GET("/", func(ctx context.Context, c *app.RequestContext) {
 		content, err := webContent.ReadFile("web/index.html")
 		if err != nil {
-			ctx.String(consts.StatusNotFound, "File not found")
+			c.String(consts.StatusNotFound, "File not found")
 			return
 		}
-		ctx.Header("Content-Type", "text/html")
-		ctx.Write(content)
+		c.Header("Content-Type", "text/html")
+		c.Write(content)
 	})
 
-	r.GET("/:file", func(c context.Context, ctx *app.RequestContext) {
-		file := ctx.Param("file")
+	r.GET("/:file", func(ctx context.Context, c *app.RequestContext) {
+		file := c.Param("file")
 		content, err := webContent.ReadFile("web/" + file)
 		if err != nil {
-			ctx.String(consts.StatusNotFound, "File not found")
+			c.String(consts.StatusNotFound, "File not found")
 			return
 		}
 
@@ -68,8 +72,8 @@ func BindRoutes(r *route.RouterGroup) error {
 		if contentType == "" {
 			contentType = "application/octet-stream"
 		}
-		ctx.Header("Content-Type", contentType)
-		ctx.Write(content)
+		c.Header("Content-Type", contentType)
+		c.Write(content)
 	})
 
 	return nil

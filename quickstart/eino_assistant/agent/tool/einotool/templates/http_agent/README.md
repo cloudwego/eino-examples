@@ -15,7 +15,7 @@ go run main.go -model=ep-xxxx -apikey=xxx
 ### 使用 curl 访问 http server
 
 ```bash
-curl 'http://localhost:8888/chat?id=123&msg=hello'
+curl 'http://127.0.0.1:8888/chat?id=123&msg=hello'
 ```
 > 注意，由于采用了 sse 的格式，结果中会有 `data:` 前缀
 
