@@ -1,0 +1,157 @@
+package gitclone
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/components/tool/utils"
+)
+
+type Config struct {
+	BaseDir string
+}
+
+func NewGitCloneTool(ctx context.Context, config *Config) (*GitCloneTool, error) {
+	if config == nil {
+		config = &Config{}
+	}
+
+	if config.BaseDir == "" {
+		return nil, fmt.Errorf("base dir cannot be empty")
+	}
+
+	return &GitCloneTool{
+		BaseDir: config.BaseDir,
+	}, nil
+}
+
+type GitCloneTool struct {
+	BaseDir string
+}
+
+func (g *GitCloneTool) ToEinoTool() (tool.BaseTool, error) {
+	return utils.InferTool("gitclone", "git clone or pull a repository", g.Invoke)
+}
+
+func (g *GitCloneTool) Invoke(ctx context.Context, req *GitCloneRequest) (res *GitCloneResponse, err error) {
+	res = &GitCloneResponse{}
+
+	if req.Url == "" {
+		res.Error = "URL cannot be empty"
+		return res, nil
+	}
+
+	valid, cloneURL := isValidGitURL(req.Url)
+	if !valid {
+		res.Error = fmt.Sprintf("Invalid Git URL format: %s", req.Url)
+		return res, nil
+	}
+
+	repoDir, repoName := extractRepoDir(cloneURL)
+	repoDir = filepath.Join(g.BaseDir, repoDir)
+	repoPath := filepath.Join(repoDir, repoName)
+
+	if err := os.MkdirAll(g.BaseDir, 0755); err != nil {
+		res.Error = fmt.Sprintf("Failed to create directory: %v", err)
+		return res, nil
+	}
+
+	if req.Action == GitCloneActionClone {
+		if _, err := os.Stat(repoPath); err == nil {
+			res.Error = "Repository already exists"
+			return res, nil
+		}
+
+		cmd := exec.CommandContext(ctx, "git", "clone", cloneURL, repoPath)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			res.Error = fmt.Sprintf("Clone failed: %v, output: %s", err, output)
+			return res, nil
+		}
+	} else if req.Action == GitCloneActionPull {
+		if _, err := os.Stat(repoPath); os.IsNotExist(err) {
+			res.Error = fmt.Sprintf("repo does not exist: %s", repoPath)
+			return res, nil
+		}
+
+		cmd := exec.CommandContext(ctx, "git", "-C", repoPath, "pull")
+		if output, err := cmd.CombinedOutput(); err != nil {
+			res.Error = fmt.Sprintf("Pull failed: %v, output: %s", err, output)
+			return res, nil
+		}
+
+	}
+
+	absPath, err := filepath.Abs(repoPath)
+	if err != nil {
+		res.Error = fmt.Sprintf("failed to get absolute [%s] path: %v", repoPath, err)
+		return res, nil
+	}
+	res.Message = fmt.Sprintf("success, repo path: %s", absPath)
+	return res, nil
+}
+
+// 辅助函数：验证 Git URL 格式
+func isValidGitURL(url string) (bool, string) {
+	cleanURL := strings.TrimSuffix(url, ".git")
+
+	parts := strings.Split(cleanURL, "/")
+	if len(parts) < 2 {
+		return false, ""
+	}
+
+	var standardURL string
+	switch {
+	// SSH 格式: git@domain:group/repo
+	case strings.HasPrefix(url, "git@"):
+		if strings.Contains(url, ":") {
+			return true, withGit(url) // 已经是标准 SSH 格式
+		}
+		return false, ""
+
+	// 完整 HTTPS 格式: https://domain/group/repo
+	case strings.HasPrefix(url, "http://"), strings.HasPrefix(url, "https://"):
+		return true, withGit(url) // 已经是标准 HTTPS 格式
+
+	default:
+		standardURL = "https://" + withGit(url)
+	}
+
+	return true, standardURL
+}
+
+func withGit(url string) string {
+	if !strings.HasSuffix(url, ".git") {
+		url += ".git"
+	}
+	return url
+}
+
+// 辅助函数：从 URL 提取 group 和 repo
+func extractRepoDir(url string) (string, string) {
+	parts := strings.Split(url, "/")
+	repoDir := parts[len(parts)-2]
+	repoName := strings.TrimSuffix(parts[len(parts)-1], ".git")
+	return repoDir, repoName
+}
+
+type GitCloneAction string
+
+const (
+	GitCloneActionClone GitCloneAction = "clone"
+	GitCloneActionPull  GitCloneAction = "pull"
+)
+
+type GitCloneRequest struct {
+	Url    string         `json:"url" jsonschema:"description=The URL of the repository to clone"`
+	Action GitCloneAction `json:"action" jsonschema:"description=The action to perform, 'clone' or 'pull'"`
+}
+
+type GitCloneResponse struct {
+	Message string `json:"message"`
+	Error   string `json:"error"`
+}
