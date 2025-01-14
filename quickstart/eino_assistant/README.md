@@ -12,7 +12,7 @@ docker-compose up -d
 
 所需的大模型和 API Key.
 豆包大模型地址: https://console.volcengine.com/ark/region:ark+cn-beijing/model
-> ChatModel 推荐: [Doubao-pro-32k](https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-pro-32k)
+> ChatModel 推荐: [Doubao-pro-4k (functioncall)](https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-pro-4k)
 > EmbeddingModel 推荐: [Doubao-embedding-large](https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-embedding-large)
 > 进入页面后点击 `推理` 按钮，即可创建按量计费的模型接入点，对应的 `ep-xxx` 就是所需的 model 名称
 

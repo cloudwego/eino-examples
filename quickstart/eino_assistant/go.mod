@@ -4,18 +4,17 @@ go 1.22
 
 require (
 	github.com/cloudwego/eino v0.3.4
-	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250110070408-97a8606cb791
-	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250110070408-97a8606cb791
+	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250114083745-f699cc985d88
+	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250114083745-f699cc985d88
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250110070408-97a8606cb791
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250110070408-97a8606cb791
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250110070408-97a8606cb791
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250113132115-d4a0dba1fded
+	github.com/cloudwego/eino-ext/devops v0.0.0-20250114083745-f699cc985d88
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/sse v0.0.6-0.20240617114443-10a844794bf3
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/stretchr/testify v1.9.0
-	github.com/volcengine/volcengine-go-sdk v1.0.160
 )
 
 require (
@@ -58,6 +57,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.0.160 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
