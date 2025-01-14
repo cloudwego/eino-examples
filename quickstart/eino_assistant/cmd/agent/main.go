@@ -42,9 +42,6 @@ func main() {
 		return
 	}
 
-	// print welcome message
-	fmt.Println("🤖 : Welcome to Eino Agent, what can I do for you ? I can search eino docs, create eino example project, search web, manage todo, and more.")
-
 	// Start interactive dialogue
 	reader := bufio.NewReader(os.Stdin)
 	for {

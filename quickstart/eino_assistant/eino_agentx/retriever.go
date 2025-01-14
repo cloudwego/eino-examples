@@ -33,8 +33,8 @@ func defaultEinoRetrieverConfig(ctx context.Context) (*EinoRetrieverConfig, erro
 			Embedding:      embedding,
 			RedisKeyPrefix: "eino:doc:",
 			Dimension:      4096,
-			TopK:           3,
-			MinScore:       0.65,
+			TopK:           4,
+			MinScore:       0.5,
 		},
 	}
 	return config, nil

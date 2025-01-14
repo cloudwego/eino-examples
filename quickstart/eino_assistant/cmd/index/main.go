@@ -11,7 +11,6 @@ import (
 
 	"github.com/cloudwego/eino-examples/agent/redis"
 	index_graph "github.com/cloudwego/eino-examples/index_graphx"
-	"github.com/cloudwego/eino-ext/components/document/loader/file"
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
 	"github.com/cloudwego/eino-ext/devops"
@@ -52,22 +51,18 @@ func indexMarkdownFiles(ctx context.Context, dir string) error {
 	}
 	runner, err := index_graph.BuildIndexGraph(ctx, index_graph.BuildConfig{
 		IndexGraph: &index_graph.IndexGraphBuildConfig{
-			LoadFileKeyOfLoader: &file.FileLoaderConfig{},
 			RedisVectorStoreKeyOfIndexer: &index_graph.RedisVectorStoreConfig{
 				RedisVectorStoreConfig: redis.RedisVectorStoreConfig{
 					RedisAddr:      "127.0.0.1:6379",
 					RedisKeyPrefix: "eino:doc:",
 					Dimension:      4096,
-					TopK:           3,
-					MinScore:       0.5,
 					Embedding:      embedding,
 				},
 			},
 			SplitDocumentKeyOfDocumentTransformer: &markdown.HeaderConfig{
 				Headers: map[string]string{
-					"#":   "title",
-					"##":  "subtitle",
-					"###": "section",
+					"#":  "title",
+					"##": "subtitle",
 				},
 			},
 		},

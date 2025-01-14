@@ -10,7 +10,7 @@ services:
     volumes:
       - ./data/redis:/data
     environment:
-      - REDIS_ARGS=--appendonly yes --dir /data
+      - REDIS_ARGS=--dir /data --appendonly no --save 1800 1
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]

@@ -1,16 +1,3 @@
----
-Description: Eino 是基于 Golang 的 AI 应用开发框架
-date: "2025-01-07"
-lastmod: ""
-linktitle: Eino
-menu:
-    main:
-        parent: 文档
-        weight: 6
-tags: []
-title: Eino 用户手册
-weight: 6
----
 
 > Eino 发音：美 / 'aino /，近似音: i know，有希望应用程序达到 "i know" 的愿景
 

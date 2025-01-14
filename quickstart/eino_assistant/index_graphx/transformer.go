@@ -10,9 +10,8 @@ import (
 func defaultSplitDocumentConfig(ctx context.Context) (*markdown.HeaderConfig, error) {
 	config := &markdown.HeaderConfig{
 		Headers: map[string]string{
-			"#":   "title",
-			"##":  "subtitle",
-			"###": "section",
+			"#":  "title",
+			"##": "subtitle",
 		},
 	}
 	return config, nil
