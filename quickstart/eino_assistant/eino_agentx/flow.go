@@ -9,12 +9,15 @@ import (
 )
 
 func defaultEinoAgentConfig(ctx context.Context) (*react.AgentConfig, error) {
-	config := &react.AgentConfig{ToolReturnDirectly: map[string]struct{}{}}
-	configOfChatModel11, err := defaultArkChatModelConfig(ctx)
+	config := &react.AgentConfig{
+		MaxStep:            25,
+		ToolReturnDirectly: map[string]struct{}{},
+	}
+	configOfChatModel, err := defaultArkChatModelConfig(ctx)
 	if err != nil {
 		return nil, err
 	}
-	ArkChatModel, err := NewArkChatModel(ctx, configOfChatModel11)
+	ArkChatModel, err := NewArkChatModel(ctx, configOfChatModel)
 	if err != nil {
 		return nil, err
 	}

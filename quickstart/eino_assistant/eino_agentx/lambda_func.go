@@ -2,21 +2,27 @@ package eino_agent
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/cloudwego/eino-ext/components/document/loader/file"
 	"github.com/cloudwego/eino/schema"
 )
 
 func NewDocumentsConvert(ctx context.Context, input []*schema.Document) (output map[string]any, err error) {
 	if len(input) == 0 {
 		return map[string]any{
-			"documents": "",
+			"documents": "null",
 		}, nil
 	}
 
-	outputStr := "## retrieved documents\n"
+	outputStr := ""
 	for _, doc := range input {
-		outputStr += doc.String() + "\n"
+		src := doc.MetaData[file.MetaKeySource]
+		if src != nil {
+			outputStr += fmt.Sprintf("Source: %s\n", src)
+		}
+		outputStr += "Content: " + doc.String() + "\n"
 	}
 	return map[string]any{
 		"documents": outputStr,

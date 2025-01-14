@@ -34,6 +34,17 @@ func main() {
 		*id = strconv.Itoa(rand.IntN(1000000))
 	}
 
+	ctx := context.Background()
+
+	err := agent.Init()
+	if err != nil {
+		log.Printf("[eino agent] init failed, err=%v", err)
+		return
+	}
+
+	// print welcome message
+	fmt.Println("🤖 : Welcome to Eino Agent, what can I do for you ? I can search eino docs, create eino example project, search web, manage todo, and more.")
+
 	// Start interactive dialogue
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -48,9 +59,6 @@ func main() {
 		if input == "" || input == "exit" || input == "quit" {
 			return
 		}
-
-		// Create context for the request
-		ctx := context.Background()
 
 		// Call RunAgent with the input
 		sr, err := agent.RunAgent(ctx, *id, input)

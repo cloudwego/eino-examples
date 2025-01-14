@@ -45,31 +45,6 @@ func Init() error {
 	return err
 }
 
-// func Run(ctx context.Context, userMessage *eino_agent.UserMessage) (*schema.StreamReader[*schema.Message], error) {
-// 	graph, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
-// 	}
-
-// 	runner, err := graph.Compile(ctx)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to compile agent graph: %w", err)
-// 	}
-
-// 	// conversation := memory.GetConversation(id, true)
-// 	// userMsg := schema.UserMessage(msg)
-// 	// conversation.Append(userMsg)
-
-// 	// msgs := conversation.GetMessages()
-
-// 	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(cbHandler))
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to stream: %w", err)
-// 	}
-
-// 	return sr, nil
-// }
-
 func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
 
 	runner, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{
