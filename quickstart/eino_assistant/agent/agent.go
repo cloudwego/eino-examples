@@ -25,11 +25,13 @@ import (
 	"os"
 	"sync"
 
-	"github.com/cloudwego/eino-examples/agent/mem"
-	eino_agent "github.com/cloudwego/eino-examples/eino_agentx"
+	"github.com/cloudwego/eino-ext/callbacks/langfuse"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/agent/mem"
+	eino_agent "github.com/cloudwego/eino-examples/eino_agentx"
 )
 
 var memory = mem.GetDefaultMemory()
@@ -55,8 +57,24 @@ func Init() error {
 		if os.Getenv("DEBUG") == "true" {
 			cbConfig.Debug = true
 		}
-
+		// this is for invoke option of WithCallback
 		cbHandler = LogCallback(cbConfig)
+
+		// init global callback, for trace and metrics
+		if os.Getenv("LANGFUSE_PUBLIC_KEY") != "" && os.Getenv("LANGFUSE_SECRET_KEY") != "" {
+			fmt.Println("[eino agent] INFO: use langfuse as callback, watch at: https://cloud.langfuse.com")
+			cbh, _ := langfuse.NewLangfuseHandler(&langfuse.Config{
+				Host:      "https://cloud.langfuse.com",
+				PublicKey: os.Getenv("LANGFUSE_PUBLIC_KEY"),
+				SecretKey: os.Getenv("LANGFUSE_SECRET_KEY"),
+				Name:      "Eino Assistant",
+				Public:    true,
+				Release:   "release/v0.0.1",
+				UserID:    "eino_god",
+				Tags:      []string{"eino", "assistant"},
+			})
+			callbacks.InitCallbackHandlers([]callbacks.Handler{cbh})
+		}
 	})
 	return err
 }
