@@ -12,7 +12,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250110031740-2b102ddbf6ee
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250108030439-1493aa120cb1
 	github.com/cloudwego/eino-ext/components/tool/googlesearch v0.0.0-20250110031740-2b102ddbf6ee
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250110031740-2b102ddbf6ee
+	github.com/cloudwego/eino-ext/devops v0.0.0-20250115085020-23a349d347b6
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/ollama/ollama v0.3.0

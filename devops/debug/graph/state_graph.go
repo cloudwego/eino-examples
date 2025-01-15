@@ -67,7 +67,6 @@ func RegisterSimpleStateGraph(ctx context.Context) {
 
 	_ = sg.AddEdge("node_3", compose.END)
 
-	// The difference with graph is you should use WithGenLocalState to register your local state function
 	r, err := sg.Compile(ctx)
 	if err != nil {
 		logs.Errorf("compile state graph failed, err=%v", err)
