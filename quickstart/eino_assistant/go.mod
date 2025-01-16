@@ -1,6 +1,6 @@
 module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 
-go 1.22
+go 1.21
 
 require (
 	code.byted.org/flow/eino v0.3.1

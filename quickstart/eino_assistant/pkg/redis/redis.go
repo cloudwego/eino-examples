@@ -32,6 +32,7 @@ const (
 	ContentField  = "content"
 	MetadataField = "metadata"
 	VectorField   = "content_vector"
+	DistanceField = "distance"
 )
 
 var initOnce sync.Once
@@ -41,7 +42,7 @@ func Init() error {
 	initOnce.Do(func() {
 		err = InitRedisIndex(context.Background(), &Config{
 			RedisAddr: "localhost:6379",
-			Dimension: 1536,
+			Dimension: 4096,
 		})
 	})
 	return err
@@ -72,7 +73,7 @@ func InitRedisIndex(ctx context.Context, config *Config) (err error) {
 		return fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	indexName := fmt.Sprintf("%s:%s", RedisPrefix, IndexName)
+	indexName := fmt.Sprintf("%s%s", RedisPrefix, IndexName)
 
 	// 检查是否存在索引
 	exists, err := client.Do(ctx, "FT.INFO", indexName).Result()

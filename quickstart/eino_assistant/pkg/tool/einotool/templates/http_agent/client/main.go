@@ -20,7 +20,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"math/rand/v2"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -34,7 +34,7 @@ func main() {
 	flag.Parse()
 
 	if *id == "" {
-		*id = strconv.Itoa(rand.IntN(1000000))
+		*id = strconv.Itoa(rand.Intn(1000000))
 	}
 
 	// 开始交互式对话

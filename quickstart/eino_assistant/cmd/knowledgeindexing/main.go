@@ -128,7 +128,7 @@ func initVectorIndex(ctx context.Context, config *RedisVectorStoreConfig) (err e
 		return fmt.Errorf("failed to connect to Redis: %w", err)
 	}
 
-	indexName := fmt.Sprintf("%s:%s", config.RedisKeyPrefix, config.IndexName)
+	indexName := fmt.Sprintf("%s%s", config.RedisKeyPrefix, config.IndexName)
 
 	// 检查是否存在索引
 	exists, err := client.Do(ctx, "FT.INFO", indexName).Result()

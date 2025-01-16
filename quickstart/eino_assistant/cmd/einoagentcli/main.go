@@ -25,7 +25,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand/v2"
+	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -59,7 +59,7 @@ func main() {
 	flag.Parse()
 
 	if *id == "" {
-		*id = strconv.Itoa(rand.IntN(1000000))
+		*id = strconv.Itoa(rand.Intn(1000000))
 	}
 
 	ctx := context.Background()
