@@ -1,0 +1,547 @@
+{
+  "name": "KnowledgeIndexing",
+  "node_trigger_mode": "AnyPredecessor",
+  "input_type": {
+    "title": "document.Source",
+    "description": "github.com/cloudwego/eino/components/document"
+  },
+  "output_type": {
+    "title": "[]string"
+  },
+  "gen_local_state": {
+    "output_type": {}
+  },
+  "id": "BZe_z8",
+  "component": "Graph",
+  "nodes": [
+    {
+      "id": "start",
+      "key": "start",
+      "name": "Start",
+      "type": "start",
+      "layoutData": {
+        "position": {
+          "x": 80,
+          "y": 86
+        }
+      }
+    },
+    {
+      "id": "end",
+      "key": "end",
+      "name": "End",
+      "type": "end",
+      "layoutData": {
+        "position": {
+          "x": 1365,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "NE2Tk4",
+      "key": "FileLoader",
+      "name": "",
+      "type": "Loader",
+      "component_schema": {
+        "name": "file",
+        "component": "Loader",
+        "component_source": "official",
+        "identifier": "github.com/cloudwego/eino-ext/components/document/loader/file",
+        "config": {
+          "description": "github.com/cloudwego/eino-ext/blob/main/components/document/loader/file/file_loader.go",
+          "schema": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "UseNameAsID": {
+                "type": "boolean",
+                "description": "",
+                "goDefinition": {
+                  "libraryRef": {
+                    "version": "",
+                    "module": "",
+                    "pkgPath": ""
+                  },
+                  "typeName": "bool",
+                  "kind": "bool",
+                  "isPtr": false
+                }
+              }
+            },
+            "propertyOrder": [
+              "UseNameAsID"
+            ],
+            "goDefinition": {
+              "libraryRef": {
+                "version": "",
+                "module": "",
+                "pkgPath": ""
+              },
+              "typeName": "file.FileLoaderConfig",
+              "kind": "struct",
+              "isPtr": false
+            }
+          },
+          "config_input": "{}"
+        },
+        "is_io_type_mutable": false,
+        "input_type": {},
+        "output_type": {},
+        "method": "NewFileLoader"
+      },
+      "layoutData": {
+        "position": {
+          "x": 375,
+          "y": 71
+        }
+      },
+      "node_option": {}
+    },
+    {
+      "id": "Jih7Gv",
+      "key": "MarkdownSplitter",
+      "name": "",
+      "type": "DocumentTransformer",
+      "component_schema": {
+        "name": "markdown",
+        "component": "DocumentTransformer",
+        "component_source": "official",
+        "identifier": "github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown",
+        "config": {
+          "description": "github.com/cloudwego/eino-ext/blob/main/components/document/transformer/splitter/markdown/header.go",
+          "schema": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "Headers": {
+                "type": "object",
+                "description": "",
+                "additionalProperties": {
+                  "type": "string",
+                  "description": "",
+                  "goDefinition": {
+                    "libraryRef": {
+                      "version": "",
+                      "module": "",
+                      "pkgPath": ""
+                    },
+                    "typeName": "string",
+                    "kind": "string",
+                    "isPtr": false
+                  }
+                },
+                "goDefinition": {
+                  "libraryRef": {
+                    "version": "",
+                    "module": "",
+                    "pkgPath": ""
+                  },
+                  "typeName": "map[string]string",
+                  "kind": "map",
+                  "isPtr": false
+                }
+              },
+              "TrimHeaders": {
+                "type": "boolean",
+                "description": "",
+                "goDefinition": {
+                  "libraryRef": {
+                    "version": "",
+                    "module": "",
+                    "pkgPath": ""
+                  },
+                  "typeName": "bool",
+                  "kind": "bool",
+                  "isPtr": false
+                }
+              }
+            },
+            "propertyOrder": [
+              "Headers",
+              "TrimHeaders"
+            ],
+            "goDefinition": {
+              "libraryRef": {
+                "version": "",
+                "module": "",
+                "pkgPath": ""
+              },
+              "typeName": "markdown.HeaderConfig",
+              "kind": "struct",
+              "isPtr": false
+            }
+          },
+          "config_input": "{\"Headers\":{},\"TrimHeaders\":true}"
+        },
+        "is_io_type_mutable": false,
+        "method": "NewMarkdownSplitter",
+        "input_type": {},
+        "output_type": {}
+      },
+      "layoutData": {
+        "position": {
+          "x": 705,
+          "y": 71
+        }
+      },
+      "node_option": {}
+    },
+    {
+      "id": "Ju7Igu",
+      "key": "RedisIndexer",
+      "name": "",
+      "type": "Indexer",
+      "component_schema": {
+        "name": "redis",
+        "component": "Indexer",
+        "component_source": "official",
+        "identifier": "github.com/cloudwego/eino-ext/components/indexer/redis",
+        "slots": [
+          {
+            "component": "Embedding",
+            "field_loc_path": "Embedding",
+            "multiple": false,
+            "required": false,
+            "component_items": [
+              {
+                "name": "ark",
+                "component": "Embedding",
+                "component_source": "official",
+                "identifier": "github.com/cloudwego/eino-ext/components/embedding/ark",
+                "config": {
+                  "description": "github.com/cloudwego/eino-ext/blob/main/components/embedding/ark/embedding.go",
+                  "schema": {
+                    "type": "object",
+                    "description": "",
+                    "properties": {
+                      "APIKey": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "AccessKey": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "BaseURL": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "Dimensions": {
+                        "type": "number",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "int",
+                          "kind": "int",
+                          "isPtr": true
+                        }
+                      },
+                      "HTTPClient": {
+                        "type": "object",
+                        "description": "",
+                        "properties": {
+                          "Timeout": {
+                            "type": "number",
+                            "description": "",
+                            "goDefinition": {
+                              "libraryRef": {
+                                "version": "",
+                                "module": "time",
+                                "pkgPath": "time"
+                              },
+                              "typeName": "time.Duration",
+                              "kind": "int64",
+                              "isPtr": false
+                            }
+                          }
+                        },
+                        "propertyOrder": [
+                          "Timeout"
+                        ],
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "net/http",
+                            "pkgPath": "net/http"
+                          },
+                          "typeName": "http.Client",
+                          "kind": "struct",
+                          "isPtr": true
+                        }
+                      },
+                      "Model": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "Region": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "RetryTimes": {
+                        "type": "number",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "int",
+                          "kind": "int",
+                          "isPtr": true
+                        }
+                      },
+                      "SecretKey": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": false
+                        }
+                      },
+                      "Timeout": {
+                        "type": "number",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "time",
+                            "pkgPath": "time"
+                          },
+                          "typeName": "time.Duration",
+                          "kind": "int64",
+                          "isPtr": true
+                        }
+                      },
+                      "User": {
+                        "type": "string",
+                        "description": "",
+                        "goDefinition": {
+                          "libraryRef": {
+                            "version": "",
+                            "module": "",
+                            "pkgPath": ""
+                          },
+                          "typeName": "string",
+                          "kind": "string",
+                          "isPtr": true
+                        }
+                      }
+                    },
+                    "propertyOrder": [
+                      "BaseURL",
+                      "Region",
+                      "HTTPClient",
+                      "Timeout",
+                      "RetryTimes",
+                      "APIKey",
+                      "AccessKey",
+                      "SecretKey",
+                      "Model",
+                      "User",
+                      "Dimensions"
+                    ],
+                    "goDefinition": {
+                      "libraryRef": {
+                        "version": "",
+                        "module": "",
+                        "pkgPath": ""
+                      },
+                      "typeName": "ark.EmbeddingConfig",
+                      "kind": "struct",
+                      "isPtr": false
+                    }
+                  },
+                  "config_input": "{\"HTTPClient\":{\"Timeout\":0},\"BaseURL\":\"https://ark.cn-beijing.volces.com/api/v3\"}"
+                },
+                "is_io_type_mutable": false,
+                "version": "1.0.0",
+                "method": "NewArkEmbedding",
+                "input_type": {},
+                "output_type": {},
+                "id": "MbIZvg",
+                "layoutData": {
+                  "isSlotNode": true,
+                  "position": {
+                    "x": 1365,
+                    "y": 172
+                  }
+                }
+              }
+            ],
+            "go_definition": {
+              "libraryRef": {
+                "version": "v0.3.6",
+                "module": "github.com/cloudwego/eino",
+                "pkgPath": "github.com/cloudwego/eino/components/embedding"
+              },
+              "typeName": "embedding.Embedder",
+              "kind": "interface",
+              "isPtr": false
+            }
+          }
+        ],
+        "config": {
+          "description": "github.com/cloudwego/eino-ext/blob/main/components/indexer/redis/indexer.go",
+          "schema": {
+            "type": "object",
+            "description": "",
+            "properties": {
+              "BatchSize": {
+                "type": "number",
+                "description": "",
+                "goDefinition": {
+                  "libraryRef": {
+                    "version": "",
+                    "module": "",
+                    "pkgPath": ""
+                  },
+                  "typeName": "int",
+                  "kind": "int",
+                  "isPtr": false
+                }
+              },
+              "KeyPrefix": {
+                "type": "string",
+                "description": "",
+                "goDefinition": {
+                  "libraryRef": {
+                    "version": "",
+                    "module": "",
+                    "pkgPath": ""
+                  },
+                  "typeName": "string",
+                  "kind": "string",
+                  "isPtr": false
+                }
+              }
+            },
+            "propertyOrder": [
+              "KeyPrefix",
+              "BatchSize"
+            ],
+            "goDefinition": {
+              "libraryRef": {
+                "version": "",
+                "module": "",
+                "pkgPath": ""
+              },
+              "typeName": "redis.IndexerConfig",
+              "kind": "struct",
+              "isPtr": false
+            }
+          },
+          "config_input": "{\"BatchSize\":5,\"KeyPrefix\":\"eino_assistant\"}"
+        },
+        "is_io_type_mutable": false,
+        "version": "1.0.0",
+        "method": "NewRedisIndexer",
+        "input_type": {},
+        "output_type": {}
+      },
+      "layoutData": {
+        "position": {
+          "x": 1035,
+          "y": 56
+        }
+      },
+      "node_option": {}
+    }
+  ],
+  "edges": [
+    {
+      "id": "",
+      "name": "",
+      "sourceWorkflowNodeId": "start",
+      "targetWorkflowNodeId": "NE2Tk4",
+      "source_node_key": "start",
+      "target_node_key": "FileLoader"
+    },
+    {
+      "id": "",
+      "name": "",
+      "sourceWorkflowNodeId": "Ju7Igu",
+      "targetWorkflowNodeId": "end",
+      "source_node_key": "RedisIndexer",
+      "target_node_key": "end"
+    },
+    {
+      "id": "",
+      "name": "",
+      "sourceWorkflowNodeId": "NE2Tk4",
+      "targetWorkflowNodeId": "Jih7Gv",
+      "source_node_key": "FileLoader",
+      "target_node_key": "MarkdownSplitter"
+    },
+    {
+      "id": "",
+      "name": "",
+      "sourceWorkflowNodeId": "Jih7Gv",
+      "targetWorkflowNodeId": "Ju7Igu",
+      "source_node_key": "MarkdownSplitter",
+      "target_node_key": "RedisIndexer"
+    }
+  ],
+  "branches": []
+}
