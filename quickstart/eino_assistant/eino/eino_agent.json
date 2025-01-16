@@ -11,7 +11,7 @@
   "gen_local_state": {
     "output_type": {}
   },
-  "id": "tNrQRc",
+  "id": "4Eyjho",
   "component": "Graph",
   "nodes": [
     {
@@ -1443,7 +1443,7 @@
         }
       },
       "node_option": {
-        "output_key": "RedisRetrieverOutput"
+        "output_key": "documents"
       }
     },
     {
