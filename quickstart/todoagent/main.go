@@ -18,36 +18,34 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"log"
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino-ext/components/tool/googlesearch"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func main() {
-	fmt.Println("Hello, World!")
+	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
+
 	ctx := context.Background()
 
 	updateTool, err := utils.InferTool("update_todo", "Update a todo item, eg: content,deadline...", UpdateTodoFunc)
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("InferTool failed, err=%v", err)
+		return
 	}
 
 	// 创建 Google Search 工具
-	searchTool, err := googlesearch.NewGoogleSearchTool(ctx, &googlesearch.Config{
-		APIKey:         os.Getenv("GOOGLE_API_KEY"),          // Google API Key
-		SearchEngineID: os.Getenv("GOOGLE_SEARCH_ENGINE_ID"), // 自定义搜索引擎 ID
-		Num:            5,                                    // 每次返回的结果数量
-		Lang:           "zh-CN",                              // 搜索结果的语言
-	})
+	searchTool, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("NewGoogleSearchTool failed, err=%v", err)
+		return
 	}
 
 	// 初始化 tools
@@ -61,12 +59,13 @@ func main() {
 	// 创建并配置 ChatModel
 	temp := float32(0.7)
 	chatModel, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
-		Model:       "gpt-4",
-		APIKey:      os.Getenv("OPENAI_API_KEY"),
+		Model:       "gpt-4o",
+		APIKey:      openAIAPIKey,
 		Temperature: &temp,
 	})
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("NewChatModel failed, err=%v", err)
+		return
 	}
 
 	// 获取工具信息, 用于绑定到 ChatModel
@@ -74,7 +73,8 @@ func main() {
 	for _, tool := range todoTools {
 		info, err := tool.Info(ctx)
 		if err != nil {
-			log.Fatal(err)
+			logs.Infof("get ToolInfo failed, err=%v", err)
+			return
 		}
 		toolInfos = append(toolInfos, info)
 	}
@@ -82,7 +82,8 @@ func main() {
 	// 将 tools 绑定到 ChatModel
 	err = chatModel.BindTools(toolInfos)
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("BindTools failed, err=%v", err)
+		return
 	}
 
 	// 创建 tools 节点
@@ -90,11 +91,12 @@ func main() {
 		Tools: todoTools,
 	})
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("NewToolNode failed, err=%v", err)
+		return
 	}
 
 	// 构建完整的处理链
-	chain := compose.NewChain[*schema.Message, []*schema.Message]()
+	chain := compose.NewChain[[]*schema.Message, []*schema.Message]()
 	chain.
 		AppendChatModel(chatModel, compose.WithNodeName("chat_model")).
 		AppendToolsNode(todoToolsNode, compose.WithNodeName("tools"))
@@ -102,20 +104,26 @@ func main() {
 	// 编译并运行 chain
 	agent, err := chain.Compile(ctx)
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("chain.Compile failed, err=%v", err)
+		return
 	}
 
 	// 运行示例
-	resp, err := agent.Invoke(ctx, &schema.Message{
-		Content: "帮我创建一个明天下午3点截止的待办事项：准备Eino项目演示文稿",
+	resp, err := agent.Invoke(ctx, []*schema.Message{
+		{
+			Role:    schema.User,
+			Content: "添加一个学习 Eino 的 TODO，同时搜索一下 cloudwego/eino 的仓库地址",
+		},
 	})
 	if err != nil {
-		log.Fatal(err)
+		logs.Errorf("agent.Invoke failed, err=%v", err)
+		return
 	}
 
 	// 输出结果
-	for _, msg := range resp {
-		fmt.Println(msg.Content)
+	for idx, msg := range resp {
+		logs.Infof("\n")
+		logs.Infof("message %d: %s: %s", idx, msg.Role, msg.Content)
 	}
 }
 
@@ -145,6 +153,7 @@ func getAddTodoTool() tool.InvokableTool {
 	return utils.NewTool(info, AddTodoFunc)
 }
 
+// ListTodoTool
 // 获取列出 todo 工具
 // 自行实现 InvokableTool 接口
 type ListTodoTool struct{}
@@ -182,19 +191,19 @@ type TodoAddParams struct {
 }
 
 func (lt *ListTodoTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
-	log.Printf("invoke tool list_todo: %s", argumentsInJSON)
+	logs.Infof("invoke tool list_todo: %s", argumentsInJSON)
 	// 具体的调用逻辑
 	return `{"todos": [{"id": "1", "content": "在2024年12月10日之前完成Eino项目演示文稿的准备工作", "started_at": 1717401600, "deadline": 1717488000, "done": false}]}`, nil
 }
 
 func AddTodoFunc(ctx context.Context, params *TodoAddParams) (string, error) {
-	log.Printf("invoke tool add_todo: %+v", params)
+	logs.Infof("invoke tool add_todo: %+v", params)
 	// 具体的调用逻辑
-	return `{"msg": "success"}`, nil
+	return `{"msg": "add todo success"}`, nil
 }
 
 func UpdateTodoFunc(ctx context.Context, params *TodoUpdateParams) (string, error) {
-	log.Printf("invoke tool update_todo: %+v", params)
+	logs.Infof("invoke tool update_todo: %+v", params)
 	// 具体的调用逻辑
-	return `{"msg": "success"}`, nil
+	return `{"msg": "update todo success"}`, nil
 }
