@@ -44,5 +44,5 @@ func NewRedisVectorStore(ctx context.Context, config *RedisVectorStoreConfig) (i
 		}
 	}
 
-	return redis.NewRedisVectorStore(ctx, &config.RedisVectorStoreConfig)
+	return redis.NewRedisIndexer(ctx, &config.RedisVectorStoreConfig)
 }

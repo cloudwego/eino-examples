@@ -3,12 +3,14 @@ module github.com/cloudwego/eino-examples
 go 1.22
 
 require (
-	github.com/cloudwego/eino v0.3.5
+	github.com/cloudwego/eino v0.3.6
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250115025927-7f73d3f2f438
 	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250114083745-f699cc985d88
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250114083745-f699cc985d88
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250110070408-97a8606cb791
+	github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250116052958-38946d1c9e51
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250110070408-97a8606cb791
+	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250116052958-38946d1c9e51
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250110070408-97a8606cb791
 	github.com/cloudwego/eino-ext/devops v0.0.0-20250114083745-f699cc985d88
 	github.com/cloudwego/hertz v0.9.5

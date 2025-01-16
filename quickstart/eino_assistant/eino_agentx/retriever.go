@@ -64,5 +64,5 @@ func NewEinoRetriever(ctx context.Context, config *EinoRetrieverConfig) (rt retr
 		}
 	}
 
-	return redis.NewRedisVectorStore(ctx, &config.RedisVectorStoreConfig)
+	return redis.NewRedisRetriever(ctx, &config.RedisVectorStoreConfig)
 }

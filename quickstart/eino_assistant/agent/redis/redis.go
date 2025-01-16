@@ -25,6 +25,8 @@ import (
 	"strconv"
 	"strings"
 
+	ri "github.com/cloudwego/eino-ext/components/indexer/redis"
+	rr "github.com/cloudwego/eino-ext/components/retriever/redis"
 	"github.com/cloudwego/eino/components/embedding"
 	"github.com/cloudwego/eino/components/indexer"
 	"github.com/cloudwego/eino/components/retriever"
@@ -41,6 +43,91 @@ const (
 	vectorField           = "content_vector"
 	topK                  = 3
 )
+
+func NewRedisIndexer(ctx context.Context, config *RedisVectorStoreConfig) (i indexer.Indexer, err error) {
+	if config == nil {
+		config, err = defaultRedisVectorStoreConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr: config.RedisAddr,
+	})
+
+	return ri.NewIndexer(ctx, &ri.IndexerConfig{
+		Client:    client,
+		KeyPrefix: config.RedisKeyPrefix,
+		DocumentToHashes: func(ctx context.Context, doc *schema.Document) (*ri.Hashes, error) {
+			key := doc.ID
+			if doc.ID == "" {
+				key = uuid.New().String()
+			}
+
+			metadataBytes, err := json.Marshal(doc.MetaData)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal metadata: %w", err)
+			}
+
+			return &ri.Hashes{
+				Key: key,
+				Field2Value: map[string]ri.FieldValue{
+					contentField:  {Value: doc.Content, EmbedKey: vectorField},
+					metadataField: {Value: metadataBytes},
+				},
+			}, nil
+		},
+		BatchSize: 10,
+		Embedding: config.Embedding,
+	})
+}
+
+func NewRedisRetriever(ctx context.Context, config *RedisVectorStoreConfig) (r retriever.Retriever, err error) {
+	if config == nil {
+		config, err = defaultRedisVectorStoreConfig(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	client := redis.NewClient(&redis.Options{
+		Addr:          config.RedisAddr,
+		Protocol:      2,
+		UnstableResp3: true,
+	})
+
+	return rr.NewRetriever(ctx, &rr.RetrieverConfig{
+		Client:            client,
+		Index:             fmt.Sprintf("%s:%s", config.RedisKeyPrefix, indexNamePrefix),
+		VectorField:       vectorField,
+		DistanceThreshold: nil,
+		Dialect:           2,
+		ReturnFields: []string{
+			contentField,
+			vectorField,
+		},
+		DocumentConverter: func(ctx context.Context, doc redis.Document) (*schema.Document, error) {
+			resp := &schema.Document{
+				ID:       doc.ID,
+				Content:  "",
+				MetaData: map[string]any{},
+			}
+			for field, val := range doc.Fields {
+				if field == contentField {
+					resp.Content = val
+				} else if field == vectorField {
+					resp.WithDenseVector(rr.Bytes2Vector([]byte(val)))
+				} else {
+					resp.MetaData[field] = val
+				}
+			}
+			return resp, nil
+		},
+		TopK:      5,
+		Embedding: config.Embedding,
+	})
+}
 
 type RedisVectorStoreConfig struct {
 	RedisAddr      string             `json:"redis_addr"`
