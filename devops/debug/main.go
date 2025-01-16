@@ -32,7 +32,7 @@ import (
 func main() {
 	ctx := context.Background()
 
-	// init eino devops server
+	// Init eino devops server
 	err := devops.Init(ctx)
 	if err != nil {
 		logs.Errorf("[eino dev] init failed, err=%v", err)
@@ -44,11 +44,11 @@ func main() {
 	graph2.RegisterSimpleGraph(ctx)
 	graph2.RegisterSimpleStateGraph(ctx)
 
-	// This part has nothing to do with eino devops debugging, just wanting the demo service exits only when the user actively closes the process.
+	// Blocking process exits
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	<-sigs
 
-	// exit
+	// Exit
 	logs.Infof("[eino dev] shutting down\n")
 }
