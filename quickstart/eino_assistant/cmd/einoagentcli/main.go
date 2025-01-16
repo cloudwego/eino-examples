@@ -150,8 +150,8 @@ func Init() error {
 
 func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
 
-	runner, err := eino_agent.BuildEinoAgent(ctx, &eino_agent.BuildConfig{
-		EinoAgent: &eino_agent.EinoAgentBuildConfig{},
+	runner, err := einoagent.BuildEinoAgent(ctx, &einoagent.BuildConfig{
+		EinoAgent: &einoagent.EinoAgentBuildConfig{},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
@@ -159,7 +159,7 @@ func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[
 
 	conversation := memory.GetConversation(id, true)
 
-	userMessage := &eino_agent.UserMessage{
+	userMessage := &einoagent.UserMessage{
 		ID:      id,
 		Query:   msg,
 		History: conversation.GetMessages(),

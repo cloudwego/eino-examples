@@ -69,8 +69,8 @@ func indexMarkdownFiles(ctx context.Context, dir string) error {
 	redisCli := redis.NewClient(&redis.Options{
 		Addr: "127.0.0.1:6379",
 	})
-	runner, err := knowledge_indexing.BuildKnowledgeIndexing(ctx, &knowledge_indexing.BuildConfig{
-		KnowledgeIndexing: &knowledge_indexing.KnowledgeIndexingBuildConfig{
+	runner, err := knowledgeindexing.BuildKnowledgeIndexing(ctx, &knowledgeindexing.BuildConfig{
+		KnowledgeIndexing: &knowledgeindexing.KnowledgeIndexingBuildConfig{
 			RedisIndexerKeyOfIndexer: &indexRedis.IndexerConfig{
 				Client:    redisCli,
 				KeyPrefix: "eino:doc:",

@@ -1,4 +1,4 @@
-package knowledge_indexing
+package knowledgeindexing
 
 import (
 	"context"

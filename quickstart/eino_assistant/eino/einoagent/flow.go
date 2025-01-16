@@ -1,9 +1,8 @@
-package eino_agent
+package einoagent
 
 import (
 	"context"
 
-	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/react"
 )
@@ -21,47 +20,13 @@ func defaultReactAgentConfig(ctx context.Context) (*react.AgentConfig, error) {
 		return nil, err
 	}
 	config.Model = chatModelIns11
-	toolCfg21, err := defaultDuckDuckGoToolConfig(ctx)
+
+	tools, err := GetTools(ctx)
 	if err != nil {
 		return nil, err
 	}
-	toolIns21, err := NewDuckDuckGoTool(ctx, toolCfg21)
-	if err != nil {
-		return nil, err
-	}
-	toolCfg22, err := defaultTaskToolConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	toolIns22, err := NewTaskTool(ctx, toolCfg22)
-	if err != nil {
-		return nil, err
-	}
-	toolCfg23, err := defaultEinoToolConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	toolIns23, err := NewEinoTool(ctx, toolCfg23)
-	if err != nil {
-		return nil, err
-	}
-	toolCfg24, err := defaultOpenURIToolConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	toolIns24, err := NewOpenURITool(ctx, toolCfg24)
-	if err != nil {
-		return nil, err
-	}
-	toolCfg25, err := defaultGitCloneToolConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	toolIns25, err := NewGitCloneTool(ctx, toolCfg25)
-	if err != nil {
-		return nil, err
-	}
-	config.ToolsConfig.Tools = []tool.BaseTool{toolIns21, toolIns22, toolIns23, toolIns24, toolIns25}
+
+	config.ToolsConfig.Tools = tools
 	return config, nil
 }
 

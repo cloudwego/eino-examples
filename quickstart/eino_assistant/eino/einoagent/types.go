@@ -1,4 +1,4 @@
-package eino_agent
+package einoagent
 
 import "github.com/cloudwego/eino/schema"
 

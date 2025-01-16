@@ -31,7 +31,7 @@ package agent
 // 	"github.com/cloudwego/eino/schema"
 
 // 	"github.com/cloudwego/eino-examples/agent/mem"
-// 	eino_agent "github.com/cloudwego/eino-examples/eino_agentx"
+// 	einoagent "github.com/cloudwego/eino-examples/einoagentx"
 // )
 
 // var memory = mem.GetDefaultMemory()
@@ -81,8 +81,8 @@ package agent
 
 // func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
 
-// 	runner, err := eino_agent.BuildAgentGraph(ctx, eino_agent.BuildConfig{
-// 		AgentGraph: &eino_agent.AgentGraphBuildConfig{},
+// 	runner, err := einoagent.BuildAgentGraph(ctx, einoagent.BuildConfig{
+// 		AgentGraph: &einoagent.AgentGraphBuildConfig{},
 // 	})
 // 	if err != nil {
 // 		return nil, fmt.Errorf("failed to build agent graph: %w", err)
@@ -90,7 +90,7 @@ package agent
 
 // 	conversation := memory.GetConversation(id, true)
 
-// 	userMessage := &eino_agent.UserMessage{
+// 	userMessage := &einoagent.UserMessage{
 // 		ID:      id,
 // 		Query:   msg,
 // 		History: conversation.GetMessages(),
