@@ -41,7 +41,7 @@ import (
 )
 
 func init() {
-	if os.Getenv("EINO_DEBUG") == "true" {
+	if os.Getenv("EINO_DEBUG") != "false" {
 		err := devops.Init(context.Background())
 		if err != nil {
 			log.Printf("[eino dev] init failed, err=%v", err)
