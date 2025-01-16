@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/indexer/redis"
@@ -11,16 +12,16 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 	redisCli "github.com/redis/go-redis/v9"
+
+	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
 )
 
-var (
-	RedisPrefix = "eino:doc:"
-	IndexName   = "vector_index"
-
-	ContentField  = "content"
-	MetadataField = "metadata"
-	VectorField   = "content_vector"
-)
+func init() {
+	err := redispkg.Init()
+	if err != nil {
+		log.Fatalf("failed to init redis index: %v", err)
+	}
+}
 
 func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error) {
 	redisAddr := os.Getenv("REDIS_ADDR")
@@ -31,7 +32,7 @@ func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error
 
 	config := &redis.IndexerConfig{
 		Client:    redisClient,
-		KeyPrefix: RedisPrefix,
+		KeyPrefix: redispkg.RedisPrefix,
 		BatchSize: 5,
 		DocumentToHashes: func(ctx context.Context, doc *schema.Document) (*redis.Hashes, error) {
 			if doc.ID == "" {
@@ -47,8 +48,8 @@ func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error
 			return &redis.Hashes{
 				Key: key,
 				Field2Value: map[string]redis.FieldValue{
-					ContentField:  {Value: doc.Content, EmbedKey: VectorField},
-					MetadataField: {Value: metadataBytes},
+					redispkg.ContentField:  {Value: doc.Content, EmbedKey: redispkg.VectorField},
+					redispkg.MetadataField: {Value: metadataBytes},
 				},
 			}, nil
 		},

@@ -28,8 +28,6 @@ import (
 	"code.byted.org/flow/eino/components/embedding"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/knowledgeindexing"
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
-	"github.com/cloudwego/eino-ext/components/embedding/ark"
-	indexRedis "github.com/cloudwego/eino-ext/components/indexer/redis"
 	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/redis/go-redis/v9"
@@ -56,26 +54,8 @@ func main() {
 }
 
 func indexMarkdownFiles(ctx context.Context, dir string) error {
-	// 初始化 embedding, 使用 ark 的 embedding 服务
-	// 请查看 README.md 获取相关信息
-	embedding, err := ark.NewEmbedder(ctx, &ark.EmbeddingConfig{
-		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
-		APIKey: os.Getenv("ARK_API_KEY"),
-	})
-	if err != nil {
-		return fmt.Errorf("new embedder failed: %w", err)
-	}
-
-	redisCli := redis.NewClient(&redis.Options{
-		Addr: "127.0.0.1:6379",
-	})
 	runner, err := knowledgeindexing.BuildKnowledgeIndexing(ctx, &knowledgeindexing.BuildConfig{
 		KnowledgeIndexing: &knowledgeindexing.KnowledgeIndexingBuildConfig{
-			RedisIndexerKeyOfIndexer: &indexRedis.IndexerConfig{
-				Client:    redisCli,
-				KeyPrefix: "eino:doc:",
-				Embedding: embedding,
-			},
 			MarkdownSplitterKeyOfDocumentTransformer: &markdown.HeaderConfig{
 				Headers: map[string]string{
 					"#": "title",

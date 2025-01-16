@@ -2,7 +2,7 @@ module github.com/cloudwego/eino-examples
 
 go 1.22.0
 
-toolchain go1.22.1
+toolchain go1.22.10
 
 require (
 	github.com/cloudwego/eino v0.3.7

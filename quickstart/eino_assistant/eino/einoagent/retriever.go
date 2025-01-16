@@ -9,15 +9,8 @@ import (
 	"github.com/cloudwego/eino/components/retriever"
 	"github.com/cloudwego/eino/schema"
 	redisCli "github.com/redis/go-redis/v9"
-)
 
-var (
-	RedisPrefix = "eino:doc:"
-	IndexName   = "vector_index"
-
-	ContentField  = "content"
-	MetadataField = "metadata"
-	VectorField   = "content_vector"
+	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
 )
 
 func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, error) {
@@ -29,9 +22,9 @@ func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, e
 
 	config := &redis.RetrieverConfig{
 		Client:       redisClient,
-		Index:        fmt.Sprintf("%s:%s", RedisPrefix, IndexName),
+		Index:        fmt.Sprintf("%s%s", redispkg.RedisPrefix, redispkg.IndexName),
 		Dialect:      2,
-		ReturnFields: []string{ContentField, MetadataField},
+		ReturnFields: []string{redispkg.ContentField, redispkg.MetadataField},
 		TopK:         4,
 		DocumentConverter: func(ctx context.Context, doc redisCli.Document) (*schema.Document, error) {
 			resp := &schema.Document{
@@ -40,11 +33,14 @@ func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, e
 				MetaData: map[string]any{},
 			}
 			for field, val := range doc.Fields {
-				if field == ContentField {
+				if field == redispkg.ContentField {
 					resp.Content = val
-				} else if field == MetadataField {
+				} else if field == redispkg.MetadataField {
 					resp.MetaData[field] = val
 				}
+			}
+			if doc.Score != nil && *doc.Score > 0 {
+				resp.WithScore(*doc.Score)
 			}
 
 			return resp, nil
