@@ -25,7 +25,8 @@ var (
 func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error) {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisClient := redisCli.NewClient(&redisCli.Options{
-		Addr: redisAddr,
+		Addr:     redisAddr,
+		Protocol: 2,
 	})
 
 	config := &redis.IndexerConfig{
@@ -33,10 +34,10 @@ func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error
 		KeyPrefix: RedisPrefix,
 		BatchSize: 5,
 		DocumentToHashes: func(ctx context.Context, doc *schema.Document) (*redis.Hashes, error) {
-			key := doc.ID
 			if doc.ID == "" {
-				key = uuid.New().String()
+				doc.ID = uuid.New().String()
 			}
+			key := doc.ID
 
 			metadataBytes, err := json.Marshal(doc.MetaData)
 			if err != nil {

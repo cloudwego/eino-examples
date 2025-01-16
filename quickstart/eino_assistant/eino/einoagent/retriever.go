@@ -23,7 +23,8 @@ var (
 func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, error) {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisClient := redisCli.NewClient(&redisCli.Options{
-		Addr: redisAddr,
+		Addr:     redisAddr,
+		Protocol: 2,
 	})
 
 	config := &redis.RetrieverConfig{

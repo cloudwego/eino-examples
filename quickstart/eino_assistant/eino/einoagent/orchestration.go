@@ -43,7 +43,7 @@ func BuildEinoAgent(ctx context.Context, config *BuildConfig) (r compose.Runnabl
 	if err != nil {
 		return nil, err
 	}
-	_ = g.AddRetrieverNode(RedisRetriever, redisRetrieverKeyOfRetriever, compose.WithOutputKey("RedisRetrieverOutput"))
+	_ = g.AddRetrieverNode(RedisRetriever, redisRetrieverKeyOfRetriever, compose.WithOutputKey("documents"))
 	_ = g.AddLambdaNode(InputToHistory, compose.InvokableLambdaWithOption(NewInputToHistory))
 	_ = g.AddEdge(compose.START, InputToQuery)
 	_ = g.AddEdge(compose.START, InputToHistory)

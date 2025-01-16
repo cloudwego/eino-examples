@@ -2,6 +2,7 @@ package einoagent
 
 import (
 	"context"
+	"os"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/components/model"
@@ -9,8 +10,9 @@ import (
 
 func defaultArkChatModelConfig(ctx context.Context) (*ark.ChatModelConfig, error) {
 	config := &ark.ChatModelConfig{
-		Stop:      []string{},
-		LogitBias: map[string]int{}}
+		Model:  os.Getenv("ARK_CHAT_MODEL"),
+		APIKey: os.Getenv("ARK_API_KEY"),
+	}
 	return config, nil
 }
 

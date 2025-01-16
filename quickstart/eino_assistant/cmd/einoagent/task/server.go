@@ -19,7 +19,6 @@ package task
 import (
 	"context"
 	"embed"
-	"fmt"
 	"mime"
 	"path/filepath"
 
@@ -53,8 +52,6 @@ func BindRoutes(r *route.RouterGroup) error {
 			})
 			return
 		}
-
-		fmt.Printf("req: %+v\n", req)
 
 		resp, err := taskTool.Invoke(ctx, &req)
 		if err != nil {

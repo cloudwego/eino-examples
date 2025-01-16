@@ -11,7 +11,7 @@ import (
 func defaultArkEmbeddingConfig(ctx context.Context) (*ark.EmbeddingConfig, error) {
 	config := &ark.EmbeddingConfig{
 		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
-		APIKey: os.Getenv("ARK_EMBEDDING_API_KEY"),
+		APIKey: os.Getenv("ARK_API_KEY"),
 	}
 	return config, nil
 }
