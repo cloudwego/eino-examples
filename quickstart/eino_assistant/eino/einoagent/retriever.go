@@ -26,7 +26,7 @@ func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, e
 		Index:        fmt.Sprintf("%s%s", redispkg.RedisPrefix, redispkg.IndexName),
 		Dialect:      2,
 		ReturnFields: []string{redispkg.ContentField, redispkg.MetadataField, redispkg.DistanceField},
-		TopK:         4,
+		TopK:         8,
 		VectorField:  redispkg.VectorField,
 		DocumentConverter: func(ctx context.Context, doc redisCli.Document) (*schema.Document, error) {
 			resp := &schema.Document{
