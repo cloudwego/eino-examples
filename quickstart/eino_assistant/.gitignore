@@ -158,6 +158,7 @@ fabric.properties
 
 .vscode/
 log/
+cmd/einoagent/data/
 __debug_bin*
 /einoagent
 .DS_Store
