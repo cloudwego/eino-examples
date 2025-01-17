@@ -1069,7 +1069,7 @@
               "isPtr": false
             }
           },
-          "config_input": "{\"ToolReturnDirectly\":{\"einoAdditionalPropertyInput\":[]},\"MaxStep\":5}"
+          "config_input": "{\"ToolReturnDirectly\":{\"einoAdditionalPropertyInput\":[]},\"MaxStep\":25}"
         },
         "is_io_type_mutable": false,
         "version": "1.0.0",

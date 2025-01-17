@@ -33,7 +33,7 @@ func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error
 	config := &redis.IndexerConfig{
 		Client:    redisClient,
 		KeyPrefix: redispkg.RedisPrefix,
-		BatchSize: 5,
+		BatchSize: 1,
 		DocumentToHashes: func(ctx context.Context, doc *schema.Document) (*redis.Hashes, error) {
 			if doc.ID == "" {
 				doc.ID = uuid.New().String()

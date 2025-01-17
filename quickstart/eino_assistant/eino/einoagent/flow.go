@@ -9,7 +9,7 @@ import (
 
 func defaultReactAgentConfig(ctx context.Context) (*react.AgentConfig, error) {
 	config := &react.AgentConfig{
-		MaxStep:            5,
+		MaxStep:            25,
 		ToolReturnDirectly: map[string]struct{}{}}
 	chatModelCfg11, err := defaultArkChatModelConfig(ctx)
 	if err != nil {

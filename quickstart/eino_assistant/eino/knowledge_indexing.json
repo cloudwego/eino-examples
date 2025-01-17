@@ -492,7 +492,7 @@
               "isPtr": false
             }
           },
-          "config_input": "{\"BatchSize\":5,\"KeyPrefix\":\"eino_assistant\"}"
+          "config_input": "{\"BatchSize\":1,\"KeyPrefix\":\"eino_assistant\"}"
         },
         "is_io_type_mutable": false,
         "version": "1.0.0",
