@@ -161,3 +161,4 @@ log/
 __debug_bin*
 /einoagent
 .DS_Store
+/data
