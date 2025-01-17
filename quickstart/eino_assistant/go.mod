@@ -3,20 +3,17 @@ module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 go 1.21
 
 require (
-	code.byted.org/flow/eino v0.3.1
-	github.com/cloudwego/eino v0.3.6
-	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250115025927-7f73d3f2f438
-	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250114083745-f699cc985d88
+	github.com/cloudwego/eino v0.3.7
+	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
+	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250117061805-cd80d1780d76
+	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250117061805-cd80d1780d76
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250117061805-cd80d1780d76
+	github.com/cloudwego/eino-ext/devops v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/sse v0.0.6-0.20240617114443-10a844794bf3
 	github.com/redis/go-redis/v9 v9.7.0
 )
-
-require github.com/stretchr/objx v0.5.2 // indirect
 
 require (
 	github.com/bytedance/gopkg v0.1.0 // indirect
@@ -56,6 +53,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.0 // indirect
@@ -66,7 +64,7 @@ require (
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/sys v0.28.0 // indirect
-	google.golang.org/protobuf v1.28.1 // indirect
+	google.golang.org/protobuf v1.36.3 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
