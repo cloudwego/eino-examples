@@ -30,7 +30,6 @@ import (
 
 func main() {
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
-	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
 
 	ctx := context.Background()
 
@@ -71,9 +70,8 @@ func main() {
 
 	// 创建 OpenAI ChatModel, 假设使用 openai 官方服务。
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		Model:  openAIModelName, // 使用的模型版本
-		APIKey: openAIAPIKey,    // OpenAI API 密钥
-
+		Model:  "gpt-4o",     // 使用的模型版本
+		APIKey: openAIAPIKey, // OpenAI API 密钥
 	})
 	if err != nil {
 		logs.Errorf("NewChatModel failed, err=%v", err)

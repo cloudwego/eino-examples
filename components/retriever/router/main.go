@@ -23,7 +23,6 @@ import (
 
 	"github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb"
 	"github.com/cloudwego/eino/components/retriever"
-	"github.com/cloudwego/eino/flow/retriever/multiquery"
 	"github.com/cloudwego/eino/flow/retriever/router"
 
 	"github.com/cloudwego/eino-examples/internal/logs"
@@ -43,7 +42,7 @@ func main() {
 		return
 	}
 
-	// rewrite query by llm
+	// route retriever by custom router
 	mqr, err := router.NewRetriever(ctx, &router.Config{
 		Retrievers: map[string]retriever.Retriever{
 			"1": vk,
@@ -76,29 +75,7 @@ func main() {
 		return
 	}
 
-	logs.Errorf("Multi-Query Retrieve success, docs=%v", resp)
-
-	// rewrite query by custom method
-	mqr, err = multiquery.NewRetriever(ctx, &multiquery.Config{
-		RewriteHandler: func(ctx context.Context, query string) ([]string, error) {
-			return strings.Split(query, "\n"), nil
-		},
-		MaxQueriesNum: 3,
-		OrigRetriever: vk,
-		FusionFunc:    nil, // use default fusion, just deduplicate by doc id
-	})
-	if err != nil {
-		logs.Errorf("NewMultiQueryRetriever failed, err=%v", err)
-		return
-	}
-
-	resp, err = mqr.Retrieve(ctx, "tourist attraction")
-	if err != nil {
-		logs.Errorf("Multi-Query Retrieve failed, err=%v", err)
-		return
-	}
-
-	logs.Infof("Multi-Query Retrieve success, docs=%v", resp)
+	logs.Infof("Router Retrieve success, docs=%v", resp)
 }
 
 func newVikingDBRetriever(ctx context.Context, host, region, ak, sk string) (retriever.Retriever, error) {

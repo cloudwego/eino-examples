@@ -27,6 +27,7 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 
+	"github.com/cloudwego/eino-examples/internal/gptr"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
@@ -57,11 +58,10 @@ func main() {
 	}
 
 	// 创建并配置 ChatModel
-	temp := float32(0.7)
 	chatModel, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
 		Model:       "gpt-4o",
 		APIKey:      openAIAPIKey,
-		Temperature: &temp,
+		Temperature: gptr.Of(float32(0.7)),
 	})
 	if err != nil {
 		logs.Errorf("NewChatModel failed, err=%v", err)
@@ -70,8 +70,9 @@ func main() {
 
 	// 获取工具信息, 用于绑定到 ChatModel
 	toolInfos := make([]*schema.ToolInfo, 0, len(todoTools))
-	for _, tool := range todoTools {
-		info, err := tool.Info(ctx)
+	var info *schema.ToolInfo
+	for _, todoTool := range todoTools {
+		info, err = todoTool.Info(ctx)
 		if err != nil {
 			logs.Infof("get ToolInfo failed, err=%v", err)
 			return
@@ -158,7 +159,7 @@ func getAddTodoTool() tool.InvokableTool {
 // 自行实现 InvokableTool 接口
 type ListTodoTool struct{}
 
-func (lt *ListTodoTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
+func (lt *ListTodoTool) Info(_ context.Context) (*schema.ToolInfo, error) {
 	return &schema.ToolInfo{
 		Name: "list_todo",
 		Desc: "List all todo items",
@@ -172,10 +173,6 @@ func (lt *ListTodoTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
 	}, nil
 }
 
-type TodoListParams struct {
-	Finished *bool `json:"finished"`
-}
-
 type TodoUpdateParams struct {
 	ID        string  `json:"id" jsonschema:"description=id of the todo"`
 	Content   *string `json:"content,omitempty" jsonschema:"description=content of the todo"`
@@ -185,25 +182,34 @@ type TodoUpdateParams struct {
 }
 
 type TodoAddParams struct {
-	Content   string `json:"content"`
-	StartedAt *int64 `json:"started_at,omitempty"` // 开始时间
-	Deadline  *int64 `json:"deadline,omitempty"`
+	Content  string `json:"content"`
+	StartAt  *int64 `json:"started_at,omitempty"` // 开始时间
+	Deadline *int64 `json:"deadline,omitempty"`
 }
 
-func (lt *ListTodoTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+func (lt *ListTodoTool) InvokableRun(_ context.Context, argumentsInJSON string, _ ...tool.Option) (string, error) {
 	logs.Infof("invoke tool list_todo: %s", argumentsInJSON)
-	// 具体的调用逻辑
+
+	// Tool处理代码
+	// ...
+
 	return `{"todos": [{"id": "1", "content": "在2024年12月10日之前完成Eino项目演示文稿的准备工作", "started_at": 1717401600, "deadline": 1717488000, "done": false}]}`, nil
 }
 
-func AddTodoFunc(ctx context.Context, params *TodoAddParams) (string, error) {
+func AddTodoFunc(_ context.Context, params *TodoAddParams) (string, error) {
 	logs.Infof("invoke tool add_todo: %+v", params)
-	// 具体的调用逻辑
+
+	// Tool处理代码
+	// ...
+
 	return `{"msg": "add todo success"}`, nil
 }
 
-func UpdateTodoFunc(ctx context.Context, params *TodoUpdateParams) (string, error) {
+func UpdateTodoFunc(_ context.Context, params *TodoUpdateParams) (string, error) {
 	logs.Infof("invoke tool update_todo: %+v", params)
-	// 具体的调用逻辑
+
+	// Tool处理代码
+	// ...
+
 	return `{"msg": "update todo success"}`, nil
 }
