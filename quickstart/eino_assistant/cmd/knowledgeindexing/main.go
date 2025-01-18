@@ -20,28 +20,16 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
-	"log"
-	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
-	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/components/embedding"
 	"github.com/redis/go-redis/v9"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/knowledgeindexing"
 )
-
-func init() {
-	if os.Getenv("EINO_DEBUG") != "false" {
-		err := devops.Init(context.Background())
-		if err != nil {
-			log.Printf("[eino dev] init failed, err=%v", err)
-		}
-	}
-}
 
 func main() {
 	ctx := context.Background()

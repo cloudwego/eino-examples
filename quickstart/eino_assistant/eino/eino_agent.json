@@ -11,7 +11,7 @@
   "gen_local_state": {
     "output_type": {}
   },
-  "id": "4Eyjho",
+  "id": "f_oI8e",
   "component": "Graph",
   "nodes": [
     {
@@ -41,7 +41,7 @@
     {
       "id": "8AgKo6",
       "key": "InputToQuery",
-      "name": "",
+      "name": "UserMessageToQuery",
       "type": "Lambda",
       "component_schema": {
         "name": "Lambda",
@@ -177,7 +177,7 @@
     {
       "id": "CDNTqO",
       "key": "ReactAgent",
-      "name": "",
+      "name": "ReAct Agent",
       "type": "Lambda",
       "component_schema": {
         "name": "react",
@@ -1449,7 +1449,7 @@
     {
       "id": "lJ0-pN",
       "key": "InputToHistory",
-      "name": "",
+      "name": "UserMessageToVariables",
       "type": "Lambda",
       "component_schema": {
         "name": "Lambda",

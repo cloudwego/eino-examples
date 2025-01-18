@@ -162,4 +162,5 @@ cmd/einoagent/data/
 __debug_bin*
 /einoagent
 .DS_Store
-/data
+/data/
+/einoagent

@@ -18,6 +18,7 @@ package knowledgeindexing
 
 import (
 	"context"
+	"log"
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/embedding/ark"
@@ -30,6 +31,8 @@ func defaultArkEmbeddingConfig(ctx context.Context) (*ark.EmbeddingConfig, error
 		APIKey:  os.Getenv("ARK_API_KEY"),
 		Model:   os.Getenv("ARK_EMBEDDING_MODEL"),
 	}
+
+	log.Printf("apiKey: %v, model: %v", config.APIKey, config.Model)
 	return config, nil
 }
 

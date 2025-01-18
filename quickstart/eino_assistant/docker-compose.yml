@@ -1,5 +1,3 @@
-version: '3.3'
-
 services:
   redis-stack:
     image: redis/redis-stack:latest
@@ -13,7 +11,7 @@ services:
       - REDIS_ARGS=--dir /data --appendonly no --save 1800 1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3

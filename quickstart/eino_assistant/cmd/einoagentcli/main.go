@@ -30,9 +30,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cloudwego/eino-ext/devops"
-
 	"github.com/cloudwego/eino-ext/callbacks/langfuse"
+	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
@@ -40,15 +39,6 @@ import (
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/einoagent"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/mem"
 )
-
-func init() {
-	if os.Getenv("EINO_DEBUG") != "false" {
-		err := devops.Init(context.Background())
-		if err != nil {
-			log.Printf("[eino dev] init failed, err=%v", err)
-		}
-	}
-}
 
 var id = flag.String("id", "", "conversation id")
 
@@ -59,13 +49,20 @@ var cbHandler callbacks.Handler
 func main() {
 	flag.Parse()
 
+	// 开启 Eino 的可视化调试能力
+	err := devops.Init(context.Background())
+	if err != nil {
+		log.Printf("[eino dev] init failed, err=%v", err)
+		return
+	}
+
 	if *id == "" {
 		*id = strconv.Itoa(rand.Intn(1000000))
 	}
 
 	ctx := context.Background()
 
-	err := Init()
+	err = Init()
 	if err != nil {
 		log.Printf("[eino agent] init failed, err=%v", err)
 		return

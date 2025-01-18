@@ -44,7 +44,8 @@ func BuildEinoAgent(ctx context.Context, config *BuildConfig) (r compose.Runnabl
 		InputToHistory = "InputToHistory"
 	)
 	g := compose.NewGraph[*UserMessage, *schema.Message]()
-	_ = g.AddLambdaNode(InputToQuery, compose.InvokableLambdaWithOption(NewInputToQuery))
+	_ = g.AddLambdaNode(InputToQuery, compose.InvokableLambdaWithOption(NewInputToQuery),
+		compose.WithNodeName("UserMessageToQuery"))
 	chatTemplateKeyOfChatTemplate, err := NewChatTemplate(ctx, config.EinoAgent.ChatTemplateKeyOfChatTemplate)
 	if err != nil {
 		return nil, err
@@ -54,13 +55,14 @@ func BuildEinoAgent(ctx context.Context, config *BuildConfig) (r compose.Runnabl
 	if err != nil {
 		return nil, err
 	}
-	_ = g.AddLambdaNode(ReactAgent, reactAgentKeyOfLambda)
+	_ = g.AddLambdaNode(ReactAgent, reactAgentKeyOfLambda, compose.WithNodeName("ReAct Agent"))
 	redisRetrieverKeyOfRetriever, err := NewRedisRetriever(ctx, config.EinoAgent.RedisRetrieverKeyOfRetriever)
 	if err != nil {
 		return nil, err
 	}
 	_ = g.AddRetrieverNode(RedisRetriever, redisRetrieverKeyOfRetriever, compose.WithOutputKey("documents"))
-	_ = g.AddLambdaNode(InputToHistory, compose.InvokableLambdaWithOption(NewInputToHistory))
+	_ = g.AddLambdaNode(InputToHistory, compose.InvokableLambdaWithOption(NewInputToHistory),
+		compose.WithNodeName("UserMessageToVariables"))
 	_ = g.AddEdge(compose.START, InputToQuery)
 	_ = g.AddEdge(compose.START, InputToHistory)
 	_ = g.AddEdge(ReactAgent, compose.END)
