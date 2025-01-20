@@ -271,39 +271,6 @@
                           "isPtr": true
                         }
                       },
-                      "HTTPClient": {
-                        "type": "object",
-                        "description": "",
-                        "properties": {
-                          "Timeout": {
-                            "type": "number",
-                            "description": "",
-                            "goDefinition": {
-                              "libraryRef": {
-                                "version": "",
-                                "module": "time",
-                                "pkgPath": "time"
-                              },
-                              "typeName": "time.Duration",
-                              "kind": "int64",
-                              "isPtr": false
-                            }
-                          }
-                        },
-                        "propertyOrder": [
-                          "Timeout"
-                        ],
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "net/http",
-                            "pkgPath": "net/http"
-                          },
-                          "typeName": "http.Client",
-                          "kind": "struct",
-                          "isPtr": true
-                        }
-                      },
                       "Model": {
                         "type": "string",
                         "description": "",
@@ -392,7 +359,6 @@
                     "propertyOrder": [
                       "BaseURL",
                       "Region",
-                      "HTTPClient",
                       "Timeout",
                       "RetryTimes",
                       "APIKey",
@@ -413,7 +379,7 @@
                       "isPtr": false
                     }
                   },
-                  "config_input": "{\"HTTPClient\":{\"Timeout\":0},\"BaseURL\":\"https://ark.cn-beijing.volces.com/api/v3\"}"
+                  "config_input": "{\"BaseURL\":\"https://ark.cn-beijing.volces.com/api/v3\"}"
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
