@@ -30,8 +30,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cloudwego/eino-ext/callbacks/langfuse"
-	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
@@ -189,7 +187,7 @@ func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[
 			conversation.Append(fullMsg)
 		}()
 
-	outter:
+	outer:
 		for {
 			select {
 			case <-ctx.Done():
@@ -199,7 +197,7 @@ func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[
 				chunk, err := srs[1].Recv()
 				if err != nil {
 					if errors.Is(err, io.EOF) {
-						break outter
+						break outer
 					}
 				}
 

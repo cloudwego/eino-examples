@@ -116,7 +116,7 @@ func HandleChat(ctx context.Context, c *app.RequestContext) {
 		log.Printf("[Chat] Finished chat with ID: %s\n", id)
 	}()
 
-outter:
+outer:
 	for {
 		select {
 		case <-ctx.Done():
@@ -126,11 +126,11 @@ outter:
 			msg, err := sr.Recv()
 			if errors.Is(err, io.EOF) {
 				log.Printf("[Chat] EOF received for chat ID: %s\n", id)
-				break outter
+				break outer
 			}
 			if err != nil {
 				log.Printf("[Chat] Error receiving message: %v\n", err)
-				break outter
+				break outer
 			}
 
 			err = s.Publish(&sse.Event{
@@ -138,7 +138,7 @@ outter:
 			})
 			if err != nil {
 				log.Printf("[Chat] Error publishing message: %v\n", err)
-				break outter
+				break outer
 			}
 		}
 	}
