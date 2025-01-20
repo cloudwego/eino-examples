@@ -22,10 +22,11 @@ export ARK_CHAT_MODEL=xxx
 export ARK_EMBEDDING_MODEL=xxx
 ```
 
-### 启动 server
+### 启动 eino agent server
 
 ```bash
-go build -o einoagent cmd/server/main.go && ./einoagent
+# 为了使用 data 目录，需要在 eino_assistant 目录下执行指令
+go run cmd/einoagent/*.go
 ```
 
 ### 访问
@@ -35,11 +36,7 @@ go build -o einoagent cmd/server/main.go && ./einoagent
 ### 命令行运行 index (可选)
 
 ```bash
-go run cmd/index/main.go
-```
-
-### 命令行运行 agent (可选)
-
-```bash
-go run cmd/agent/main.go
+# 因示例的Markdown文件存放在 cmd/knowledgeindexing/eino-docs 目录，代码中指定了相对路径 ./eino-docs，所以需在 cmd/knowledgeindexing 运行指令
+cd cmd/knowledgeindexing
+go run main.go
 ```
