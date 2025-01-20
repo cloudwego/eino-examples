@@ -18,7 +18,6 @@ package graph
 
 import (
 	"context"
-
 	"github.com/cloudwego/eino/compose"
 
 	"github.com/cloudwego/eino-examples/internal/logs"
@@ -54,6 +53,59 @@ func RegisterSimpleGraph(ctx context.Context) {
 	}
 
 	message, err := r.Invoke(ctx, "eino graph test")
+	if err != nil {
+		logs.Errorf("invoke graph failed, err=%v", err)
+		return
+	}
+
+	logs.Infof("eino simple graph output is: %v", message)
+}
+
+type NodeMes struct {
+	Messages string
+}
+
+//type NodeMes **string
+
+func RegisterComplexGraph(ctx context.Context) {
+	g := compose.NewGraph[any, string]()
+
+	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input *NodeMes) (output string, err error) {
+		//return input.Messages + " process by node_1,", nil
+		return input.Messages + " process by node_1,", nil
+	}))
+
+	_ = g.AddLambdaNode("node_2", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by node_2,", nil
+	}))
+
+	_ = g.AddLambdaNode("node_3", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by node_3,", nil
+	}))
+
+	_ = g.AddEdge(compose.START, "node_1")
+
+	_ = g.AddEdge("node_1", "node_2")
+
+	_ = g.AddEdge("node_2", "node_3")
+
+	_ = g.AddEdge("node_3", compose.END)
+
+	r, err := g.Compile(ctx)
+	if err != nil {
+		logs.Errorf("compile graph failed, err=%v", err)
+		return
+	}
+	//gptr.Of(gptr.Of("eino graph test")
+
+	//nodeMes := NodeMes{
+	//	Messages: "process by node_1,",
+	//}
+	//var ptr *NodeMes = &nodeMes
+	//var nodeMesRes = &ptr
+	//message, err := r.Invoke(ctx, nodeMesRes)
+
+	message, err := r.Invoke(ctx, &NodeMes{Messages: "eino graph test"})
 	if err != nil {
 		logs.Errorf("invoke graph failed, err=%v", err)
 		return

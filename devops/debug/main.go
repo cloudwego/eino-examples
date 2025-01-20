@@ -33,7 +33,14 @@ func main() {
 	ctx := context.Background()
 
 	// Init eino devops server
-	err := devops.Init(ctx)
+
+	//nodeMes := graph.NodeMes{
+	//	Messages: "process by node_1,",
+	//}
+	//var ptr *graph.NodeMes = &nodeMes
+	//var nodeMesRes = &ptr
+
+	err := devops.Init(ctx, devops.AppendType(&graph.NodeMes{}))
 	if err != nil {
 		logs.Errorf("[eino dev] init failed, err=%v", err)
 		return
@@ -43,6 +50,7 @@ func main() {
 	chain.RegisterSimpleChain(ctx)
 	graph.RegisterSimpleGraph(ctx)
 	graph.RegisterSimpleStateGraph(ctx)
+	graph.RegisterComplexGraph(ctx)
 
 	// Blocking process exits
 	sigs := make(chan os.Signal, 1)
