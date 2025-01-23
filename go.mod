@@ -10,7 +10,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250114173536-ca9322ed9f9a
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250108030439-1493aa120cb1
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250116120445-4165a5358a34
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250116071241-3f1eaaafd49c
+	github.com/cloudwego/eino-ext/devops v0.1.0
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/ollama/ollama v0.3.0
