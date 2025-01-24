@@ -27,8 +27,8 @@ func newHost(ctx context.Context, baseURL, apiKey, modelName string) (*host.Host
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
 		Model:   modelName,
-		ByAzure: true,
-		APIKey:  apiKey,
+		//ByAzure: true,
+		APIKey: apiKey,
 	})
 	if err != nil {
 		return nil, err

@@ -34,9 +34,9 @@ import (
 
 func main() {
 
-	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
+	//openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
-	modelName := os.Getenv("MODEL_NAME")
+	modelName := os.Getenv("OPENAI_MODEL_NAME")
 
 	ctx := context.Background()
 
@@ -51,9 +51,9 @@ func main() {
 	)
 
 	modelConf := &openai.ChatModelConfig{
-		BaseURL:     openAIBaseURL,
-		APIKey:      openAIAPIKey,
-		ByAzure:     true,
+		//BaseURL:     openAIBaseURL,
+		APIKey: openAIAPIKey,
+		//ByAzure:     true,
 		Model:       modelName,
 		Temperature: gptr.Of(float32(0.7)),
 		APIVersion:  "2024-06-01",
