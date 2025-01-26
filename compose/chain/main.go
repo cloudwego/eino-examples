@@ -87,9 +87,9 @@ func main() {
 	modelConf := &openai.ChatModelConfig{
 		BaseURL:     openAPIBaseURL,
 		APIKey:      openAPIAK,
-		ByAzure:     true,
 		Model:       modelName,
 		Temperature: gptr.Of(float32(0.7)),
+		ByAzure:     false,
 		APIVersion:  "2024-06-01",
 	}
 
