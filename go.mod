@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.10
 
 require (
-	github.com/cloudwego/eino v0.3.7
+	github.com/cloudwego/eino v0.3.9
 	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250110031740-2b102ddbf6ee
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250114173536-ca9322ed9f9a
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250108030439-1493aa120cb1
