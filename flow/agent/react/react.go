@@ -82,7 +82,7 @@ func main() {
 	// msg, err := agent.Generate(ctx, []*schema.Message{
 	// 	{
 	// 		Role:    schema.User,
-	// 		Content: "我在海淀区，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
+	// 		Content: "我在北京，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
 	// 	},
 	// }, react.WithCallbacks(&myCallback{}))
 	// if err != nil {
@@ -94,7 +94,7 @@ func main() {
 	sr, err := ragent.Stream(ctx, []*schema.Message{
 		{
 			Role:    schema.User,
-			Content: "我在海淀区，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
+			Content: "我在北京，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
 		},
 	}, agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})))
 	if err != nil {

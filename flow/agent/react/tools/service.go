@@ -146,12 +146,12 @@ func (rd *restaurantDatabase) GetDishesByRestaurant(ctx context.Context, restaur
 
 func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lines_in_func
 	return map[string][]restaurantDataItem{
-		"海淀": {
+		"北京": {
 			{
 				ID:    "1001",
-				Name:  "跳不动的E世界5F餐厅",
-				Place: "中关村E世界 5F, 左转进入",
-				Desc:  "这个是跳不动的E世界5F餐厅, 在E世界-5F, 口味多种多样",
+				Name:  "云边小馆",
+				Place: "北京",
+				Desc:  "这个是云边小馆, 在北京, 口味多种多样",
 				Score: 3,
 				Dishes: []restaurantDishDataItem{
 					{
@@ -193,9 +193,9 @@ func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lin
 			},
 			{
 				ID:    "1002",
-				Name:  "跳动的E世界地下餐厅",
-				Place: "中关村E世界-1F",
-				Desc:  "跳动的E世界地下餐厅, 在E世界-1F, 很多档口, 等你来探索",
+				Name:  "聚福轩食府",
+				Place: "北京",
+				Desc:  "北京的聚福轩食府, 很多档口, 等你来探索",
 				Score: 5,
 				Dishes: []restaurantDishDataItem{
 					{
@@ -226,9 +226,9 @@ func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lin
 			},
 			{
 				ID:    "1003",
-				Name:  "抖一抖的中航餐厅",
-				Place: "中航广场-1F",
-				Desc:  "非常豪华的中航餐厅, 好吃不贵",
+				Name:  "花影食舍",
+				Place: "上海",
+				Desc:  "非常豪华的花影食舍, 好吃不贵",
 				Score: 10,
 				Dishes: []restaurantDishDataItem{
 					{
@@ -252,12 +252,12 @@ func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lin
 				},
 			},
 		},
-		"徐汇": {
+		"上海": {
 			{
 				ID:    "2001",
-				Name:  "漕河大饭店",
-				Place: "上海徐汇区一栋大楼里3层",
-				Desc:  "这个是漕河大饭店, 在漕河大饭店, 口味多种多样",
+				Name:  "鸿宾雅膳楼",
+				Place: "上海",
+				Desc:  "这个是鸿宾雅膳楼, 在上海, 口味多种多样",
 				Score: 3,
 				Dishes: []restaurantDishDataItem{
 					{
@@ -276,9 +276,9 @@ func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lin
 			},
 			{
 				ID:    "2002",
-				Name:  "漕河小饭店",
+				Name:  "饭醉团伙根据地",
 				Desc:  "专注糖醋口味，你值得拥有",
-				Place: "上海徐汇区二栋大楼里5层",
+				Place: "上海",
 				Score: 5,
 				Dishes: []restaurantDishDataItem{
 					{
@@ -297,8 +297,8 @@ func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lin
 			},
 			{
 				ID:    "2010",
-				Name:  "漕河隐藏饭店",
-				Desc:  "这个是漕河隐藏饭店, 藏在一个你找不到的位置, 只等待有缘人来探索, 口味以川菜为主, 辣椒、花椒 大把大把放.",
+				Name:  "好吃到跺 jiojio 餐馆",
+				Desc:  "这个是好吃到跺 jiojio 餐馆, 藏在一个你找不到的位置, 只等待有缘人来探索, 口味以川菜为主, 辣椒、花椒 大把大把放.",
 				Place: "它在它不在的地方",
 				Score: 10,
 				Dishes: []restaurantDishDataItem{

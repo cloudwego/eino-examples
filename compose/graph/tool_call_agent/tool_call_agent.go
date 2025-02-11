@@ -86,7 +86,7 @@ func main() {
 			return &userInfoResponse{
 				Name:     input.Name,
 				Email:    input.Email,
-				Company:  "Bytedance",
+				Company:  "Awesome company",
 				Position: "CEO",
 				Salary:   "9999",
 			}, nil
