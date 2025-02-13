@@ -24,6 +24,8 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
+// INFO: 参考文档 https://www.cloudwego.io/zh/docs/eino/core_modules/components/lambda_guide/
+
 type Options struct {
 	Filed1 string
 }
