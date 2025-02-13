@@ -34,7 +34,7 @@ func init() {
 func MustHasEnvs(envs ...string) {
 	for _, env := range envs {
 		if os.Getenv(env) == "" {
-			log.Fatalf("❌ [ERROR] env [%s] is required, but is not setted now, please check your .env file", env)
+			log.Fatalf("❌ [ERROR] env [%s] is required, but is not set now, please check your .env file", env)
 		}
 	}
 }
