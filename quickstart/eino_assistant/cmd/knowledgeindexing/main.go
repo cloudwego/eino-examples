@@ -23,6 +23,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
+
 	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/components/embedding"
@@ -30,6 +32,11 @@ import (
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/knowledgeindexing"
 )
+
+func init() {
+	// check some essential envs
+	env.MustHasEnvs("ARK_API_KEY", "ARK_EMBEDDING_MODEL")
+}
 
 func main() {
 	ctx := context.Background()

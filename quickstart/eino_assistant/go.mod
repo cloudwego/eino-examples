@@ -3,7 +3,7 @@ module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 go 1.21
 
 require (
-	github.com/cloudwego/eino v0.3.7
+	github.com/cloudwego/eino v0.3.9
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250117061805-cd80d1780d76
@@ -12,6 +12,7 @@ require (
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/sse v0.0.6-0.20240617114443-10a844794bf3
+	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.7.0
 )
 
