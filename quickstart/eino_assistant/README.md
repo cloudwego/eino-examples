@@ -1,5 +1,8 @@
 ## 说明
 
+### 文档地址
+[eino 实践教程](https://www.cloudwego.io/zh/docs/eino/overview/bytedance_eino_practice/)
+
 ### docker 启动 redis 作为向量数据库
 
 ```bash
