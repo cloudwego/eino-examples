@@ -30,6 +30,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
+
 	"github.com/cloudwego/eino-ext/callbacks/langfuse"
 	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/callbacks"
@@ -109,6 +111,8 @@ func main() {
 }
 
 func Init() error {
+	// check some essential envs
+	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
 
 	os.MkdirAll("log", 0755)
 	var f *os.File

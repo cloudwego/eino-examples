@@ -22,6 +22,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
+
 	"github.com/cloudwego/eino-ext/devops"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/cmd/einoagent/agent"
@@ -38,6 +40,9 @@ func init() {
 			log.Printf("[eino dev] init failed, err=%v", err)
 		}
 	}
+
+	// check some essential envs
+	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
 }
 
 func main() {
