@@ -6,6 +6,7 @@
 ### docker 启动 redis 作为向量数据库
 
 ```bash
+# Notice: 如果本地已经安装了 redis，则需要先停止本地的 redis 容器，再执行上述命令，否则端口冲突会导致启动失败
 docker-compose up -d
 # 可以在 http://127.0.0.1:8001 看到 redis 的 web 界面
 # redis 监听在 127.0.0.1:6379, 使用 redis-cli ping 可测试
@@ -29,7 +30,7 @@ export ARK_EMBEDDING_MODEL=xxx
 
 ```bash
 # 为了使用 data 目录，需要在 eino_assistant 目录下执行指令
-go run cmd/einoagent/*.go
+go run cmd/einoagent/main.go
 ```
 
 ### 访问
