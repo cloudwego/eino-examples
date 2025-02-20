@@ -5,6 +5,10 @@ on: [ push, pull_request ]
 jobs:
   unit-benchmark-test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Go
