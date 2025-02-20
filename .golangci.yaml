@@ -2,7 +2,7 @@
 output:
   # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
   formats: 
-    - colored-line-number
+    - format: colored-line-number
 # All available settings of specific linters.
 # Refer to https://golangci-lint.run/usage/linters
 linters-settings:
