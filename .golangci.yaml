@@ -31,4 +31,4 @@ issues:
   exclude-use-default: true
   exclude-files:
     - ".*\\.mock\\.go$"
-  exclude-dirs:
+  exclude-dirs: []
