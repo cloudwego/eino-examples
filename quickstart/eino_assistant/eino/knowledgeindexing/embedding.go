@@ -32,7 +32,7 @@ func defaultArkEmbeddingConfig(ctx context.Context) (*ark.EmbeddingConfig, error
 		Model:   os.Getenv("ARK_EMBEDDING_MODEL"),
 	}
 
-	log.Printf("apiKey: %v, model: %v", config.APIKey, config.Model)
+	log.Printf("model: %v", config.Model)
 	return config, nil
 }
 

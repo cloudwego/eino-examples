@@ -62,10 +62,7 @@ func createMessagesFromTemplate() []*schema.Message {
 
 // 输出结果
 //func main() {
-//	messages, err := createMessagesFromTemplate()
-//	if err != nil {
-//		fmt.Printf("create messages from template fail: %s", err.Error())
-//	}
+//	messages := createMessagesFromTemplate()
 //	fmt.Printf("formatted message: %v", messages)
 //}
 

@@ -48,6 +48,11 @@ var memory = mem.GetDefaultMemory()
 
 var cbHandler callbacks.Handler
 
+const (
+	userID = "eino_god"
+	name   = "Eino Assistant"
+)
+
 func main() {
 	flag.Parse()
 
@@ -138,10 +143,10 @@ func Init() error {
 			Host:      "https://cloud.langfuse.com",
 			PublicKey: os.Getenv("LANGFUSE_PUBLIC_KEY"),
 			SecretKey: os.Getenv("LANGFUSE_SECRET_KEY"),
-			Name:      "Eino Assistant",
+			Name:      name,
 			Public:    true,
 			Release:   "release/v0.0.1",
-			UserID:    "eino_god",
+			UserID:    userID,
 			Tags:      []string{"eino", "assistant"},
 		})
 		callbacks.InitCallbackHandlers([]callbacks.Handler{cbh})
