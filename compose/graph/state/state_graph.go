@@ -20,13 +20,11 @@ import (
 	"context"
 	"errors"
 	"io"
-	"runtime/debug"
 	"strings"
 	"unicode/utf8"
 
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
-	"github.com/cloudwego/eino/utils/safe"
 
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
@@ -101,8 +99,7 @@ func main() {
 			defer func() {
 				panicErr := recover()
 				if panicErr != nil {
-					err := safe.NewPanicErr(panicErr, debug.Stack())
-					logs.Errorf("panic occurs: %v\n", err)
+					logs.Errorf("panic occurs: %v\n", panicErr)
 				}
 
 			}()
