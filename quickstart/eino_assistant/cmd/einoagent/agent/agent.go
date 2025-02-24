@@ -40,11 +40,6 @@ var cbHandler callbacks.Handler
 
 var once sync.Once
 
-const (
-	userID = "eino_god"
-	name   = "Eino Assistant"
-)
-
 func Init() error {
 	var err error
 	once.Do(func() {
@@ -72,10 +67,10 @@ func Init() error {
 				Host:      "https://cloud.langfuse.com",
 				PublicKey: os.Getenv("LANGFUSE_PUBLIC_KEY"),
 				SecretKey: os.Getenv("LANGFUSE_SECRET_KEY"),
-				Name:      name,
+				Name:      "Eino Assistant",
 				Public:    true,
 				Release:   "release/v0.0.1",
-				UserID:    userID,
+				UserID:    "eino_god",
 				Tags:      []string{"eino", "assistant"},
 			})
 			callbacks.InitCallbackHandlers([]callbacks.Handler{cbh})
