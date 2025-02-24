@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"runtime/debug"
 	"strings"
 	"unicode/utf8"
 
@@ -28,6 +29,11 @@ import (
 
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
+
+type panicErr struct {
+	info  any
+	stack []byte
+}
 
 func main() {
 	ctx := context.Background()
@@ -97,9 +103,13 @@ func main() {
 		go func() {
 
 			defer func() {
-				panicErr := recover()
-				if panicErr != nil {
-					logs.Errorf("panic occurs: %v\n", panicErr)
+				err := recover()
+				if err != nil {
+					errStack := &panicErr{
+						info:  err,
+						stack: debug.Stack(),
+					}
+					logs.Errorf("panic occurs: %v\n", errStack)
 				}
 
 			}()
