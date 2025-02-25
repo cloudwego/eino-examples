@@ -103,15 +103,9 @@ func main() {
 		go func() {
 
 			defer func() {
-				err := recover()
-				if err != nil {
-					errStack := &panicErr{
-						info:  err,
-						stack: debug.Stack(),
-					}
-					logs.Errorf("panic occurs: %v\n", errStack)
+				if err := recover(); err != nil {
+					logs.Errorf("panic occurs: %v\nStack Trace:\n%s", err, string(debug.Stack()))
 				}
-
 			}()
 
 			for _, field := range strings.Fields(prefix) {
