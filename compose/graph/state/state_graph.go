@@ -30,11 +30,6 @@ import (
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
-type panicErr struct {
-	info  any
-	stack []byte
-}
-
 func main() {
 	ctx := context.Background()
 
