@@ -14,6 +14,7 @@ docker-compose up -d
 
 ### 环境变量
 
+#### 大模型
 所需的大模型和 API Key.
 豆包大模型地址: https://console.volcengine.com/ark/region:ark+cn-beijing/model
 > ChatModel 推荐: [Doubao-pro-4k (functioncall)](https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail?Id=doubao-pro-4k)
@@ -24,6 +25,13 @@ docker-compose up -d
 export ARK_API_KEY=xxx
 export ARK_CHAT_MODEL=xxx
 export ARK_EMBEDDING_MODEL=xxx
+```
+
+#### 可观测
+可观测能力的自动集成，仅需配置下方环境变量，即可访问APMPlus查看观测数据: https://console.volcengine.com/apmplus-server
+```bash
+export APMPLUS_APP_KEY=xxx
+export APMPLUS_REGION=xxx # 选填
 ```
 
 ### 启动 eino agent server

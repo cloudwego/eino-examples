@@ -18,19 +18,21 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
-
 	"github.com/cloudwego/eino-ext/devops"
+	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/hertz-contrib/obs-opentelemetry/provider"
+	hertztracing "github.com/hertz-contrib/obs-opentelemetry/tracing"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/cmd/einoagent/agent"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/cmd/einoagent/task"
-
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
 )
 
 func init() {
@@ -56,6 +58,23 @@ func main() {
 	h := server.Default(server.WithHostPorts(":" + port))
 
 	h.Use(LogMiddleware())
+
+	if os.Getenv("APMPLUS_APP_KEY") != "" {
+		region := os.Getenv("APMPLUS_REGION")
+		if region == "" {
+			region = "cn-beijing"
+		}
+		_ = provider.NewOpenTelemetryProvider(
+			provider.WithServiceName("eino-assistant"),
+			provider.WithExportEndpoint(fmt.Sprintf("apmplus-%s.volces.com:4317", region)),
+			provider.WithInsecure(),
+			provider.WithHeaders(map[string]string{"X-ByteAPM-AppKey": os.Getenv("APMPLUS_APP_KEY")}),
+			provider.WithResourceAttribute(attribute.String("apmplus.business_type", "llm")),
+		)
+		tracer, cfg := hertztracing.NewServerTracer()
+		h = server.Default(server.WithHostPorts(":"+port), tracer)
+		h.Use(LogMiddleware(), hertztracing.ServerMiddleware(cfg))
+	}
 
 	// 注册 task 路由组
 	taskGroup := h.Group("/task")
