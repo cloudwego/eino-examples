@@ -3,12 +3,12 @@ module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 go 1.21
 
 require (
-	github.com/cloudwego/eino v0.3.9
+	github.com/cloudwego/eino v0.3.13
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/devops v0.0.0-20250117061805-cd80d1780d76
+	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/devops v0.1.1
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/sse v0.0.6-0.20240617114443-10a844794bf3
@@ -23,10 +23,10 @@ require (
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
-	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250116071241-3f1eaaafd49c
-	github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250116071241-3f1eaaafd49c
+	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250225083118-fd27d80f189c
+	github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250113033825-eb19b2b6b386 // indirect
 	github.com/cloudwego/netpoll v0.6.4 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.0.160 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.0.181 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect

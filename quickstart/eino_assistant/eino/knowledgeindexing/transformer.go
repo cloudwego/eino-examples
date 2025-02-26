@@ -23,19 +23,14 @@ import (
 	"github.com/cloudwego/eino/components/document"
 )
 
-func defaultMarkdownSplitterConfig(ctx context.Context) (*markdown.HeaderConfig, error) {
+// newDocumentTransformer component initialization function of node 'MarkdownSplitter' in graph 'KnowledgeIndexing'
+func newDocumentTransformer(ctx context.Context) (tfr document.Transformer, err error) {
+	// TODO Modify component configuration here.
 	config := &markdown.HeaderConfig{
-		TrimHeaders: true}
-	return config, nil
-}
-
-func NewMarkdownSplitter(ctx context.Context, config *markdown.HeaderConfig) (tfr document.Transformer, err error) {
-	if config == nil {
-		config, err = defaultMarkdownSplitterConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
+		Headers: map[string]string{
+			"#": "title",
+		},
+		TrimHeaders: false}
 	tfr, err = markdown.NewHeaderSplitter(ctx, config)
 	if err != nil {
 		return nil, err

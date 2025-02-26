@@ -24,20 +24,11 @@ import (
 	"github.com/cloudwego/eino/components/model"
 )
 
-func defaultArkChatModelConfig(ctx context.Context) (*ark.ChatModelConfig, error) {
+func newChatModel(ctx context.Context) (cm model.ChatModel, err error) {
+	// TODO Modify component configuration here.
 	config := &ark.ChatModelConfig{
 		Model:  os.Getenv("ARK_CHAT_MODEL"),
 		APIKey: os.Getenv("ARK_API_KEY"),
-	}
-	return config, nil
-}
-
-func NewArkChatModel(ctx context.Context, config *ark.ChatModelConfig) (cm model.ChatModel, err error) {
-	if config == nil {
-		config, err = defaultArkChatModelConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
 	}
 	cm, err = ark.NewChatModel(ctx, config)
 	if err != nil {

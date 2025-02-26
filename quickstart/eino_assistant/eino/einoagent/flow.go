@@ -23,36 +23,22 @@ import (
 	"github.com/cloudwego/eino/flow/agent/react"
 )
 
-func defaultReactAgentConfig(ctx context.Context) (*react.AgentConfig, error) {
+// newLambda1 component initialization function of node 'ReactAgent' in graph 'EinoAgent'
+func newLambda1(ctx context.Context) (lba *compose.Lambda, err error) {
+	// TODO Modify component configuration here.
 	config := &react.AgentConfig{
 		MaxStep:            25,
 		ToolReturnDirectly: map[string]struct{}{}}
-	chatModelCfg11, err := defaultArkChatModelConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	chatModelIns11, err := NewArkChatModel(ctx, chatModelCfg11)
+	chatModelIns11, err := newChatModel(ctx)
 	if err != nil {
 		return nil, err
 	}
 	config.Model = chatModelIns11
-
 	tools, err := GetTools(ctx)
 	if err != nil {
 		return nil, err
 	}
-
 	config.ToolsConfig.Tools = tools
-	return config, nil
-}
-
-func NewReactAgent(ctx context.Context, config *react.AgentConfig) (lba *compose.Lambda, err error) {
-	if config == nil {
-		config, err = defaultReactAgentConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	ins, err := react.NewAgent(ctx, config)
 	if err != nil {
 		return nil, err

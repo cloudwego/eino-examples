@@ -22,21 +22,22 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cloudwego/eino-ext/components/retriever/redis"
-	"github.com/cloudwego/eino/components/retriever"
+	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
 	"github.com/cloudwego/eino/schema"
 	redisCli "github.com/redis/go-redis/v9"
 
-	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
+	"github.com/cloudwego/eino-ext/components/retriever/redis"
+	"github.com/cloudwego/eino/components/retriever"
 )
 
-func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, error) {
+// newRetriever component initialization function of node 'RedisRetriever' in graph 'EinoAgent'
+func newRetriever(ctx context.Context) (rtr retriever.Retriever, err error) {
+	// TODO Modify component configuration here.
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisClient := redisCli.NewClient(&redisCli.Options{
 		Addr:     redisAddr,
 		Protocol: 2,
 	})
-
 	config := &redis.RetrieverConfig{
 		Client:       redisClient,
 		Index:        fmt.Sprintf("%s%s", redispkg.RedisPrefix, redispkg.IndexName),
@@ -67,25 +68,11 @@ func defaultRedisRetrieverConfig(ctx context.Context) (*redis.RetrieverConfig, e
 			return resp, nil
 		},
 	}
-	embeddingCfg11, err := defaultArkEmbeddingConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	embeddingIns11, err := NewArkEmbedding(ctx, embeddingCfg11)
+	embeddingIns11, err := newEmbedding(ctx)
 	if err != nil {
 		return nil, err
 	}
 	config.Embedding = embeddingIns11
-	return config, nil
-}
-
-func NewRedisRetriever(ctx context.Context, config *redis.RetrieverConfig) (rtr retriever.Retriever, err error) {
-	if config == nil {
-		config, err = defaultRedisRetrieverConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	rtr, err = redis.NewRetriever(ctx, config)
 	if err != nil {
 		return nil, err

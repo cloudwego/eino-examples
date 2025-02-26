@@ -23,11 +23,6 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-type ChatTemplateConfig struct {
-	FormatType schema.FormatType
-	Templates  []schema.MessagesTemplate
-}
-
 var systemPrompt = `
 # Role: Eino Expert Assistant
 
@@ -61,7 +56,14 @@ var systemPrompt = `
 ==== doc end ====
 `
 
-func defaultPromptTemplateConfig(ctx context.Context) (*ChatTemplateConfig, error) {
+type ChatTemplateConfig struct {
+	FormatType schema.FormatType
+	Templates  []schema.MessagesTemplate
+}
+
+// newChatTemplate component initialization function of node 'ChatTemplate' in graph 'EinoAgent'
+func newChatTemplate(ctx context.Context) (ctp prompt.ChatTemplate, err error) {
+	// TODO Modify component configuration here.
 	config := &ChatTemplateConfig{
 		FormatType: schema.FString,
 		Templates: []schema.MessagesTemplate{
@@ -70,16 +72,6 @@ func defaultPromptTemplateConfig(ctx context.Context) (*ChatTemplateConfig, erro
 			schema.UserMessage("{content}"),
 		},
 	}
-	return config, nil
-}
-
-func NewChatTemplate(ctx context.Context, config *ChatTemplateConfig) (ct prompt.ChatTemplate, err error) {
-	if config == nil {
-		config, err = defaultPromptTemplateConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	ct = prompt.FromMessages(config.FormatType, config.Templates...)
-	return ct, nil
+	ctp = prompt.FromMessages(config.FormatType, config.Templates...)
+	return ctp, nil
 }

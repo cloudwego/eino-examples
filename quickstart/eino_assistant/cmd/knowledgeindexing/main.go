@@ -25,7 +25,6 @@ import (
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
 
-	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/components/embedding"
 	"github.com/redis/go-redis/v9"
@@ -50,15 +49,7 @@ func main() {
 }
 
 func indexMarkdownFiles(ctx context.Context, dir string) error {
-	runner, err := knowledgeindexing.BuildKnowledgeIndexing(ctx, &knowledgeindexing.BuildConfig{
-		KnowledgeIndexing: &knowledgeindexing.KnowledgeIndexingBuildConfig{
-			MarkdownSplitterKeyOfDocumentTransformer: &markdown.HeaderConfig{
-				Headers: map[string]string{
-					"#": "title",
-				},
-			},
-		},
-	})
+	runner, err := knowledgeindexing.BuildKnowledgeIndexing(ctx)
 	if err != nil {
 		return fmt.Errorf("build index graph failed: %w", err)
 	}

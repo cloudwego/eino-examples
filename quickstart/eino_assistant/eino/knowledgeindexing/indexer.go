@@ -39,7 +39,9 @@ func init() {
 	}
 }
 
-func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error) {
+// newIndexer component initialization function of node 'RedisIndexer' in graph 'KnowledgeIndexing'
+func newIndexer(ctx context.Context) (idr indexer.Indexer, err error) {
+	// TODO Modify component configuration here.
 	redisAddr := os.Getenv("REDIS_ADDR")
 	redisClient := redisCli.NewClient(&redisCli.Options{
 		Addr:     redisAddr,
@@ -71,25 +73,11 @@ func defaultRedisIndexerConfig(ctx context.Context) (*redis.IndexerConfig, error
 		},
 	}
 
-	embeddingCfg11, err := defaultArkEmbeddingConfig(ctx)
-	if err != nil {
-		return nil, err
-	}
-	embeddingIns11, err := NewArkEmbedding(ctx, embeddingCfg11)
+	embeddingIns11, err := newEmbedding(ctx)
 	if err != nil {
 		return nil, err
 	}
 	config.Embedding = embeddingIns11
-	return config, nil
-}
-
-func NewRedisIndexer(ctx context.Context, config *redis.IndexerConfig) (idr indexer.Indexer, err error) {
-	if config == nil {
-		config, err = defaultRedisIndexerConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	idr, err = redis.NewIndexer(ctx, config)
 	if err != nil {
 		return nil, err

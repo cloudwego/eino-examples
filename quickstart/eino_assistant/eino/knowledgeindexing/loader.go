@@ -23,18 +23,10 @@ import (
 	"github.com/cloudwego/eino/components/document"
 )
 
-func defaultFileLoaderConfig(ctx context.Context) (*file.FileLoaderConfig, error) {
+// newLoader component initialization function of node 'FileLoader' in graph 'KnowledgeIndexing'
+func newLoader(ctx context.Context) (ldr document.Loader, err error) {
+	// TODO Modify component configuration here.
 	config := &file.FileLoaderConfig{}
-	return config, nil
-}
-
-func NewFileLoader(ctx context.Context, config *file.FileLoaderConfig) (ldr document.Loader, err error) {
-	if config == nil {
-		config, err = defaultFileLoaderConfig(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
 	ldr, err = file.NewFileLoader(ctx, config)
 	if err != nil {
 		return nil, err

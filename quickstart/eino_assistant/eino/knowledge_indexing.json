@@ -11,7 +11,7 @@
   "gen_local_state": {
     "output_type": {}
   },
-  "id": "BZe_z8",
+  "id": "A0HIpo",
   "component": "Graph",
   "nodes": [
     {
@@ -39,7 +39,7 @@
       }
     },
     {
-      "id": "NE2Tk4",
+      "id": "VC7vv4",
       "key": "FileLoader",
       "name": "",
       "type": "Loader",
@@ -48,6 +48,14 @@
         "component": "Loader",
         "component_source": "official",
         "identifier": "github.com/cloudwego/eino-ext/components/document/loader/file",
+        "input_type": {
+          "title": "document.Source",
+          "description": ""
+        },
+        "output_type": {
+          "title": "[]*schema.Document",
+          "description": ""
+        },
         "config": {
           "description": "github.com/cloudwego/eino-ext/blob/main/components/document/loader/file/file_loader.go",
           "schema": {
@@ -86,20 +94,18 @@
           "config_input": "{}"
         },
         "is_io_type_mutable": false,
-        "input_type": {},
-        "output_type": {},
-        "method": "NewFileLoader"
+        "version": "1.0.0"
       },
+      "node_option": {},
       "layoutData": {
         "position": {
-          "x": 375,
-          "y": 71
+          "x": 367,
+          "y": 42
         }
-      },
-      "node_option": {}
+      }
     },
     {
-      "id": "Jih7Gv",
+      "id": "wyJ5GC",
       "key": "MarkdownSplitter",
       "name": "",
       "type": "DocumentTransformer",
@@ -108,6 +114,14 @@
         "component": "DocumentTransformer",
         "component_source": "official",
         "identifier": "github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown",
+        "input_type": {
+          "title": "[]*schema.Document",
+          "description": ""
+        },
+        "output_type": {
+          "title": "[]*schema.Document",
+          "description": ""
+        },
         "config": {
           "description": "github.com/cloudwego/eino-ext/blob/main/components/document/transformer/splitter/markdown/header.go",
           "schema": {
@@ -172,23 +186,21 @@
               "isPtr": false
             }
           },
-          "config_input": "{\"Headers\":{},\"TrimHeaders\":true}"
+          "config_input": "{}"
         },
         "is_io_type_mutable": false,
-        "method": "NewMarkdownSplitter",
-        "input_type": {},
-        "output_type": {}
+        "version": "1.0.0"
       },
+      "node_option": {},
       "layoutData": {
         "position": {
-          "x": 705,
-          "y": 71
+          "x": 697,
+          "y": 41
         }
-      },
-      "node_option": {}
+      }
     },
     {
-      "id": "Ju7Igu",
+      "id": "rcJ7mn",
       "key": "RedisIndexer",
       "name": "",
       "type": "Indexer",
@@ -197,6 +209,14 @@
         "component": "Indexer",
         "component_source": "official",
         "identifier": "github.com/cloudwego/eino-ext/components/indexer/redis",
+        "input_type": {
+          "title": "[]*schema.Document",
+          "description": ""
+        },
+        "output_type": {
+          "title": "[]string",
+          "description": ""
+        },
         "slots": [
           {
             "component": "Embedding",
@@ -209,6 +229,14 @@
                 "component": "Embedding",
                 "component_source": "official",
                 "identifier": "github.com/cloudwego/eino-ext/components/embedding/ark",
+                "input_type": {
+                  "title": "[]string",
+                  "description": ""
+                },
+                "output_type": {
+                  "title": "[][]float64",
+                  "description": ""
+                },
                 "config": {
                   "description": "github.com/cloudwego/eino-ext/blob/main/components/embedding/ark/embedding.go",
                   "schema": {
@@ -255,20 +283,6 @@
                           "typeName": "string",
                           "kind": "string",
                           "isPtr": false
-                        }
-                      },
-                      "Dimensions": {
-                        "type": "number",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "int",
-                          "kind": "int",
-                          "isPtr": true
                         }
                       },
                       "Model": {
@@ -340,20 +354,6 @@
                           "kind": "int64",
                           "isPtr": true
                         }
-                      },
-                      "User": {
-                        "type": "string",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "string",
-                          "kind": "string",
-                          "isPtr": true
-                        }
                       }
                     },
                     "propertyOrder": [
@@ -364,9 +364,7 @@
                       "APIKey",
                       "AccessKey",
                       "SecretKey",
-                      "Model",
-                      "User",
-                      "Dimensions"
+                      "Model"
                     ],
                     "goDefinition": {
                       "libraryRef": {
@@ -379,19 +377,16 @@
                       "isPtr": false
                     }
                   },
-                  "config_input": "{\"BaseURL\":\"https://ark.cn-beijing.volces.com/api/v3\"}"
+                  "config_input": ""
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewArkEmbedding",
-                "input_type": {},
-                "output_type": {},
-                "id": "MbIZvg",
+                "id": "fxAVaQ",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1365,
-                    "y": 172
+                    "x": 1384,
+                    "y": 133
                   }
                 }
               }
@@ -458,21 +453,18 @@
               "isPtr": false
             }
           },
-          "config_input": "{\"BatchSize\":1,\"KeyPrefix\":\"eino_assistant\"}"
+          "config_input": "{}"
         },
         "is_io_type_mutable": false,
-        "version": "1.0.0",
-        "method": "NewRedisIndexer",
-        "input_type": {},
-        "output_type": {}
+        "version": "1.0.0"
       },
+      "node_option": {},
       "layoutData": {
         "position": {
-          "x": 1035,
-          "y": 56
+          "x": 1047,
+          "y": 25
         }
-      },
-      "node_option": {}
+      }
     }
   ],
   "edges": [
@@ -480,14 +472,14 @@
       "id": "",
       "name": "",
       "sourceWorkflowNodeId": "start",
-      "targetWorkflowNodeId": "NE2Tk4",
+      "targetWorkflowNodeId": "VC7vv4",
       "source_node_key": "start",
       "target_node_key": "FileLoader"
     },
     {
       "id": "",
       "name": "",
-      "sourceWorkflowNodeId": "Ju7Igu",
+      "sourceWorkflowNodeId": "rcJ7mn",
       "targetWorkflowNodeId": "end",
       "source_node_key": "RedisIndexer",
       "target_node_key": "end"
@@ -495,19 +487,26 @@
     {
       "id": "",
       "name": "",
-      "sourceWorkflowNodeId": "NE2Tk4",
-      "targetWorkflowNodeId": "Jih7Gv",
+      "sourceWorkflowNodeId": "VC7vv4",
+      "targetWorkflowNodeId": "wyJ5GC",
       "source_node_key": "FileLoader",
       "target_node_key": "MarkdownSplitter"
     },
     {
       "id": "",
       "name": "",
-      "sourceWorkflowNodeId": "Jih7Gv",
-      "targetWorkflowNodeId": "Ju7Igu",
+      "sourceWorkflowNodeId": "wyJ5GC",
+      "targetWorkflowNodeId": "rcJ7mn",
       "source_node_key": "MarkdownSplitter",
       "target_node_key": "RedisIndexer"
     }
   ],
-  "branches": []
+  "branches": [],
+  "nodeCounter": {
+    "default": 3,
+    "Loader": 3,
+    "DocumentTransformer": 2,
+    "Lambda": 2,
+    "Indexer": 2
+  }
 }

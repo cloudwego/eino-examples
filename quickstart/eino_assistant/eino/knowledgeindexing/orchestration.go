@@ -19,41 +19,28 @@ package knowledgeindexing
 import (
 	"context"
 
-	"github.com/cloudwego/eino-ext/components/document/loader/file"
-	"github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown"
-	"github.com/cloudwego/eino-ext/components/indexer/redis"
 	"github.com/cloudwego/eino/components/document"
 	"github.com/cloudwego/eino/compose"
 )
 
-type KnowledgeIndexingBuildConfig struct {
-	FileLoaderKeyOfLoader                    *file.FileLoaderConfig
-	MarkdownSplitterKeyOfDocumentTransformer *markdown.HeaderConfig
-	RedisIndexerKeyOfIndexer                 *redis.IndexerConfig
-}
-
-type BuildConfig struct {
-	KnowledgeIndexing *KnowledgeIndexingBuildConfig
-}
-
-func BuildKnowledgeIndexing(ctx context.Context, config *BuildConfig) (r compose.Runnable[document.Source, []string], err error) {
+func BuildKnowledgeIndexing(ctx context.Context) (r compose.Runnable[document.Source, []string], err error) {
 	const (
 		FileLoader       = "FileLoader"
 		MarkdownSplitter = "MarkdownSplitter"
 		RedisIndexer     = "RedisIndexer"
 	)
 	g := compose.NewGraph[document.Source, []string]()
-	fileLoaderKeyOfLoader, err := NewFileLoader(ctx, config.KnowledgeIndexing.FileLoaderKeyOfLoader)
+	fileLoaderKeyOfLoader, err := newLoader(ctx)
 	if err != nil {
 		return nil, err
 	}
 	_ = g.AddLoaderNode(FileLoader, fileLoaderKeyOfLoader)
-	markdownSplitterKeyOfDocumentTransformer, err := NewMarkdownSplitter(ctx, config.KnowledgeIndexing.MarkdownSplitterKeyOfDocumentTransformer)
+	markdownSplitterKeyOfDocumentTransformer, err := newDocumentTransformer(ctx)
 	if err != nil {
 		return nil, err
 	}
 	_ = g.AddDocumentTransformerNode(MarkdownSplitter, markdownSplitterKeyOfDocumentTransformer)
-	redisIndexerKeyOfIndexer, err := NewRedisIndexer(ctx, config.KnowledgeIndexing.RedisIndexerKeyOfIndexer)
+	redisIndexerKeyOfIndexer, err := newIndexer(ctx)
 	if err != nil {
 		return nil, err
 	}

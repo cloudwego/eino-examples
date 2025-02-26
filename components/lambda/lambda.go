@@ -27,7 +27,7 @@ import (
 // INFO: 参考文档 https://www.cloudwego.io/zh/docs/eino/core_modules/components/lambda_guide/
 
 type Options struct {
-	Filed1 string
+	Field1 string
 }
 
 type MyOption func(*Options)

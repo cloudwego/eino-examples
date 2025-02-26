@@ -11,7 +11,7 @@
   "gen_local_state": {
     "output_type": {}
   },
-  "id": "f_oI8e",
+  "id": "lyLr9o",
   "component": "Graph",
   "nodes": [
     {
@@ -91,8 +91,7 @@
           "extra_property_input": "{\"has_option\":true,\"interaction_type\":\"invoke\"}"
         },
         "is_io_type_mutable": true,
-        "version": "1.0.0",
-        "method": "NewInputToQuery"
+        "version": "1.0.0"
       },
       "layoutData": {
         "position": {
@@ -163,8 +162,7 @@
           "config_input": "{\"FormatType\":1}"
         },
         "is_io_type_mutable": false,
-        "version": "1.0.0",
-        "method": "NewChatTemplate"
+        "version": "1.0.0"
       },
       "layoutData": {
         "position": {
@@ -204,6 +202,14 @@
                 "component": "ChatModel",
                 "component_source": "official",
                 "identifier": "github.com/cloudwego/eino-ext/components/model/ark",
+                "input_type": {
+                  "title": "[]*schema.Message",
+                  "description": ""
+                },
+                "output_type": {
+                  "title": "*schema.Message",
+                  "description": ""
+                },
                 "config": {
                   "description": "github.com/cloudwego/eino-ext/blob/main/components/model/ark/chatmodel.go",
                   "schema": {
@@ -266,20 +272,6 @@
                           "isPtr": true
                         }
                       },
-                      "LogProbs": {
-                        "type": "boolean",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "bool",
-                          "kind": "bool",
-                          "isPtr": true
-                        }
-                      },
                       "LogitBias": {
                         "type": "object",
                         "description": "",
@@ -336,20 +328,6 @@
                           "isPtr": false
                         }
                       },
-                      "N": {
-                        "type": "number",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "int",
-                          "kind": "int",
-                          "isPtr": true
-                        }
-                      },
                       "PresencePenalty": {
                         "type": "number",
                         "description": "",
@@ -376,20 +354,6 @@
                           "typeName": "string",
                           "kind": "string",
                           "isPtr": false
-                        }
-                      },
-                      "RepetitionPenalty": {
-                        "type": "number",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "float32",
-                          "kind": "float32",
-                          "isPtr": true
                         }
                       },
                       "RetryTimes": {
@@ -448,20 +412,6 @@
                           "isPtr": false
                         }
                       },
-                      "Stream": {
-                        "type": "boolean",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "bool",
-                          "kind": "bool",
-                          "isPtr": true
-                        }
-                      },
                       "Temperature": {
                         "type": "number",
                         "description": "",
@@ -490,20 +440,6 @@
                           "isPtr": true
                         }
                       },
-                      "TopLogProbs": {
-                        "type": "number",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "int",
-                          "kind": "int",
-                          "isPtr": true
-                        }
-                      },
                       "TopP": {
                         "type": "number",
                         "description": "",
@@ -515,20 +451,6 @@
                           },
                           "typeName": "float32",
                           "kind": "float32",
-                          "isPtr": true
-                        }
-                      },
-                      "User": {
-                        "type": "string",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "string",
-                          "kind": "string",
                           "isPtr": true
                         }
                       }
@@ -545,16 +467,10 @@
                       "MaxTokens",
                       "Temperature",
                       "TopP",
-                      "Stream",
                       "Stop",
                       "FrequencyPenalty",
                       "LogitBias",
-                      "LogProbs",
-                      "TopLogProbs",
-                      "User",
-                      "PresencePenalty",
-                      "RepetitionPenalty",
-                      "N"
+                      "PresencePenalty"
                     ],
                     "goDefinition": {
                       "libraryRef": {
@@ -567,19 +483,16 @@
                       "isPtr": false
                     }
                   },
-                  "config_input": "{\"Stop\":[],\"LogitBias\":{\"einoAdditionalPropertyInput\":[]}}"
+                  "config_input": ""
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewArkChatModel",
-                "input_type": {},
-                "output_type": {},
-                "id": "WMHlcP",
+                "id": "9n5PZt",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1684.65,
-                    "y": 506.65
+                    "x": 1697.28,
+                    "y": 458.76
                   }
                 }
               }
@@ -606,6 +519,14 @@
                 "component": "Tool",
                 "component_source": "official",
                 "identifier": "github.com/cloudwego/eino-ext/components/tool/duckduckgo",
+                "input_type": {
+                  "title": "string",
+                  "description": ""
+                },
+                "output_type": {
+                  "title": "string",
+                  "description": ""
+                },
                 "config": {
                   "description": "github.com/cloudwego/eino-ext/blob/main/components/tool/duckduckgo/search.go",
                   "schema": {
@@ -824,57 +745,16 @@
                       "isPtr": false
                     }
                   },
-                  "config_input": "{\"DDGConfig\":{\"Headers\":{\"einoAdditionalPropertyInput\":[]}}}"
+                  "config_input": "{}"
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "id": "Z7Yokw",
+                "id": "Hw6TpP",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1691.55,
-                    "y": 602.75
-                  }
-                },
-                "method": "NewDuckDuckGoTool",
-                "input_type": {},
-                "output_type": {}
-              },
-              {
-                "name": "Tool",
-                "component": "Tool",
-                "component_source": "custom",
-                "extra_property": {
-                  "schema": {
-                    "type": "object",
-                    "description": "",
-                    "properties": {
-                      "interaction_type": {
-                        "type": "string",
-                        "description": "",
-                        "enum": [
-                          "invoke",
-                          "stream"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "interaction_type"
-                    ]
-                  },
-                  "extra_property_input": "{\"interaction_type\":\"invoke\"}"
-                },
-                "is_io_type_mutable": false,
-                "version": "1.0.0",
-                "method": "NewTaskTool",
-                "input_type": {},
-                "output_type": {},
-                "id": "pEMFBs",
-                "layoutData": {
-                  "isSlotNode": true,
-                  "position": {
-                    "x": 1693.28,
-                    "y": 709.2
+                    "x": 1696.32,
+                    "y": 602.28
                   }
                 }
               },
@@ -904,15 +784,14 @@
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewEinoTool",
                 "input_type": {},
                 "output_type": {},
-                "id": "CMur3X",
+                "id": "iMwAQ_",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1696.72,
-                    "y": 869.65
+                    "x": 1699.2,
+                    "y": 845.16
                   }
                 }
               },
@@ -942,15 +821,14 @@
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewOpenURITool",
                 "input_type": {},
                 "output_type": {},
-                "id": "fKVHkP",
+                "id": "KKj2rp",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1693.28,
-                    "y": 1026.65
+                    "x": 1697.28,
+                    "y": 711.72
                   }
                 }
               },
@@ -980,15 +858,51 @@
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewGitCloneTool",
                 "input_type": {},
                 "output_type": {},
-                "id": "cfymTR",
+                "id": "FFz0iR",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1695,
-                    "y": 1194
+                    "x": 1701.92,
+                    "y": 1112.84
+                  }
+                }
+              },
+              {
+                "name": "Tool",
+                "component": "Tool",
+                "component_source": "custom",
+                "extra_property": {
+                  "schema": {
+                    "type": "object",
+                    "description": "",
+                    "properties": {
+                      "interaction_type": {
+                        "type": "string",
+                        "description": "",
+                        "enum": [
+                          "invoke",
+                          "stream"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "interaction_type"
+                    ]
+                  },
+                  "extra_property_input": "{\"interaction_type\":\"invoke\"}"
+                },
+                "is_io_type_mutable": false,
+                "version": "1.0.0",
+                "input_type": {},
+                "output_type": {},
+                "id": "cu1Hbe",
+                "layoutData": {
+                  "isSlotNode": true,
+                  "position": {
+                    "x": 1700.8,
+                    "y": 978.28
                   }
                 }
               }
@@ -1072,8 +986,7 @@
           "config_input": "{\"ToolReturnDirectly\":{\"einoAdditionalPropertyInput\":[]},\"MaxStep\":25}"
         },
         "is_io_type_mutable": false,
-        "version": "1.0.0",
-        "method": "NewReactAgent"
+        "version": "1.0.0"
       },
       "layoutData": {
         "position": {
@@ -1105,6 +1018,14 @@
                 "component": "Embedding",
                 "component_source": "official",
                 "identifier": "github.com/cloudwego/eino-ext/components/embedding/ark",
+                "input_type": {
+                  "title": "[]string",
+                  "description": ""
+                },
+                "output_type": {
+                  "title": "[][]float64",
+                  "description": ""
+                },
                 "config": {
                   "description": "github.com/cloudwego/eino-ext/blob/main/components/embedding/ark/embedding.go",
                   "schema": {
@@ -1151,20 +1072,6 @@
                           "typeName": "string",
                           "kind": "string",
                           "isPtr": false
-                        }
-                      },
-                      "Dimensions": {
-                        "type": "number",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "int",
-                          "kind": "int",
-                          "isPtr": true
                         }
                       },
                       "Model": {
@@ -1236,20 +1143,6 @@
                           "kind": "int64",
                           "isPtr": true
                         }
-                      },
-                      "User": {
-                        "type": "string",
-                        "description": "",
-                        "goDefinition": {
-                          "libraryRef": {
-                            "version": "",
-                            "module": "",
-                            "pkgPath": ""
-                          },
-                          "typeName": "string",
-                          "kind": "string",
-                          "isPtr": true
-                        }
                       }
                     },
                     "propertyOrder": [
@@ -1260,9 +1153,7 @@
                       "APIKey",
                       "AccessKey",
                       "SecretKey",
-                      "Model",
-                      "User",
-                      "Dimensions"
+                      "Model"
                     ],
                     "goDefinition": {
                       "libraryRef": {
@@ -1279,15 +1170,12 @@
                 },
                 "is_io_type_mutable": false,
                 "version": "1.0.0",
-                "method": "NewArkEmbedding",
-                "input_type": {},
-                "output_type": {},
-                "id": "6tbVVn",
+                "id": "LMuyas",
                 "layoutData": {
                   "isSlotNode": true,
                   "position": {
-                    "x": 1035,
-                    "y": 841
+                    "x": 1052.27,
+                    "y": 849.45
                   }
                 }
               }
@@ -1428,11 +1316,10 @@
               "isPtr": false
             }
           },
-          "config_input": "{\"ReturnFields\":[]}"
+          "config_input": "{}"
         },
         "is_io_type_mutable": false,
         "version": "1.0.0",
-        "method": "NewRedisRetriever",
         "input_type": {},
         "output_type": {}
       },
@@ -1499,8 +1386,7 @@
           "extra_property_input": "{\"has_option\":true,\"interaction_type\":\"invoke\"}"
         },
         "is_io_type_mutable": true,
-        "version": "1.0.0",
-        "method": "NewInputToHistory"
+        "version": "1.0.0"
       },
       "layoutData": {
         "position": {
@@ -1569,5 +1455,11 @@
       "target_node_key": "ReactAgent"
     }
   ],
-  "branches": []
+  "branches": [],
+  "nodeCounter": {
+    "Lambda": 6,
+    "ChatModel": 2,
+    "Tool": 2,
+    "default": 2
+  }
 }
