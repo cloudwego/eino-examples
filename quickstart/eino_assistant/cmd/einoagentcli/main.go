@@ -132,6 +132,7 @@ func Init() error {
 	cbHandler = LogCallback(cbConfig)
 
 	// init global callback, for trace and metrics
+	callbackHandlers := make([]callbacks.Handler, 0)
 	if os.Getenv("APMPLUS_APP_KEY") != "" {
 		region := os.Getenv("APMPLUS_REGION")
 		if region == "" {
@@ -147,7 +148,7 @@ func Init() error {
 		if err != nil {
 			log.Fatal(err)
 		}
-		callbacks.InitCallbackHandlers([]callbacks.Handler{cbh})
+		callbackHandlers = append(callbackHandlers, cbh)
 	}
 
 	if os.Getenv("LANGFUSE_PUBLIC_KEY") != "" && os.Getenv("LANGFUSE_SECRET_KEY") != "" {
@@ -162,7 +163,10 @@ func Init() error {
 			UserID:    "eino_god",
 			Tags:      []string{"eino", "assistant"},
 		})
-		callbacks.InitCallbackHandlers([]callbacks.Handler{cbh})
+		callbackHandlers = append(callbackHandlers, cbh)
+	}
+	if len(callbackHandlers) > 0 {
+		callbacks.InitCallbackHandlers(callbackHandlers)
 	}
 
 	return nil
