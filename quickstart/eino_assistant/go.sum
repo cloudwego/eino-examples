@@ -50,8 +50,8 @@ github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-f
 github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c/go.mod h1:iU/5QoRRQK1GyldawI6BbogyuIqOPLDJct3zDIVWqJ8=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c h1:04ok61D6U2i3Rbsx3bhSCoqAoTEWWd0Nu4YCQAqsUu0=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c/go.mod h1:8t2iDlxewqX7/kx0LX1QMRh6Qx9D5un5Kl/XM06COQo=
-github.com/cloudwego/eino-ext/devops v0.1.1 h1:g02z5R9gfI7r0D0J6km7k+bE/ONxdQ+lLqegRGdPy3E=
-github.com/cloudwego/eino-ext/devops v0.1.1/go.mod h1:Wx6Rketzamgp/dn99D+5rEXVwor/2hSHm5LWlgIXjKo=
+github.com/cloudwego/eino-ext/devops v0.1.2 h1:X8YkXN1HqoXoWg9+sGJbUPlLVbgrBCRwz548x+x8Vdw=
+github.com/cloudwego/eino-ext/devops v0.1.2/go.mod h1:Wx6Rketzamgp/dn99D+5rEXVwor/2hSHm5LWlgIXjKo=
 github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250113033825-eb19b2b6b386 h1:dF//5iW+PCS8ZnZ0PwmO2enn3Oek++mbgB6dmaJAz6o=
 github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250113033825-eb19b2b6b386/go.mod h1:77jqGUJZjxg+V/sJ8S6dd0JtRLO782yVWHmhuFgb9ig=
 github.com/cloudwego/eino-ext/libs/acl/opentelemetry v0.0.0-20250225080340-5935633151d3 h1:p1hlOXmAj1yIhJl3JRvwP+9WtEhuOnn6H+lIXIMeDzU=

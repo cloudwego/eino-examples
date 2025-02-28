@@ -9,7 +9,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c
-	github.com/cloudwego/eino-ext/devops v0.1.1
+	github.com/cloudwego/eino-ext/devops v0.1.2
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/obs-opentelemetry/provider v0.3.0
