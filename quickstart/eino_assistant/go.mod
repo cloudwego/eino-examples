@@ -3,13 +3,13 @@ module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 go 1.22.0
 
 require (
-	github.com/cloudwego/eino v0.3.13
+	github.com/cloudwego/eino v0.3.14
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.0-20250226083455-1ccdc82184a9
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c
-	github.com/cloudwego/eino-ext/devops v0.1.2
+	github.com/cloudwego/eino-ext/devops v0.1.3
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/obs-opentelemetry/provider v0.3.0

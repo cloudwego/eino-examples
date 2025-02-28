@@ -104,8 +104,8 @@ github.com/clbanning/mxj v1.8.4/go.mod h1:BVjHeAH+rl9rs6f+QIpeRl0tfu10SXn1pUSa5P
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudwego/base64x v0.1.5 h1:XPciSp1xaq2VCSt6lF0phncD4koWyULpl5bUxbfCyP4=
 github.com/cloudwego/base64x v0.1.5/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
-github.com/cloudwego/eino v0.3.13 h1:5fq5hM+UzbLtv4nXMhU6tAxgb7Q3AyaJ6/566XsJqc0=
-github.com/cloudwego/eino v0.3.13/go.mod h1:+kmJimGEcKuSI6OKhet7kBedkm1WUZS3H1QRazxgWUo=
+github.com/cloudwego/eino v0.3.14 h1:aq2LGR1zIEF0wyqIVMcmyhuLORifz6L6Mnmzof5nGqU=
+github.com/cloudwego/eino v0.3.14/go.mod h1:+kmJimGEcKuSI6OKhet7kBedkm1WUZS3H1QRazxgWUo=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76 h1:kK4f2kunb5xlc0XTkg6wkjy8Z/BDfJjWAVm9EOdRErg=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76/go.mod h1:LWR+h0EfIELl/I1tDSVH0Tgx8j2gymxa174U1C8BNps=
 github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250117061805-cd80d1780d76 h1:GJ4OqxyBH8la8Gu4PhTHXZNZFmrtEIrrymkCEpJ7XZU=
@@ -122,8 +122,8 @@ github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250221
 github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250221090944-e8ef7aabbe10/go.mod h1:Fo0UBvCoAvzHTKwgix6GZ4tdf0XCyaxX+fzDbc5l8Wk=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250221090944-e8ef7aabbe10 h1:pXKBHcBceNHNitPqgbg8tGXW5V6klGtXfWrPU8NiyjY=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250221090944-e8ef7aabbe10/go.mod h1:8t2iDlxewqX7/kx0LX1QMRh6Qx9D5un5Kl/XM06COQo=
-github.com/cloudwego/eino-ext/devops v0.1.2 h1:X8YkXN1HqoXoWg9+sGJbUPlLVbgrBCRwz548x+x8Vdw=
-github.com/cloudwego/eino-ext/devops v0.1.2/go.mod h1:Wx6Rketzamgp/dn99D+5rEXVwor/2hSHm5LWlgIXjKo=
+github.com/cloudwego/eino-ext/devops v0.1.3 h1:wLMyWhzDIGXCgdEcNUL/7WwzPkRrNJuHC/iMFMWAy2Y=
+github.com/cloudwego/eino-ext/devops v0.1.3/go.mod h1:wkrh7yUnU2ZBv7RSFd6Fej64VrHamn8ZRjsB9YUh4PQ=
 github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250221090944-e8ef7aabbe10 h1:M6Z2PeX+MxW7jgoZ0p6qDfVtMe1/4XqSQSAHUrI2HTM=
 github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250221090944-e8ef7aabbe10/go.mod h1:6CThw1XQx/ASXNt31yuvp0X4Yp4GprknQuIvP9VKDpw=
 github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQPiEFhY=
