@@ -31,9 +31,16 @@ func RegisterSimpleGraph(ctx context.Context) {
 		return input + " process by node_1,", nil
 	}))
 
-	_ = g.AddLambdaNode("node_2", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
-		return input + " process by node_2,", nil
+	sg := compose.NewGraph[string, string]()
+	_ = sg.AddLambdaNode("sg_node_1", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by sg_node_1,", nil
 	}))
+
+	_ = sg.AddEdge(compose.START, "sg_node_1")
+
+	_ = sg.AddEdge("sg_node_1", compose.END)
+
+	_ = g.AddGraphNode("node_2", sg)
 
 	_ = g.AddLambdaNode("node_3", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
 		return input + " process by node_3,", nil
