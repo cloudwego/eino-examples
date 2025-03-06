@@ -34,6 +34,7 @@ import (
 	"github.com/hertz-contrib/sse"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/mem"
+	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
 )
 
 //go:embed web
@@ -45,8 +46,19 @@ type ChatRequest struct {
 }
 
 func BindRoutes(r *route.RouterGroup) error {
-	if err := Init(); err != nil {
+	var err error
+	if err = Init(); err != nil {
 		return err
+	}
+
+	// 首次运行时，先初始化 Redis 索引
+	err = redispkg.InitRedisIndex(context.Background(), &redispkg.Config{
+		RedisAddr: "localhost:6379",
+		Dimension: 4096,
+	})
+
+	if err != nil {
+		log.Fatalf("failed to init redis index: %v", err)
 	}
 
 	// API 路由

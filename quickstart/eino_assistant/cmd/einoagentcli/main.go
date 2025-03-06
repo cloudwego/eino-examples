@@ -38,8 +38,8 @@ import (
 	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/einoagent"
-	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/mem"
+	redispkg "github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/redis"
 )
 
 var id = flag.String("id", "", "conversation id")
@@ -63,6 +63,16 @@ func main() {
 	}
 
 	ctx := context.Background()
+
+	// 首次运行时，先初始化 Redis 索引
+	err = redispkg.InitRedisIndex(context.Background(), &redispkg.Config{
+		RedisAddr: "localhost:6379",
+		Dimension: 4096,
+	})
+
+	if err != nil {
+		log.Fatalf("failed to init redis index: %v", err)
+	}
 
 	err = Init()
 	if err != nil {
@@ -112,7 +122,7 @@ func main() {
 
 func Init() error {
 	// check some essential envs
-	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
+	//env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
 
 	os.MkdirAll("log", 0755)
 	var f *os.File
