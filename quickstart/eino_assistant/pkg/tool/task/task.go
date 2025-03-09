@@ -36,34 +36,34 @@ const (
 )
 
 type Task struct {
-	ID        string `json:"id" jsonschema:"description:id of the task"`
-	Title     string `json:"title" jsonschema:"description:title of the task"`
-	Content   string `json:"content" jsonschema:"description:content of the task"`
-	Completed bool   `json:"completed" jsonschema:"description:completed status of the task"`
-	Deadline  string `json:"deadline" jsonschema:"description:deadline of the task"`
+	ID        string `json:"id" jsonschema:"description=id of the task"`
+	Title     string `json:"title" jsonschema:"description=title of the task"`
+	Content   string `json:"content" jsonschema:"description=content of the task"`
+	Completed bool   `json:"completed" jsonschema:"description=completed status of the task"`
+	Deadline  string `json:"deadline" jsonschema:"description=deadline of the task"`
 	IsDeleted bool   `json:"is_deleted" jsonschema:"-"`
 
-	CreatedAt string `json:"created_at" jsonschema:"description:created time of the task"`
+	CreatedAt string `json:"created_at" jsonschema:"description=created time of the task"`
 }
 
 type TaskRequest struct {
-	Action Action      `json:"action" jsonschema:"description:action to perform, enum:add,update,delete,list"`
-	Task   *Task       `json:"task" jsonschema:"description:task to add, update, or delete"`
-	List   *ListParams `json:"list" jsonschema:"description:list parameters"`
+	Action Action      `json:"action" jsonschema:"description=action to perform, enum:add,update,delete,list"`
+	Task   *Task       `json:"task" jsonschema:"description=task to add, update, or delete"`
+	List   *ListParams `json:"list" jsonschema:"description=list parameters"`
 }
 
 type ListParams struct {
-	Query  string `json:"query" jsonschema:"description:query to search"`
-	IsDone *bool  `json:"is_done" jsonschema:"description:filter by completed status"`
-	Limit  *int   `json:"limit" jsonschema:"description:limit the number of results"`
+	Query  string `json:"query" jsonschema:"description=query to search"`
+	IsDone *bool  `json:"is_done" jsonschema:"description=filter by completed status"`
+	Limit  *int   `json:"limit" jsonschema:"description=limit the number of results"`
 }
 
 type TaskResponse struct {
-	Status string `json:"status" jsonschema:"description:status of the response"`
+	Status string `json:"status" jsonschema:"description=status of the response"`
 
-	TaskList []*Task `json:"task_list" jsonschema:"description:list of tasks"`
+	TaskList []*Task `json:"task_list" jsonschema:"description=list of tasks"`
 
-	Error string `json:"error" jsonschema:"description:error message"`
+	Error string `json:"error" jsonschema:"description=error message"`
 }
 
 type TaskToolImpl struct {
