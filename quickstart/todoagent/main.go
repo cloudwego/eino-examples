@@ -58,7 +58,7 @@ func main() {
 	}
 
 	// 创建并配置 ChatModel
-	chatModel, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
+	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		Model:       "gpt-4o",
 		APIKey:      openAIAPIKey,
 		Temperature: gptr.Of(float32(0.7)),
@@ -88,7 +88,7 @@ func main() {
 	}
 
 	// 创建 tools 节点
-	todoToolsNode, err := compose.NewToolNode(context.Background(), &compose.ToolsNodeConfig{
+	todoToolsNode, err := compose.NewToolNode(ctx, &compose.ToolsNodeConfig{
 		Tools: todoTools,
 	})
 	if err != nil {
