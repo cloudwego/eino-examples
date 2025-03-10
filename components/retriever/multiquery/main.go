@@ -103,11 +103,9 @@ func main() {
 func newChatModel(ctx context.Context, baseURL, apiKey, modelName string) (model.ChatModel, error) {
 
 	return openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		BaseURL:    baseURL,
-		APIKey:     apiKey,
-		Model:      modelName,
-		ByAzure:    true,
-		APIVersion: "2024-06-01",
+		BaseURL: baseURL,
+		APIKey:  apiKey,
+		Model:   modelName,
 	})
 }
 

@@ -35,7 +35,7 @@ import (
 func main() {
 	openAPIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAPIAK := os.Getenv("OPENAI_API_KEY")
-	modelName := os.Getenv("MODEL_NAME")
+	modelName := os.Getenv("OPENAI_MODEL_NAME")
 
 	ctx := context.Background()
 	// build branch func
@@ -84,17 +84,13 @@ func main() {
 			return "你的叫声是怎样的？", nil
 		}))
 
-	modelConf := &openai.ChatModelConfig{
+	// create chat model node
+	cm, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
 		BaseURL:     openAPIBaseURL,
 		APIKey:      openAPIAK,
 		Model:       modelName,
 		Temperature: gptr.Of(float32(0.7)),
-		ByAzure:     false,
-		APIVersion:  "2024-06-01",
-	}
-
-	// create chat model node
-	cm, err := openai.NewChatModel(context.Background(), modelConf)
+	})
 	if err != nil {
 		log.Panic(err)
 		return

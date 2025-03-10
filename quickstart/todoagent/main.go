@@ -33,6 +33,8 @@ import (
 
 func main() {
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
+	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
+	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 
 	ctx := context.Background()
 
@@ -59,7 +61,8 @@ func main() {
 
 	// 创建并配置 ChatModel
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		Model:       "gpt-4o",
+		BaseURL:     openAIBaseURL,
+		Model:       openAIModelName,
 		APIKey:      openAIAPIKey,
 		Temperature: gptr.Of(float32(0.7)),
 	})

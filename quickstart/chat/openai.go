@@ -27,9 +27,12 @@ import (
 
 func createOpenAIChatModel(ctx context.Context) model.ChatModel {
 	key := os.Getenv("OPENAI_API_KEY")
+	modelName := os.Getenv("OPENAI_MODEL_NAME")
+	baseURL := os.Getenv("OPENAI_BASE_URL")
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		Model:  "gpt-4o", // 使用的模型版本
-		APIKey: key,      // OpenAI API 密钥
+		BaseURL: baseURL,
+		Model:   modelName,
+		APIKey:  key,
 	})
 	if err != nil {
 		log.Fatalf("create openai chat model failed, err=%v", err)

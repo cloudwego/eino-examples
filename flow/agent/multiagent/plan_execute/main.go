@@ -44,7 +44,7 @@ func main() {
 	ctx := context.Background()
 
 	deepSeekModel, err := deepseek.NewChatModel(ctx, &deepseek.ChatModelConfig{
-		Model:   os.Getenv("DEEPSEEK_MODEL_ID"),
+		Model:   os.Getenv("DEEPSEEK_MODEL_NAME"),
 		APIKey:  os.Getenv("DEEPSEEK_API_KEY"),
 		BaseURL: os.Getenv("DEEPSEEK_BASE_URL"),
 	})
@@ -54,7 +54,7 @@ func main() {
 
 	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_ID"),
+		Model:  os.Getenv("ARK_MODEL_NAME"),
 	})
 	if err != nil {
 		log.Fatalf("new Ark model failed: %v", err)

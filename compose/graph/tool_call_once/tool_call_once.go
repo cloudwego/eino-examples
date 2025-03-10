@@ -33,7 +33,7 @@ import (
 )
 
 func main() {
-	//openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
+	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	modelName := os.Getenv("OPENAI_MODEL_NAME")
 
@@ -46,16 +46,12 @@ func main() {
 		schema.UserMessage("{query}"),
 	)
 
-	modelConf := &openai.ChatModelConfig{
-		//BaseURL:     openAIBaseURL,
-		APIKey: openAIAPIKey,
-		//ByAzure:     true,
+	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
+		BaseURL:     openAIBaseURL,
+		APIKey:      openAIAPIKey,
 		Model:       modelName,
 		Temperature: gptr.Of(float32(0.7)),
-		APIVersion:  "2024-06-01",
-	}
-
-	chatModel, err := openai.NewChatModel(ctx, modelConf)
+	})
 	if err != nil {
 		logs.Fatalf("NewChatModel failed, err=%v", err)
 	}

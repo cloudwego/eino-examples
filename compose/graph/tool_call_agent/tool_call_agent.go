@@ -34,7 +34,7 @@ import (
 
 func main() {
 
-	//openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
+	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	modelName := os.Getenv("OPENAI_MODEL_NAME")
 
@@ -50,17 +50,13 @@ func main() {
 		schema.UserMessage("{user_query}"),
 	)
 
-	modelConf := &openai.ChatModelConfig{
-		//BaseURL:     openAIBaseURL,
-		APIKey: openAIAPIKey,
-		//ByAzure:     true,
+	// 2. create an instance of ChatModel as 2nd Graph Node
+	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
+		BaseURL:     openAIBaseURL,
+		APIKey:      openAIAPIKey,
 		Model:       modelName,
 		Temperature: gptr.Of(float32(0.7)),
-		APIVersion:  "2024-06-01",
-	}
-
-	// 2. create an instance of ChatModel as 2nd Graph Node
-	chatModel, err := openai.NewChatModel(ctx, modelConf)
+	})
 	if err != nil {
 		logs.Errorf("NewChatModel failed, err=%v", err)
 		return

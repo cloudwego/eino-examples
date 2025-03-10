@@ -38,18 +38,16 @@ import (
 
 func main() {
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
-	// openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
+	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
 
 	ctx := context.Background()
 
-	// prepare chat model
+	// prepare ChatModel
 	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		// BaseURL: openAIBaseURL, // if using Azure or other models conforming to OpenAI protocol, set this to your model's base URL
-		APIKey: openAIAPIKey,
-		Model:  openAIModelName,
-		// ByAzure:    true, // if using Azure's OpenAI API, set this to true
-		APIVersion: "2024-06-01",
+		BaseURL: openAIBaseURL,
+		APIKey:  openAIAPIKey,
+		Model:   openAIModelName,
 	})
 	if err != nil {
 		logs.Errorf("failed to create chat model: %v", err)
