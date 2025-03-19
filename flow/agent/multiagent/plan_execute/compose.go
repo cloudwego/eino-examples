@@ -155,10 +155,6 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 			if strings.Contains(content, "最终答案") {
 				return compose.END, nil
 			}
-
-			if len(content) > 20 {
-				return nodeKeyReviserToList, nil
-			}
 		}
 	}
 
