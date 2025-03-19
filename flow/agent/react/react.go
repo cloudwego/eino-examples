@@ -171,7 +171,7 @@ func (cb *LoggerCallback) OnError(ctx context.Context, info *callbacks.RunInfo, 
 func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callbacks.RunInfo,
 	output *schema.StreamReader[callbacks.CallbackOutput]) context.Context {
 
-	var graphInfoName = "PregelGraph"
+	var graphInfoName = react.GraphName
 
 	go func() {
 		defer func() {
