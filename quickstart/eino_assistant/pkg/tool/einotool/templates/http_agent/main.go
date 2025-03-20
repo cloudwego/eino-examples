@@ -77,7 +77,7 @@ func main() {
 			return
 		}
 
-		sr, err := agent.Stream(ctx, msgs)
+		sr, err := agent.Stream(ctx, append([]*schema.Message{schema.SystemMessage(*prompt)}, msgs...))
 		if err != nil {
 			c.JSON(consts.StatusInternalServerError, map[string]string{"error": err.Error()})
 			return
@@ -135,7 +135,7 @@ func main() {
 func NewAgent(ctx context.Context) (*react.Agent, error) {
 
 	// 初始化模型
-	model, err := PrepareModel(ctx)
+	m, err := PrepareModel(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -148,11 +148,10 @@ func NewAgent(ctx context.Context) (*react.Agent, error) {
 
 	// 初始化 agent
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		Model: model,
+		Model: m,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: tools,
 		},
-		MessageModifier: react.NewPersonaModifier(*prompt),
 	})
 	if err != nil {
 		return nil, err
@@ -174,11 +173,11 @@ func PrepareModel(ctx context.Context) (model.ChatModel, error) {
 }
 
 func PrepareTools(ctx context.Context) ([]tool.BaseTool, error) {
-	duckduckgo, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
+	ddg, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
 	if err != nil {
 		return nil, err
 	}
-	return []tool.BaseTool{duckduckgo}, nil
+	return []tool.BaseTool{ddg}, nil
 }
 
 // simple memory can store messages of each conversation

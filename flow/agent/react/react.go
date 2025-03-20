@@ -87,8 +87,6 @@ func main() {
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{restaurantTool, dishTool},
 		},
-
-		MessageModifier: react.NewPersonaModifier(persona),
 		// StreamToolCallChecker: toolCallChecker, // uncomment it to replace the default tool call checker with custom one
 	})
 	if err != nil {
@@ -110,6 +108,10 @@ func main() {
 	// fmt.Println(msg.String())
 
 	sr, err := ragent.Stream(ctx, []*schema.Message{
+		{
+			Role:    schema.System,
+			Content: persona,
+		},
 		{
 			Role:    schema.User,
 			Content: "我在北京，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
