@@ -33,7 +33,7 @@ func main() {
 	ctx := context.Background()
 
 	// Init eino devops server
-	err := devops.Init(ctx)
+	err := devops.Init(ctx, devops.AppendType(graph.CustomStruct{}))
 	if err != nil {
 		logs.Errorf("[eino dev] init failed, err=%v", err)
 		return
@@ -43,6 +43,11 @@ func main() {
 	chain.RegisterSimpleChain(ctx)
 	graph.RegisterSimpleGraph(ctx)
 	graph.RegisterSimpleStateGraph(ctx)
+
+	graph.RegisterCustomStructGraph(ctx)
+	graph.RegisterSchemaGraph(ctx)
+	graph.RegisterInterfaceGraph(ctx)
+	graph.RegisterCustomInterfaceGraph(ctx)
 
 	// Blocking process exits
 	sigs := make(chan os.Signal, 1)
