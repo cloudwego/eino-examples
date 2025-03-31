@@ -26,10 +26,10 @@ import (
 )
 
 func RegisterSimpleGraph(ctx context.Context) {
-	g := compose.NewGraph[string, string]()
+	g := compose.NewGraph[*string, string]()
 
-	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
-		return input + " process by node_1,", nil
+	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input *string) (output string, err error) {
+		return *input + " process by node_1,", nil
 	}))
 
 	sg := compose.NewGraph[string, string]()
@@ -61,7 +61,8 @@ func RegisterSimpleGraph(ctx context.Context) {
 		return
 	}
 
-	message, err := r.Invoke(ctx, "eino graph test")
+	str := "eino graph test"
+	message, err := r.Invoke(ctx, &str)
 	if err != nil {
 		logs.Errorf("invoke graph failed, err=%v", err)
 		return
@@ -74,6 +75,9 @@ type CustomStruct struct {
 	Field1 string
 	Field2 int
 	Field3 map[string]string
+	Field4 *string
+	Field5 any
+	Field6 any
 }
 
 type InnerStruct struct {
@@ -86,7 +90,7 @@ func RegisterCustomStructGraph(ctx context.Context) {
 	g := compose.NewGraph[*CustomStruct, string]()
 
 	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input *CustomStruct) (output string, err error) {
-		return input.Field1 + " process by node_1,", nil
+		return input.Field1 + input.Field5.(string) + input.Field6.(CustomStruct).Field1 + " process by node_1,", nil
 	}))
 
 	sg := compose.NewGraph[string, string]()
@@ -120,6 +124,10 @@ func RegisterCustomStructGraph(ctx context.Context) {
 
 	message, err := r.Invoke(ctx, &CustomStruct{
 		Field1: "process by struct node_1,",
+		Field5: "5",
+		Field6: CustomStruct{
+			Field1: "process by struct node_6,",
+		},
 	})
 	if err != nil {
 		logs.Errorf("invoke graph failed, err=%v", err)
@@ -262,6 +270,51 @@ func RegisterCustomInterfaceGraph(ctx context.Context) {
 	message, err := r.Invoke(ctx, &CustomStruct{
 		Field1: "process by custom interface node_1,",
 	})
+	if err != nil {
+		logs.Errorf("invoke graph failed, err=%v", err)
+		return
+	}
+
+	logs.Infof("eino simple graph output is: %v", message)
+}
+
+func RegisterInterfaceStrGraph(ctx context.Context) {
+	g := compose.NewGraph[any, string]()
+
+	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by node_1,", nil
+	}))
+
+	sg := compose.NewGraph[string, string]()
+	_ = sg.AddLambdaNode("sg_node_1", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by sg_node_1,", nil
+	}))
+
+	_ = sg.AddEdge(compose.START, "sg_node_1")
+
+	_ = sg.AddEdge("sg_node_1", compose.END)
+
+	_ = g.AddGraphNode("node_2", sg)
+
+	_ = g.AddLambdaNode("node_3", compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {
+		return input + " process by node_3,", nil
+	}))
+
+	_ = g.AddEdge(compose.START, "node_1")
+
+	_ = g.AddEdge("node_1", "node_2")
+
+	_ = g.AddEdge("node_2", "node_3")
+
+	_ = g.AddEdge("node_3", compose.END)
+
+	r, err := g.Compile(ctx)
+	if err != nil {
+		logs.Errorf("compile graph failed, err=%v", err)
+		return
+	}
+
+	message, err := r.Invoke(ctx, "ss")
 	if err != nil {
 		logs.Errorf("invoke graph failed, err=%v", err)
 		return

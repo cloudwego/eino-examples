@@ -48,6 +48,7 @@ func main() {
 	graph.RegisterSchemaGraph(ctx)
 	graph.RegisterInterfaceGraph(ctx)
 	graph.RegisterCustomInterfaceGraph(ctx)
+	graph.RegisterInterfaceStrGraph(ctx)
 
 	// Blocking process exits
 	sigs := make(chan os.Signal, 1)
