@@ -9,7 +9,7 @@ require (
 	github.com/cloudwego/eino v0.3.18
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.0
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.5
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20250221090944-e8ef7aabbe10
 	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250221090944-e8ef7aabbe10
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250221090944-e8ef7aabbe10
