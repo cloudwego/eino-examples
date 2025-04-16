@@ -90,7 +90,7 @@ func RegisterCustomStructGraph(ctx context.Context) {
 	g := compose.NewGraph[*CustomStruct, string]()
 
 	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input *CustomStruct) (output string, err error) {
-		return input.Field1 + input.Field5.(string) + input.Field6.(CustomStruct).Field1 + " process by node_1,", nil
+		return input.Field1 + *input.Field4 + input.Field5.(string) + input.Field6.(CustomStruct).Field1 + " process by node_1,", nil
 	}))
 
 	sg := compose.NewGraph[string, string]()
@@ -122,9 +122,12 @@ func RegisterCustomStructGraph(ctx context.Context) {
 		return
 	}
 
+	field4 := "ss"
+
 	message, err := r.Invoke(ctx, &CustomStruct{
 		Field1: "process by struct node_1,",
 		Field5: "5",
+		Field4: &field4,
 		Field6: CustomStruct{
 			Field1: "process by struct node_6,",
 		},
