@@ -29,8 +29,8 @@ github.com/cloudwego/eino v0.3.23 h1:fPjskHM85I4PPa+GZPoh76bMCbdRKWVKd52gdvcGHt8
 github.com/cloudwego/eino v0.3.23/go.mod h1:wUjz990apdsaOraOXdh6CdhVXq8DJsOvLsVlxNTcNfY=
 github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250415073426-726b929afbc2 h1:M/u7nNq1dXEKlwjy2CMUefO/lFk5zBPbm/r2G70TXGc=
 github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250415073426-726b929afbc2/go.mod h1:XWVF6RYWD1O7Ax/Mq5S3NZbdmHkIuYws7PvM92Q+ZJQ=
-github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250421080917-56d9b5a9ae10 h1:WHS+FTfEoOy+hzams6I3uud2nyHO54GS0sIZSry9pdc=
-github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250421080917-56d9b5a9ae10/go.mod h1:8gMakAGQUR+IaWTSD0cpcD4U5FYq5puZ73/QjXqs1oU=
+github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250422100419-a2ef28c59573 h1:m//0wJ8IqXMzaHN5FsD2D1ytK7oj2S9AWriXPgXaj4k=
+github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250422100419-a2ef28c59573/go.mod h1:hr63Rvtto40i4y21fElgxdtoPHhSZ2BqVqDOqk2kdeA=
 github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20250421090053-2091919102c7 h1:Bp/Cf51YzUg0wsJuGwerCVrs0yB/306FPkmVQD1cSMg=
 github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20250421090053-2091919102c7/go.mod h1:OGk7Ejiwuciw9TrzxaaXT3My2+bdTIFE9xk/AlG0ZK0=
 github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20250421090053-2091919102c7 h1:lQtjLrApL4tKz1dQuYHxtfUv04O96UTAyPvkUlT608E=
@@ -39,8 +39,8 @@ github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250416093724-5
 github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250416093724-5f53a5d6cc28/go.mod h1:bLd1hxvmOxU0KZOl0Cd73CCku9gGSwx+DyX0nG7RJj0=
 github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250415073426-726b929afbc2 h1:QJ4OxgSa/Z0Z3PfX3uWG9NbHsYCoQwagZUkJwT2k1ZE=
 github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250415073426-726b929afbc2/go.mod h1:nH8n+e6KG3w1cPMS1qT35Hxw19WJlYyWdWTQWnwJPFk=
-github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250416093724-5f53a5d6cc28 h1:LZyLFdPglF5Obxc0KJoHc54Q5qqylcZFoWZrEfwxsqg=
-github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250416093724-5f53a5d6cc28/go.mod h1:Ye0YAqpESCxMlnALNrjeNJjhS9q2PIdxVdJbtFeni8o=
+github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250422100419-a2ef28c59573 h1:lBBF/b4nsdtP2XxrHg4/wWC4slWfwxKHVH1hiJD3NCo=
+github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250422100419-a2ef28c59573/go.mod h1:Ye0YAqpESCxMlnALNrjeNJjhS9q2PIdxVdJbtFeni8o=
 github.com/cloudwego/iasm v0.2.0/go.mod h1:8rXZaNYT2n95jn+zTI1sDr+IgcD2GVs0nlbbQPiEFhY=
 github.com/containerd/log v0.1.0 h1:TCJt7ioM2cr/tfR8GPbGf9/VRAX8D2B4PjzCpfX540I=
 github.com/containerd/log v0.1.0/go.mod h1:VRRf09a7mHDIRezVKTRCrOq78v577GXq3bSa3EhrzVo=

@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	github.com/cloudwego/eino v0.3.23
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250415073426-726b929afbc2
-	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250421080917-56d9b5a9ae10
+	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250422100419-a2ef28c59573
 	github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20250421090053-2091919102c7
 	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20250421090053-2091919102c7
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250416093724-5f53a5d6cc28
@@ -25,7 +25,7 @@ require (
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250415073426-726b929afbc2 // indirect
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250416093724-5f53a5d6cc28 // indirect
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250422100419-a2ef28c59573 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.0.4+incompatible // indirect
 	github.com/docker/go-connections v0.5.0 // indirect
