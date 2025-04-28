@@ -20,13 +20,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudwego/eino-ext/components/model/openai"
 	"io"
 	"log"
-	"os"
 	"sync"
 
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/deepseek"
 	callbacks2 "github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
@@ -43,18 +42,21 @@ import (
 func main() {
 	ctx := context.Background()
 
-	deepSeekModel, err := deepseek.NewChatModel(ctx, &deepseek.ChatModelConfig{
-		Model:   os.Getenv("DEEPSEEK_MODEL_NAME"),
-		APIKey:  os.Getenv("DEEPSEEK_API_KEY"),
-		BaseURL: os.Getenv("DEEPSEEK_BASE_URL"),
+	deepSeekModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
+		Model:   "ali-deepseek-r1-distill-qwen-14b",
+		APIKey:  "lYKshg7xvRKL2brlsVKLEihwNZxmkHiX",
+		BaseURL: "https://search.bytedance.net/gpt/openapi/online/v2/crawl",
+		ByAzure: true,
 	})
 	if err != nil {
 		log.Fatalf("new DeepSeek model failed: %v", err)
 	}
 
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
+	arkModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
+		Model:   "gpt-4o-2024-05-13",
+		APIKey:  "lYKshg7xvRKL2brlsVKLEihwNZxmkHiX",
+		BaseURL: "https://search.bytedance.net/gpt/openapi/online/v2/crawl",
+		ByAzure: true,
 	})
 	if err != nil {
 		log.Fatalf("new Ark model failed: %v", err)
