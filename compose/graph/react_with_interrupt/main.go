@@ -95,7 +95,7 @@ func newChatTemplate(_ context.Context) prompt.ChatTemplate {
 	)
 }
 
-func newChatModel(ctx context.Context) model.ChatModel {
+func newChatModel(ctx context.Context) model.BaseChatModel {
 	cm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		APIKey:  os.Getenv("OPENAI_API_KEY"),
 		Model:   os.Getenv("OPENAI_MODEL"),
@@ -146,7 +146,7 @@ type myState struct {
 	history []*schema.Message
 }
 
-func composeGraph[I, O any](ctx context.Context, tpl prompt.ChatTemplate, cm model.ChatModel, tn *compose.ToolsNode, store compose.CheckPointStore) (compose.Runnable[I, O], error) {
+func composeGraph[I, O any](ctx context.Context, tpl prompt.ChatTemplate, cm model.BaseChatModel, tn *compose.ToolsNode, store compose.CheckPointStore) (compose.Runnable[I, O], error) {
 	g := compose.NewGraph[I, O](compose.WithGenLocalState(func(ctx context.Context) *myState {
 		return &myState{}
 	}))
