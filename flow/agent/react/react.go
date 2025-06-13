@@ -83,7 +83,7 @@ func main() {
 	}*/
 
 	ragent, err := react.NewAgent(ctx, &react.AgentConfig{
-		Model: arkModel,
+		ToolCallingModel: arkModel,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{restaurantTool, dishTool},
 		},
