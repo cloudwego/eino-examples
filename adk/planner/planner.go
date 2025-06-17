@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/demo/base/agents"
-	"github.com/cloudwego/eino/adk/demo/base/tools"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
+
+	"github.com/cloudwego/eino-examples/adk/base/agents"
+	"github.com/cloudwego/eino-examples/adk/base/tools"
 )
 
 func NewAgent(ctx context.Context) (adk.Agent, error) {

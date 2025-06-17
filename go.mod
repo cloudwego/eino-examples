@@ -6,19 +6,19 @@ toolchain go1.23.6
 
 require (
 	github.com/bytedance/sonic v1.13.2
-	github.com/cloudwego/eino v0.3.18
-	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.5
-	github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20250221090944-e8ef7aabbe10
-	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250221090944-e8ef7aabbe10
-	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250221090944-e8ef7aabbe10
-	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250319082935-6219ec437e56
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250221090944-e8ef7aabbe10
+	github.com/cloudwego/eino v0.3.43-0.20250611072754-9c9cb4bbd689
+	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250616031540-9f38f72c63e9
+	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250616031540-9f38f72c63e9
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.13
+	github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20250612061754-5a3deb091dc5
+	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250616031540-9f38f72c63e9
+	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250612061754-5a3deb091dc5
+	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250616031540-9f38f72c63e9
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250616031540-9f38f72c63e9
 	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/getkin/kin-openapi v0.118.0
-	github.com/ollama/ollama v0.4.0
+	github.com/ollama/ollama v0.5.12
 	github.com/stretchr/testify v1.10.0
 )
 
@@ -29,10 +29,11 @@ require (
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250221090944-e8ef7aabbe10 // indirect
-	github.com/cohesion-org/deepseek-go v1.2.3 // indirect
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250616031540-9f38f72c63e9 // indirect
+	github.com/cohesion-org/deepseek-go v1.2.8 // indirect
 	github.com/dslipak/pdf v0.0.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/evanphx/json-patch v0.5.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -48,6 +49,7 @@ require (
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/matoous/go-nanoid v1.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
+	github.com/meguminnnnnnnnn/go-openai v0.0.0-20250530094841-88286040d3c1 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
@@ -62,8 +64,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/volcengine/volc-sdk-golang v1.0.196 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.0.185 // indirect
+	github.com/volcengine/volc-sdk-golang v1.0.199 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.1.16 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.14.0 // indirect
 	golang.org/x/crypto v0.34.0 // indirect
