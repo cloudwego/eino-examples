@@ -25,7 +25,7 @@ import (
 	"sync"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -173,7 +173,7 @@ func PrepareModel(ctx context.Context) (model.ChatModel, error) {
 }
 
 func PrepareTools(ctx context.Context) ([]tool.BaseTool, error) {
-	ddg, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
+	ddg, err := duckduckgo.NewTextSearchTool(ctx, &duckduckgo.Config{})
 	if err != nil {
 		return nil, err
 	}
