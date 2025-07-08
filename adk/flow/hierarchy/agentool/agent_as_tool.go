@@ -105,7 +105,11 @@ If the tool is successful, present the weather report clearly.`,
 		Description: "Provides weather information for specific cities.",
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: []tool.BaseTool{getWeatherTool},
+				Tools: []tool.BaseTool{
+					getWeatherTool,
+					adk.NewAgentTool(ctx, greetingAgent),
+					adk.NewAgentTool(ctx, farewellAgent),
+				},
 			},
 		},
 	})
@@ -114,14 +118,9 @@ If the tool is successful, present the weather report clearly.`,
 		panic(err)
 	}
 
-	as, err := adk.SetSubAgents(ctx, weatherAgent, []adk.Agent{greetingAgent, farewellAgent})
-	if err != nil {
-		panic(err)
-	}
+	as := adk.NewRunner(ctx, &adk.RunnerConfig{})
 
-	rn := adk.NewRunner(ctx, &adk.RunnerConfig{})
-	events := rn.Run(ctx, as, []adk.Message{schema.UserMessage("bye")})
-
+	events := as.Run(ctx, weatherAgent, []adk.Message{schema.UserMessage("bye")})
 	for i := 0; ; i++ {
 		event, ok := events.Next()
 		if !ok {
