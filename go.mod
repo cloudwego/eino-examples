@@ -6,10 +6,10 @@ toolchain go1.23.6
 
 require (
 	github.com/bytedance/sonic v1.13.2
-	github.com/cloudwego/eino v0.3.48
+	github.com/cloudwego/eino v0.3.50-0.20250717050522-3b9bfa435e19
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.13
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.15
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20250221090944-e8ef7aabbe10
 	github.com/cloudwego/eino-ext/components/model/ollama v0.0.0-20250221090944-e8ef7aabbe10
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250221090944-e8ef7aabbe10
@@ -63,12 +63,12 @@ require (
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.196 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.1.16 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.1.20 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.14.0 // indirect
 	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
 	golang.org/x/net v0.39.0 // indirect
-	golang.org/x/sys v0.32.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.24.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
