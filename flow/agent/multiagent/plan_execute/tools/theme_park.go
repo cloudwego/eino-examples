@@ -46,7 +46,7 @@ type Activity struct {
 	RequireBooking     bool         `json:"require_booking,omitempty" jsonschema:"description=一个餐厅是否需要提前预约"`
 	HasPriorityAccess  bool         `json:"has_priority_access,omitempty" jsonschema:"description=一个项目是否有高速票服务"`
 	PriorityAccessCost int          `json:"priority_access_cost,omitempty" jsonschema:"description=一个项目如果有高速票服务，则一个人的高速票需要花多少钱"`
-	QueueTime          int          `json:"queue_time,omitempty" jsonschema:"description=一个项目常规需要的排队时间，单位是分钟。如果为空，则这个项目一般不需要排队"`
+	QueueTime          float64      `json:"queue_time,omitempty" jsonschema:"description=一个项目常规需要的排队时间，单位是分钟。如果为空，则这个项目一般不需要排队"`
 }
 
 // LocationAdjacency 主题乐园的一个区域到相邻区域的步行时间.
@@ -56,14 +56,14 @@ type LocationAdjacency struct {
 }
 
 type DestinationWalkingTime struct {
-	DestinationName string `json:"destination_name" jsonschema:"description=目标区域名称"`
-	WalkTime        int    `json:"walk_time" jsonschema:"description=步行到目标区域所需要的分钟数"`
+	DestinationName string  `json:"destination_name" jsonschema:"description=目标区域名称"`
+	WalkTime        float64 `json:"walk_time" jsonschema:"description=步行到目标区域所需要的分钟数"`
 }
 
 // AttractionQueueTime 主题乐园的一个游乐项目的排队时间.
 type AttractionQueueTime struct {
-	Name      string `json:"name" jsonschema:"description=游乐项目的名称"`
-	QueueTime int    `json:"queue_time" jsonschema:"description=游乐项目的排队时间"`
+	Name      string  `json:"name" jsonschema:"description=游乐项目的名称"`
+	QueueTime float64 `json:"queue_time" jsonschema:"description=游乐项目的排队时间"`
 }
 
 type ListPerformanceRequest struct {
