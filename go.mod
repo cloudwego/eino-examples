@@ -6,7 +6,7 @@ toolchain go1.23.6
 
 require (
 	github.com/bytedance/sonic v1.13.2
-	github.com/cloudwego/eino v0.3.43-0.20250611072754-9c9cb4bbd689
+	github.com/cloudwego/eino v0.3.50-0.20250711055828-1032c59b1258
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250616031540-9f38f72c63e9
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250616031540-9f38f72c63e9
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.13
