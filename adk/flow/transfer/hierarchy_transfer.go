@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/bytedance/sonic"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
@@ -41,13 +41,14 @@ func main() {
 	}
 
 	greetingAgent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Model: chatModel,
+		Model:       chatModel,
+		Name:        "greeting_agent",
+		Description: "handles simple greetings and say hellos.",
+
 		Instruction: `You are the Greeting Agent. Your ONLY task is to provide a friendly greeting to the user.
 Use the 'say_hello' tool to generate the greeting.
 If the user provides their name, make sure to pass it to the tool.
 Do not engage in any other conversation or tasks.`,
-		Name:        "greeting_agent",
-		Description: "Handles simple greetings and hellos using the 'say_hello' tool.",
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{sayHelloTool},
@@ -103,7 +104,7 @@ If the tool is successful, present the weather report clearly.`,
 	rn := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: false,
 	})
-	events := rn.Run(ctx, as, []adk.Message{schema.UserMessage("bye")})
+	events := rn.Run(ctx, as, []adk.Message{schema.UserMessage("hello")})
 
 	for i := 0; ; i++ {
 		event, ok := events.Next()
@@ -111,13 +112,13 @@ If the tool is successful, present the weather report clearly.`,
 			break
 		}
 
-		log.Printf("agent: %s, eventIdx=%d\n", event.AgentName, i)
+		log.Printf("agent: %s, eventIdx: %d\n", event.AgentName, i)
 
-		s, e := sonic.MarshalString(event)
+		s, e := json.MarshalIndent(event, "  ", "  ")
 		if e != nil {
 			panic(e)
 		}
-		log.Printf("    event: %s\n", s)
+		log.Printf("    event: %s\n", string(s))
 	}
 }
 

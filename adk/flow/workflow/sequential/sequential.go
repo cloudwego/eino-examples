@@ -24,14 +24,14 @@ func main() {
 	}
 
 	agent1, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:        "天气Agent",
+		Name:        "weather_agent",
 		Description: "You are a helpful assistant",
 		Instruction: "你只能回答天气相关的问题，超过范围内的回复我不知道",
 		Model:       cm,
 	})
 
 	agent2, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:        "BaseAskAgent",
+		Name:        "base_agent",
 		Description: "You are a helpful assistant",
 		Instruction: "You are a helpful assistant",
 		Model:       cm,
@@ -53,7 +53,7 @@ func main() {
 		schema.UserMessage("introduce china beijing."),
 	})
 
-	for {
+	for i := 0; ; i++ {
 		ev, hasNext := iter.Next()
 		if !hasNext {
 			break
@@ -66,9 +66,15 @@ func main() {
 				continue
 			}
 
-			data, _ := json.MarshalIndent(msg, "", "  ")
-			log.Printf("agent=%v\n", ev.AgentName)
+			data, _ := json.MarshalIndent(msg, "  ", "  ")
+			log.Printf("agent: %s, run_path: %v, eventIdx: %d\n", ev.AgentName, ev.RunPath, i)
 			log.Printf("    msg: %v\n", string(data))
+		}
+
+		if ev.Action != nil {
+			log.Printf("agent: %s, run_path: %v, eventIdx: %d\n", ev.AgentName, ev.RunPath, i)
+			data, _ := json.MarshalIndent(ev.Action, "  ", "  ")
+			log.Printf("    action: %v\n", string(data))
 		}
 	}
 }
