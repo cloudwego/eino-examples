@@ -14,14 +14,12 @@ uv sync
 ```bash
 cp ./conf/deer-go.yaml.1 ./conf/deer-go.yaml
 ```
-3. 运行 `build.sh` 完成编译，编译产物在 `output/` 文件夹下
-4. 运行 `run.sh`，编译并执行。
+3. 运行 `run.sh`，编译并执行。
 
 ``` bash
-./build.sh
 ./run.sh
 ```
-5. 如果想配合deerflow的前端运行，需要添加`-s`参数，同时运行deerflow的前端，即可。
+4. 如果想配合deerflow的前端运行，需要添加`-s`参数，同时运行deerflow的前端，即可。
 ``` bash
 ./run.sh -s
 ```
