@@ -26,8 +26,8 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 
-	"deer-go/biz/infra"
-	"deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 )
 
 func loadReporterMsg(ctx context.Context, name string, opts ...any) (output []*schema.Message, err error) {

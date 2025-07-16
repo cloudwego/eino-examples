@@ -27,12 +27,12 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/sse"
-	
-	"deer-go/biz/consts"
-	"deer-go/biz/eino"
-	"deer-go/biz/infra"
-	"deer-go/biz/model"
-	"deer-go/biz/util"
+
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/consts"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/eino"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/util"
 )
 
 func ChatStreamEino(ctx context.Context, c *app.RequestContext) {

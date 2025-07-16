@@ -22,8 +22,8 @@ import (
 	"github.com/RanFeng/ilog"
 	"github.com/cloudwego/eino/compose"
 
-	"deer-go/biz/consts"
-	"deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/consts"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 )
 
 func routerResearchTeam(ctx context.Context, input string, opts ...any) (output string, err error) {

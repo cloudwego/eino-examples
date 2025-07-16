@@ -21,7 +21,7 @@ package main
 import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 
-	"deer-go/biz/handler"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/handler"
 )
 
 // customizeRegister registers customize routers.

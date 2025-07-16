@@ -31,9 +31,9 @@ import (
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
 
-	"deer-go/biz/consts"
-	"deer-go/biz/infra"
-	"deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/consts"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 )
 
 func loadResearcherMsg(ctx context.Context, name string, opts ...any) (output []*schema.Message, err error) {

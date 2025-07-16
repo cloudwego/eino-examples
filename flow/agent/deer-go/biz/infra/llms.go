@@ -23,8 +23,8 @@ import (
 	openai3 "github.com/cloudwego/eino-ext/libs/acl/openai"
 	"github.com/getkin/kin-openapi/openapi3gen"
 
-	"deer-go/biz/model"
-	"deer-go/conf"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
 )
 
 var (

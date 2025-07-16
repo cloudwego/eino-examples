@@ -33,11 +33,11 @@ import (
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/hertz-contrib/cors"
 
-	"deer-go/biz/consts"
-	"deer-go/biz/eino"
-	"deer-go/biz/infra"
-	"deer-go/biz/model"
-	"deer-go/conf"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/consts"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/eino"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
+	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
 )
 
 func CorsMw() app.HandlerFunc {
