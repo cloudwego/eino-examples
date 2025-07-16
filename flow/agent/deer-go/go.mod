@@ -1,4 +1,4 @@
-module deer-go
+module github.com/cloudwego/eino-examples/flow/agent/deer-go
 
 go 1.23.0
 
