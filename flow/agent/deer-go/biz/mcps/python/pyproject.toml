@@ -1,0 +1,9 @@
+[project]
+name = "python-mcp-server"
+version = "0.1.0"
+description = "用于执行python代码的mcp server"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    'mcp==1.8.1',
+]
