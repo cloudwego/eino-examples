@@ -1,0 +1,103 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package main
+
+import (
+	"bufio"
+	"context"
+	"fmt"
+	"log"
+	"os"
+
+	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/compose"
+
+	"github.com/cloudwego/eino-examples/adk/intro/chatmodel/internal"
+)
+
+func main() {
+	ctx := context.Background()
+	a := internal.NewBookRecommendAgent()
+	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+		Agent:           a,
+		CheckPointStore: newInMemoryStore(),
+	})
+	iter := runner.Query(ctx, "recommend a book to me", adk.WithCheckPointID("1"))
+	for {
+		event, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if event.Err != nil {
+			log.Fatal(event.Err)
+		}
+		if event.Action != nil && event.Action.Interrupted != nil {
+			fmt.Printf("\ninterrupt happened, info: %+v\n", event.Action.Interrupted.Data.(*compose.InterruptInfo).RerunNodesExtra["ToolNode"])
+			continue
+		}
+		msg, err := event.Output.MessageOutput.GetMessage()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("\nmessage:\n%v\n======\n\n", msg)
+	}
+
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Print("new input is:\n")
+	scanner.Scan()
+	nInput := scanner.Text()
+
+	iter, err := runner.Resume(ctx, "1", adk.WithToolOptions([]tool.Option{internal.WithNewInput(nInput)}))
+	if err != nil {
+		log.Fatal(err)
+	}
+	for {
+		event, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if event.Err != nil {
+			log.Fatal(event.Err)
+		}
+		msg, err := event.Output.MessageOutput.GetMessage()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("\nmessage:\n%v\n======\n\n", msg)
+	}
+}
+
+func newInMemoryStore() compose.CheckPointStore {
+	return &inMemoryStore{
+		mem: map[string][]byte{},
+	}
+}
+
+type inMemoryStore struct {
+	mem map[string][]byte
+}
+
+func (i *inMemoryStore) Set(ctx context.Context, key string, value []byte) error {
+	i.mem[key] = value
+	return nil
+}
+
+func (i *inMemoryStore) Get(ctx context.Context, key string) ([]byte, bool, error) {
+	v, ok := i.mem[key]
+	return v, ok, nil
+}
