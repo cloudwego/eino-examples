@@ -2,13 +2,14 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/bytedance/sonic"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
@@ -25,30 +26,29 @@ func main() {
 		log.Fatalf("ark.NewChatModel failed: %v\n", err)
 	}
 
-	getWeatherTool, err := utils.InferTool("get_weather", "Retrieves the current weather report for a specified city.", GetWeatherInfo)
+	getWeatherTool, err := utils.InferTool("get_weather", "Retrieves the current weather report for a specified city.", getWeatherInfo)
 	if err != nil {
 		log.Fatalf("utils.InferTool get_weather failed: %v\n", err)
 	}
 
-	sayHelloTool, err := utils.InferTool("say_hello", "Provides a simple greeting, optionally addressing the user by name.", SayHello)
+	sayHelloTool, err := utils.InferTool("say_hello", "Provides a simple greeting, optionally addressing the user by name.", sayHello)
 	if err != nil {
 		log.Fatalf("utils.InferTool say_hello failed: %v\n", err)
 	}
 
-	sayGoodbyeTool, err := utils.InferTool("say_goodbye", "Provides a simple farewell message to conclude the conversation.", SayGoodbye)
+	sayGoodbyeTool, err := utils.InferTool("say_goodbye", "Provides a simple farewell message to conclude the conversation.", sayGoodbye)
 	if err != nil {
 		log.Fatalf("utils.InferTool say_goodbye failed: %v\n", err)
 	}
 
 	greetingAgent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Model:       chatModel,
-		Name:        "greeting_agent",
-		Description: "handles simple greetings and say hellos.",
-
+		Model: chatModel,
 		Instruction: `You are the Greeting Agent. Your ONLY task is to provide a friendly greeting to the user.
 Use the 'say_hello' tool to generate the greeting.
 If the user provides their name, make sure to pass it to the tool.
 Do not engage in any other conversation or tasks.`,
+		Name:        "greeting_agent",
+		Description: "Handles simple greetings and hellos using the 'say_hello' tool.",
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{sayHelloTool},
@@ -104,7 +104,7 @@ If the tool is successful, present the weather report clearly.`,
 	rn := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: false,
 	})
-	events := rn.Run(ctx, as, []adk.Message{schema.UserMessage("hello")})
+	events := rn.Run(ctx, as, []adk.Message{schema.UserMessage("bye")})
 
 	for i := 0; ; i++ {
 		event, ok := events.Next()
@@ -112,21 +112,30 @@ If the tool is successful, present the weather report clearly.`,
 			break
 		}
 
-		log.Printf("agent: %s, eventIdx: %d\n", event.AgentName, i)
+		log.Printf("agent: %s, eventIdx=%d\n", event.AgentName, i)
 
-		s, e := json.MarshalIndent(event, "  ", "  ")
+		if event.Err != nil {
+			log.Printf("    error: %v\n", event.Err)
+			continue
+		}
+		s, e := sonic.MarshalString(event)
 		if e != nil {
 			panic(e)
 		}
-		log.Printf("    event: %s\n", string(s))
+		log.Printf("    event: %s\n", s)
 	}
+}
+
+func buildSubAgents(ctx context.Context, chatModel model.ToolCallingChatModel) (adk.Agent, error) {
+
+	return nil, nil
 }
 
 type City struct {
 	Name string `json:"city_name" jsonschema:"description=the name of the city (e.g., \"Beijing\", \"London\")"`
 }
 
-func GetWeatherInfo(ctx context.Context, city *City) (string, error) {
+func getWeatherInfo(ctx context.Context, city *City) (string, error) {
 	return fmt.Sprintf("the weather in %s is good", city.Name), nil
 }
 
@@ -134,10 +143,10 @@ type UserName struct {
 	Name string `json:"user_name" jsonschema:"description=the name of the user (e.g., \"Alice\", \"Bob\")"`
 }
 
-func SayHello(ctx context.Context, user *UserName) (string, error) {
+func sayHello(ctx context.Context, user *UserName) (string, error) {
 	return fmt.Sprintf("hello, %s", user.Name), nil
 }
 
-func SayGoodbye(ctx context.Context, none struct{}) (string, error) {
+func sayGoodbye(ctx context.Context, none struct{}) (string, error) {
 	return "goodbye", nil
 }

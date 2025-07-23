@@ -4,9 +4,12 @@ go 1.23.4
 
 toolchain go1.23.6
 
+replace (
+	github.com/cloudwego/eino => /Users/bytedance/gocode/src/github.com/cloudwego/eino
+)
 require (
 	github.com/bytedance/sonic v1.13.2
-	github.com/cloudwego/eino v0.3.50-0.20250714102715-d94509b95160
+	github.com/cloudwego/eino v0.3.50-0.20250717050522-3b9bfa435e19
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250616031540-9f38f72c63e9
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250616031540-9f38f72c63e9
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.13
