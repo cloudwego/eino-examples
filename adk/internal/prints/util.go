@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package adk
+package prints
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
+	"strings"
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
@@ -27,7 +29,7 @@ import (
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
-func PrintEvent(event *adk.AgentEvent) {
+func Event(event *adk.AgentEvent) {
 	fmt.Printf("name: %s\npath: %s", event.AgentName, event.RunPath)
 	if event.Output != nil && event.Output.MessageOutput != nil {
 		if m := event.Output.MessageOutput.Message; m != nil {
@@ -47,6 +49,8 @@ func PrintEvent(event *adk.AgentEvent) {
 		} else if s := event.Output.MessageOutput.MessageStream; s != nil {
 			toolMap := map[int][]*schema.Message{}
 			var contentStart bool
+			charNumOfOneRow := 0
+			maxCharNumOfOneRow := 120
 			for {
 				chunk, err := s.Recv()
 				if err != nil {
@@ -64,9 +68,16 @@ func PrintEvent(event *adk.AgentEvent) {
 						} else {
 							fmt.Printf("\nanswer: ")
 						}
-					} else {
-						fmt.Printf(chunk.Content)
 					}
+
+					charNumOfOneRow += len(chunk.Content)
+					if strings.Contains(chunk.Content, "\n") {
+						charNumOfOneRow = 0
+					} else if charNumOfOneRow >= maxCharNumOfOneRow {
+						fmt.Printf("\n")
+						charNumOfOneRow = 0
+					}
+					fmt.Printf(chunk.Content)
 				}
 
 				if len(chunk.ToolCalls) > 0 {
@@ -107,6 +118,11 @@ func PrintEvent(event *adk.AgentEvent) {
 	if event.Action != nil {
 		if event.Action.TransferToAgent != nil {
 			fmt.Printf("\naction: transfer to %v", event.Action.TransferToAgent.DestAgentName)
+		}
+		if event.Action.Interrupted != nil {
+			ii, _ := json.MarshalIndent(event.Action.Interrupted.Data, "  ", "  ")
+			fmt.Printf("\naction: interrupted")
+			fmt.Printf("\ninterrupt snapshot: %v", string(ii))
 		}
 		if event.Action.Exit {
 			fmt.Printf("\naction: exit")

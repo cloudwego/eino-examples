@@ -32,8 +32,9 @@ func NewBookRecommendAgent() adk.Agent {
 	a, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:        "BookRecommender",
 		Description: "An agent that can recommend books",
-		Instruction: `You are an expert book recommender. Based on the user's request, use the "search_book" tool to find relevant books. Finally, present the results to the user.`,
-		Model:       NewChatModel(),
+		Instruction: `You are an expert book recommender.
+Based on the user's request, use the "search_book" tool to find relevant books. Finally, present the results to the user.`,
+		Model: NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{NewBookRecommender(), NewAskForClarificationTool()},

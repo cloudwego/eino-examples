@@ -27,6 +27,7 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
+	"github.com/cloudwego/eino-examples/adk/internal/prints"
 	"github.com/cloudwego/eino-examples/adk/intro/chatmodel/internal"
 )
 
@@ -34,6 +35,7 @@ func main() {
 	ctx := context.Background()
 	a := internal.NewBookRecommendAgent()
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
 		CheckPointStore: newInMemoryStore(),
 	})
@@ -46,20 +48,14 @@ func main() {
 		if event.Err != nil {
 			log.Fatal(event.Err)
 		}
-		if event.Action != nil && event.Action.Interrupted != nil {
-			fmt.Printf("\ninterrupt happened, info: %+v\n", event.Action.Interrupted.Data.(*compose.InterruptInfo).RerunNodesExtra["ToolNode"])
-			continue
-		}
-		msg, err := event.Output.MessageOutput.GetMessage()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("\nmessage:\n%v\n======\n\n", msg)
+
+		prints.Event(event)
 	}
 
 	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Print("new input is:\n")
+	fmt.Print("\nyour input here: ")
 	scanner.Scan()
+	fmt.Println()
 	nInput := scanner.Text()
 
 	iter, err := runner.Resume(ctx, "1", adk.WithToolOptions([]tool.Option{internal.WithNewInput(nInput)}))
@@ -71,14 +67,12 @@ func main() {
 		if !ok {
 			break
 		}
+
 		if event.Err != nil {
 			log.Fatal(event.Err)
 		}
-		msg, err := event.Output.MessageOutput.GetMessage()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("\nmessage:\n%v\n======\n\n", msg)
+
+		prints.Event(event)
 	}
 }
 

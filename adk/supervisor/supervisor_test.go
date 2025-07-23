@@ -25,7 +25,7 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 
-	adk2 "github.com/cloudwego/eino-examples/adk"
+	"github.com/cloudwego/eino-examples/adk/internal/prints"
 )
 
 func TestSupervisor(t *testing.T) {
@@ -51,6 +51,6 @@ func TestSupervisor(t *testing.T) {
 			break
 		}
 
-		adk2.PrintEvent(event)
+		prints.Event(event)
 	}
 }
