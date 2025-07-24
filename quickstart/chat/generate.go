@@ -24,7 +24,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-func generate(ctx context.Context, llm model.ChatModel, in []*schema.Message) *schema.Message {
+func generate(ctx context.Context, llm model.ToolCallingChatModel, in []*schema.Message) *schema.Message {
 	result, err := llm.Generate(ctx, in)
 	if err != nil {
 		log.Fatalf("llm generate failed: %v", err)
@@ -32,7 +32,7 @@ func generate(ctx context.Context, llm model.ChatModel, in []*schema.Message) *s
 	return result
 }
 
-func stream(ctx context.Context, llm model.ChatModel, in []*schema.Message) *schema.StreamReader[*schema.Message] {
+func stream(ctx context.Context, llm model.ToolCallingChatModel, in []*schema.Message) *schema.StreamReader[*schema.Message] {
 	result, err := llm.Stream(ctx, in)
 	if err != nil {
 		log.Fatalf("llm generate failed: %v", err)
