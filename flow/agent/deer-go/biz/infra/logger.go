@@ -125,9 +125,11 @@ func (cb *LoggerCallback) pushMsg(ctx context.Context, msgID string, msg *schema
 
 func (cb *LoggerCallback) OnStart(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
 	if inputStr, ok := input.(string); ok {
-		cb.Out <- "\n==================\n"
-		cb.Out <- fmt.Sprintf(" [OnStart] %s ", inputStr)
-		cb.Out <- "\n==================\n"
+		if cb.Out != nil {
+			cb.Out <- "\n==================\n"
+			cb.Out <- fmt.Sprintf(" [OnStart] %s ", inputStr)
+			cb.Out <- "\n==================\n"
+		}
 	}
 	return ctx
 }
