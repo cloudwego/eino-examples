@@ -35,11 +35,13 @@ type BookSearchOutput struct {
 }
 
 func NewBookRecommender() tool.InvokableTool {
-	bookSearchTool, err := utils.InferTool("search_book", "Search books based on user preferences", func(ctx context.Context, input *BookSearchInput) (output *BookSearchOutput, err error) {
-		// search code
-		// ...
-		return &BookSearchOutput{Books: []string{"God's blessing on this wonderful world!"}}, nil
-	})
+	bookSearchTool, err := utils.InferTool("search_book", "Search books based on user preferences",
+		func(ctx context.Context, input *BookSearchInput) (output *BookSearchOutput, err error) {
+			// search code
+			// ...
+			return &BookSearchOutput{Books: []string{"God's blessing on this wonderful world!"}}, nil
+		},
+	)
 	if err != nil {
 		log.Fatalf("failed to create search book tool: %v", err)
 	}

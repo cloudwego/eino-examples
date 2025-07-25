@@ -34,7 +34,10 @@ import (
 )
 
 func main() {
-	compose.RegisterSerializableType[myState]("state")
+	err := compose.RegisterSerializableType[myState]("state")
+	if err != nil {
+		log.Fatalf("RegisterSerializableType failed: %v", err)
+	}
 
 	ctx := context.Background()
 	runner, err := composeGraph[map[string]any, *schema.Message](

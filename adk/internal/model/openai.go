@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package internal
+package model
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -27,16 +26,19 @@ import (
 )
 
 func NewChatModel() model.ToolCallingChatModel {
-	ctx := context.Background()
-	apiKey := os.Getenv("OPENAI_API_KEY")
-	openaiModel := os.Getenv("OPENAI_MODEL")
-
-	cm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		APIKey: apiKey,
-		Model:  openaiModel,
+	cm, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
+		APIKey:  os.Getenv("OPENAI_API_KEY"),
+		Model:   os.Getenv("OPENAI_MODEL"),
+		BaseURL: os.Getenv("OPENAI_BASE_URL"),
+		ByAzure: func() bool {
+			if os.Getenv("OPENAI_BY_AZURE") == "true" {
+				return true
+			}
+			return false
+		}(),
 	})
 	if err != nil {
-		log.Fatal(fmt.Errorf("failed to create chatmodel: %w", err))
+		log.Fatalf("openai.NewChatModel failed: %v", err)
 	}
 	return cm
 }

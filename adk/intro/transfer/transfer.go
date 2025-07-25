@@ -18,11 +18,11 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/cloudwego/eino/adk"
 
+	"github.com/cloudwego/eino-examples/adk/internal/prints"
 	"github.com/cloudwego/eino-examples/adk/intro/transfer/internal"
 )
 
@@ -38,7 +38,8 @@ func main() {
 	}
 
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
-		Agent: a,
+		EnableStreaming: true, // you can disable streaming here
+		Agent:           a,
 	})
 
 	// query weather
@@ -52,11 +53,8 @@ func main() {
 		if event.Err != nil {
 			log.Fatal(event.Err)
 		}
-		if event.Action != nil {
-			fmt.Printf("\nAgent[%s]: transfer to %+v\n\n======\n", event.AgentName, event.Action.TransferToAgent.DestAgentName)
-		} else {
-			fmt.Printf("\nAgent[%s]:\n%+v\n\n======\n", event.AgentName, event.Output.MessageOutput.Message)
-		}
+
+		prints.Event(event)
 	}
 
 	// failed to route
@@ -70,10 +68,6 @@ func main() {
 		if event.Err != nil {
 			log.Fatal(event.Err)
 		}
-		if event.Action != nil {
-			fmt.Printf("\nAgent[%s]: transfer to %+v\n\n======\n", event.AgentName, event.Action.TransferToAgent.DestAgentName)
-		} else {
-			fmt.Printf("\nAgent[%s]:\n%+v\n\n======\n", event.AgentName, event.Output.MessageOutput.Message)
-		}
+		prints.Event(event)
 	}
 }
