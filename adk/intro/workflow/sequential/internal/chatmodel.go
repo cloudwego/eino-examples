@@ -19,30 +19,11 @@ package internal
 import (
 	"context"
 	"log"
-	"os"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/components/model"
-)
 
-func newChatModel() model.ToolCallingChatModel {
-	cm, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
-		APIKey:  os.Getenv("OPENAI_API_KEY"),
-		Model:   os.Getenv("OPENAI_MODEL"),
-		BaseURL: os.Getenv("OPENAI_BASE_URL"),
-		ByAzure: func() bool {
-			if os.Getenv("OPENAI_BY_AZURE") == "true" {
-				return true
-			}
-			return false
-		}(),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	return cm
-}
+	"github.com/cloudwego/eino-examples/adk/internal/model"
+)
 
 func NewPlanAgent() adk.Agent {
 	a, err := adk.NewChatModelAgent(context.Background(), &adk.ChatModelAgentConfig{
@@ -53,7 +34,7 @@ You are an expert research planner.
 Your goal is to create a comprehensive, step-by-step research plan for a given topic. 
 The plan should be logical, clear, and easy to follow.
 The user will provide the research topic. Your output must ONLY be the research plan itself, without any conversational text, introductions, or summaries.`,
-		Model:     newChatModel(),
+		Model:     model.NewChatModel(),
 		OutputKey: "Plan",
 	})
 	if err != nil {
@@ -72,7 +53,7 @@ You will be provided with a detailed research plan:
 {Plan}
 
 Your task is to expand on this plan to write a comprehensive, well-structured, and in-depth report.`,
-		Model: newChatModel(),
+		Model: model.NewChatModel(),
 	})
 	if err != nil {
 		log.Fatal(err)

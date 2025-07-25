@@ -20,33 +20,14 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
-)
 
-func newChatModel() model.ToolCallingChatModel {
-	cm, err := openai.NewChatModel(context.Background(), &openai.ChatModelConfig{
-		APIKey:  os.Getenv("OPENAI_API_KEY"),
-		Model:   os.Getenv("OPENAI_MODEL"),
-		BaseURL: os.Getenv("OPENAI_BASE_URL"),
-		ByAzure: func() bool {
-			if os.Getenv("OPENAI_BY_AZURE") == "true" {
-				return true
-			}
-			return false
-		}(),
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-	return cm
-}
+	"github.com/cloudwego/eino-examples/adk/internal/model"
+)
 
 type GetWeatherInput struct {
 	City string `json:"city"`
@@ -69,7 +50,7 @@ func NewWeatherAgent() adk.Agent {
 		Description: "This agent can get the current weather for a given city.",
 		Instruction: `Your sole purpose is to get the current weather for a given city by using the 'get_weather' tool.
 After calling the tool, report the result directly to the user.`,
-		Model: newChatModel(),
+		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{weatherTool},
@@ -88,7 +69,7 @@ func NewChatAgent() adk.Agent {
 		Description: "A general-purpose agent for handling conversational chat.", // English description
 		Instruction: `You are a friendly conversational assistant.
 Your role is to handle general chit-chat and answer questions that are not related to any specific tool-based tasks.`,
-		Model: newChatModel(),
+		Model: model.NewChatModel(),
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -103,7 +84,7 @@ func NewRouterAgent() adk.Agent {
 		Instruction: `You are an intelligent task router.
 Your responsibility is to analyze the user's request and delegate it to the most appropriate expert agent.
 If no Agent can handle the task, simply inform the user it cannot be processed.`,
-		Model: newChatModel(),
+		Model: model.NewChatModel(),
 	})
 	if err != nil {
 		log.Fatal(err)

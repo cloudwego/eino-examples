@@ -24,6 +24,8 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
+
+	"github.com/cloudwego/eino-examples/adk/internal/model"
 )
 
 func NewBookRecommendAgent() adk.Agent {
@@ -34,7 +36,7 @@ func NewBookRecommendAgent() adk.Agent {
 		Description: "An agent that can recommend books",
 		Instruction: `You are an expert book recommender.
 Based on the user's request, use the "search_book" tool to find relevant books. Finally, present the results to the user.`,
-		Model: NewChatModel(),
+		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{NewBookRecommender(), NewAskForClarificationTool()},
