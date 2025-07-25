@@ -23,6 +23,7 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 
+	"github.com/cloudwego/eino-examples/adk/internal/prints"
 	"github.com/cloudwego/eino-examples/adk/intro/workflow/sequential/internal"
 )
 
@@ -39,7 +40,8 @@ func main() {
 	}
 
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
-		Agent: a,
+		EnableStreaming: true, // you can disable streaming here
+		Agent:           a,
 	})
 
 	iter := runner.Query(ctx, "The history of Large Language Models")
@@ -52,10 +54,7 @@ func main() {
 			fmt.Printf("Error: %v\n", event.Err)
 			break
 		}
-		msg, err := event.Output.MessageOutput.GetMessage()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Agent[%s]:\n %+v\n\n===========\n\n", event.AgentName, msg)
+
+		prints.Event(event)
 	}
 }

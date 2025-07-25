@@ -20,34 +20,40 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"testing"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/adk/internal/prints"
+	"github.com/cloudwego/eino-examples/adk/intro/workflow/loop/internal"
 )
 
-func TestSupervisor(t *testing.T) {
-	sv, err := buildSupervisor(context.Background())
+func main() {
+	ctx := context.Background()
+
+	a, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
+		Name:          "ReflectionAgent",
+		Description:   "Reflection agent with main and critique agent for iterative task solving.",
+		SubAgents:     []adk.Agent{internal.NewMainAgent(), internal.NewCritiqueAgent()},
+		MaxIterations: 5,
+	})
 	if err != nil {
-		log.Fatalf("build supervisor failed: %v", err)
+		log.Fatal(err)
 	}
 
-	query := "find US and New York state GDP in 2024. what % of US GDP was New York state?"
-
-	iter := sv.Run(context.Background(), &adk.AgentInput{
-		Messages: []adk.Message{
-			schema.UserMessage(query),
-		},
-		EnableStreaming: true,
+	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+		EnableStreaming: true, // you can disable streaming here
+		Agent:           a,
 	})
 
-	fmt.Println("\nuser query: ", query)
-
+	iter := runner.Query(ctx,
+		"briefly introduce what a multimodal embedding model is.")
 	for {
-		event, hasEvent := iter.Next()
-		if !hasEvent {
+		event, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if event.Err != nil {
+			fmt.Printf("Error: %v\n", event.Err)
 			break
 		}
 
