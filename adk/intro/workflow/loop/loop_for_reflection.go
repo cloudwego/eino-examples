@@ -18,7 +18,7 @@ func main() {
 		Name:          "ReflectionAgent",
 		Description:   "Reflection agent with main and critique agent for iterative task solving.",
 		SubAgents:     []adk.Agent{internal.NewMainAgent(), internal.NewCritiqueAgent()},
-		MaxIterations: 20,
+		MaxIterations: 5,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -30,7 +30,7 @@ func main() {
 	})
 
 	iter := runner.Query(ctx,
-		"tell me all the possible architectures of multi-modal embeddings, and analyze their pros and cons")
+		"briefly introduce what a multimodal embedding model is.")
 	for {
 		event, ok := iter.Next()
 		if !ok {
