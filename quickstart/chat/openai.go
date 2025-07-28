@@ -25,7 +25,7 @@ import (
 	"github.com/cloudwego/eino/components/model"
 )
 
-func createOpenAIChatModel(ctx context.Context) model.ChatModel {
+func createOpenAIChatModel(ctx context.Context) model.ToolCallingChatModel {
 	key := os.Getenv("OPENAI_API_KEY")
 	modelName := os.Getenv("OPENAI_MODEL_NAME")
 	baseURL := os.Getenv("OPENAI_BASE_URL")
