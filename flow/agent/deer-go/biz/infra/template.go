@@ -14,28 +14,32 @@
  * limitations under the License.
  */
 
-package main
+package infra
 
 import (
 	"context"
-	"log"
+	"fmt"
+	"io/ioutil"
 	"os"
-
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino/components/model"
+	"path/filepath"
 )
 
-func createOpenAIChatModel(ctx context.Context) model.ToolCallingChatModel {
-	key := os.Getenv("OPENAI_API_KEY")
-	modelName := os.Getenv("OPENAI_MODEL_NAME")
-	baseURL := os.Getenv("OPENAI_BASE_URL")
-	chatModel, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		BaseURL: baseURL,
-		Model:   modelName,
-		APIKey:  key,
-	})
+// GetPromptTemplate 加载并返回一个提示模板
+func GetPromptTemplate(ctx context.Context, promptName string) (string, error) {
+	// 获取当前文件所在目录
+	dir, err := os.Getwd()
 	if err != nil {
-		log.Fatalf("create openai chat model failed, err=%v", err)
+		return "", fmt.Errorf("获取当前工作目录失败: %w", err)
 	}
-	return chatModel
+
+	// 构建模板文件路径
+	templatePath := filepath.Join(dir, "biz", "prompts", fmt.Sprintf("%s.md", promptName))
+
+	// 读取模板文件内容
+	content, err := ioutil.ReadFile(templatePath)
+	if err != nil {
+		return "", fmt.Errorf("读取模板文件 %s 失败: %w", promptName, err)
+	}
+
+	return string(content), nil
 }
