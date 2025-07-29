@@ -118,8 +118,10 @@ func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[
 		Query:   msg,
 		History: conversation.GetMessages(),
 	}
-	// set session info
-	ctx = apmplus.SetSession(ctx, apmplus.WithSessionID(id), apmplus.WithUserID("eino-assistant-user"))
+	if os.Getenv("APMPLUS_APP_KEY") != "" {
+		// set session info for apmplus callback
+		ctx = apmplus.SetSession(ctx, apmplus.WithSessionID(id), apmplus.WithUserID("eino-assistant-user"))
+	}
 	sr, err := runner.Stream(ctx, userMessage, compose.WithCallbacks(cbHandler))
 	if err != nil {
 		return nil, fmt.Errorf("failed to stream: %w", err)
