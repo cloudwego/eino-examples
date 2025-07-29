@@ -37,14 +37,17 @@ import (
 )
 
 func main() {
-	arkAPIKey := os.Getenv("ARK_API_KEY")
-	arkModelName := os.Getenv("ARK_MODEL_NAME")
-
 	ctx := context.Background()
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: arkAPIKey,
-		Model:  arkModelName,
-	})
+
+	config := &ark.ChatModelConfig{
+		APIKey: os.Getenv("ARK_API_KEY"),
+		Model:  os.Getenv("ARK_MODEL_NAME"),
+	}
+
+	// Create a new cached ark chat model.
+	//arkModel, err = NewCachedARKChatModel(ctx, config)
+
+	arkModel, err := ark.NewChatModel(ctx, config)
 	if err != nil {
 		logs.Errorf("failed to create chat model: %v", err)
 		return
@@ -107,6 +110,21 @@ func main() {
 	// }
 	// fmt.Println(msg.String())
 
+	// If you want to use cached ark chat model, define a cache option and pass it to the agent.
+	// cacheOption := &ark.CacheOption{
+	//		APIType: ark.ResponsesAPI,
+	//		SessionCache: &ark.SessionCacheConfig{
+	//			EnableCache: true,
+	//			TTL:         3600,
+	//		},
+	//	}
+	// ctx = WithCacheCtx(ctx, cacheOption)
+
+	opt := []agent.AgentOption{
+		agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
+		//react.WithChatModelOptions(ark.WithCache(cacheOption)),
+	}
+
 	sr, err := ragent.Stream(ctx, []*schema.Message{
 		{
 			Role:    schema.System,
@@ -116,7 +134,7 @@ func main() {
 			Role:    schema.User,
 			Content: "我在北京，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
 		},
-	}, agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})))
+	}, opt...)
 	if err != nil {
 		logs.Errorf("failed to stream: %v", err)
 		return
@@ -143,7 +161,6 @@ func main() {
 	}
 
 	logs.Infof("\n\n===== finished =====\n")
-
 }
 
 type LoggerCallback struct {

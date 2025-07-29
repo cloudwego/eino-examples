@@ -11,7 +11,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20250707031732-1bfb5847488c
-	github.com/cloudwego/eino-ext/devops v0.1.3
+	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/obs-opentelemetry/provider v0.3.0
@@ -56,6 +56,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/matoous/go-nanoid v1.5.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
