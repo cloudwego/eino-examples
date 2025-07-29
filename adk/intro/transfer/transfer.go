@@ -22,14 +22,14 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 
-	"github.com/cloudwego/eino-examples/adk/internal/prints"
-	"github.com/cloudwego/eino-examples/adk/intro/transfer/internal"
+	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/intro/transfer/subagents"
 )
 
 func main() {
-	weatherAgent := internal.NewWeatherAgent()
-	chatAgent := internal.NewChatAgent()
-	routerAgent := internal.NewRouterAgent()
+	weatherAgent := subagents.NewWeatherAgent()
+	chatAgent := subagents.NewChatAgent()
+	routerAgent := subagents.NewRouterAgent()
 
 	ctx := context.Background()
 	a, err := adk.SetSubAgents(ctx, routerAgent, []adk.Agent{chatAgent, weatherAgent})
