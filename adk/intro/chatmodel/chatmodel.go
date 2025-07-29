@@ -27,13 +27,13 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
-	"github.com/cloudwego/eino-examples/adk/internal/prints"
-	"github.com/cloudwego/eino-examples/adk/intro/chatmodel/internal"
+	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/intro/chatmodel/subagents"
 )
 
 func main() {
 	ctx := context.Background()
-	a := internal.NewBookRecommendAgent()
+	a := subagents.NewBookRecommendAgent()
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
@@ -58,7 +58,7 @@ func main() {
 	fmt.Println()
 	nInput := scanner.Text()
 
-	iter, err := runner.Resume(ctx, "1", adk.WithToolOptions([]tool.Option{internal.WithNewInput(nInput)}))
+	iter, err := runner.Resume(ctx, "1", adk.WithToolOptions([]tool.Option{subagents.WithNewInput(nInput)}))
 	if err != nil {
 		log.Fatal(err)
 	}

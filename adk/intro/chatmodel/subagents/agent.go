@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package internal
+package subagents
 
 import (
 	"context"
@@ -25,7 +25,7 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
-	"github.com/cloudwego/eino-examples/adk/internal/model"
+	"github.com/cloudwego/eino-examples/adk/common/model"
 )
 
 func NewBookRecommendAgent() adk.Agent {

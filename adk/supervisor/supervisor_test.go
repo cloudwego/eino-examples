@@ -25,7 +25,7 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 
-	"github.com/cloudwego/eino-examples/adk/internal/prints"
+	"github.com/cloudwego/eino-examples/adk/common/prints"
 )
 
 func TestSupervisor(t *testing.T) {
