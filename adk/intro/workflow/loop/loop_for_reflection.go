@@ -23,8 +23,8 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 
-	"github.com/cloudwego/eino-examples/adk/internal/prints"
-	"github.com/cloudwego/eino-examples/adk/intro/workflow/loop/internal"
+	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/intro/workflow/loop/subagents"
 )
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 	a, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
 		Name:          "ReflectionAgent",
 		Description:   "Reflection agent with main and critique agent for iterative task solving.",
-		SubAgents:     []adk.Agent{internal.NewMainAgent(), internal.NewCritiqueAgent()},
+		SubAgents:     []adk.Agent{subagents.NewMainAgent(), subagents.NewCritiqueAgent()},
 		MaxIterations: 5,
 	})
 	if err != nil {

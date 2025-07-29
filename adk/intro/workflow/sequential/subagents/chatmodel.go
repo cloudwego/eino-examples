@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package internal
+package subagents
 
 import (
 	"context"
@@ -22,17 +22,20 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 
-	"github.com/cloudwego/eino-examples/adk/internal/model"
+	"github.com/cloudwego/eino-examples/adk/common/model"
 )
 
-func NewMainAgent() adk.Agent {
+func NewPlanAgent() adk.Agent {
 	a, err := adk.NewChatModelAgent(context.Background(), &adk.ChatModelAgentConfig{
-		Name:        "MainAgent",
-		Description: "Main agent that attempts to solve the user's task.",
-		Instruction: `You are the main agent responsible for solving the user's task. 
-Provide a comprehensive solution based on the given requirements. 
-Focus on delivering accurate and complete results.`,
-		Model: model.NewChatModel(),
+		Name:        "PlannerAgent",
+		Description: "Generates a research plan based on a topic.",
+		Instruction: `
+You are an expert research planner. 
+Your goal is to create a comprehensive, step-by-step research plan for a given topic. 
+The plan should be logical, clear, and easy to follow.
+The user will provide the research topic. Your output must ONLY be the research plan itself, without any conversational text, introductions, or summaries.`,
+		Model:     model.NewChatModel(),
+		OutputKey: "Plan",
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -40,16 +43,17 @@ Focus on delivering accurate and complete results.`,
 	return a
 }
 
-func NewCritiqueAgent() adk.Agent {
+func NewWriterAgent() adk.Agent {
 	a, err := adk.NewChatModelAgent(context.Background(), &adk.ChatModelAgentConfig{
-		Name:        "CritiqueAgent",
-		Description: "Critique agent that reviews the main agent's work and provides feedback.",
-		Instruction: `You are a critique agent responsible for reviewing the main agent's work.
-Analyze the provided solution for accuracy, completeness, and quality.
-If you find issues or areas for improvement, provide specific feedback.
-If the work is satisfactory, call the 'exit' tool and provide a final summary response.`,
+		Name:        "WriterAgent",
+		Description: "Writes a report based on a research plan.",
+		Instruction: `
+You are an expert academic writer.
+You will be provided with a detailed research plan:
+{Plan}
+
+Your task is to expand on this plan to write a comprehensive, well-structured, and in-depth report.`,
 		Model: model.NewChatModel(),
-		// Exit:  nil, // use default exit tool
 	})
 	if err != nil {
 		log.Fatal(err)
