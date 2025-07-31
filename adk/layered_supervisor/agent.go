@@ -19,25 +19,18 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
+	"github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/tools"
 )
 
 func buildSearchAgent(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	type searchReq struct {
 		Query string `json:"query"`
@@ -69,7 +62,7 @@ func buildSearchAgent(ctx context.Context) (adk.Agent, error) {
         - Assist ONLY with research-related tasks, DO NOT do any math
         - After you're done with your tasks, respond to the supervisor directly
         - Respond ONLY with the results of your work, do NOT include ANY other text.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{searchTool},
@@ -82,13 +75,7 @@ func buildSearchAgent(ctx context.Context) (adk.Agent, error) {
 }
 
 func buildSubtractAgent(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	type subtractReq struct {
 		A float64 `json:"a"`
@@ -121,7 +108,7 @@ func buildSubtractAgent(ctx context.Context) (adk.Agent, error) {
         - Assist ONLY with math subtraction-related tasks
         - After you're done with your tasks, respond to the supervisor directly
         - Respond ONLY with the results of your work, do NOT include ANY other text.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{subtractTool},
@@ -134,13 +121,7 @@ func buildSubtractAgent(ctx context.Context) (adk.Agent, error) {
 }
 
 func buildMultiplyAgent(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	type multiplyReq struct {
 		A float64 `json:"a"`
@@ -173,7 +154,7 @@ func buildMultiplyAgent(ctx context.Context) (adk.Agent, error) {
         - Assist ONLY with math multiplication-related tasks
         - After you're done with your tasks, respond to the supervisor directly
         - Respond ONLY with the results of your work, do NOT include ANY other text.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{multiplyTool},
@@ -186,13 +167,7 @@ func buildMultiplyAgent(ctx context.Context) (adk.Agent, error) {
 }
 
 func buildDivideAgent(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	type divideReq struct {
 		A float64 `json:"a"`
@@ -225,7 +200,7 @@ func buildDivideAgent(ctx context.Context) (adk.Agent, error) {
         - Assist ONLY with math division-related tasks
         - After you're done with your tasks, respond to the supervisor directly
         - Respond ONLY with the results of your work, do NOT include ANY other text.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{divideTool},
@@ -238,13 +213,7 @@ func buildDivideAgent(ctx context.Context) (adk.Agent, error) {
 }
 
 func buildMathAgent(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	sa, err := buildSubtractAgent(ctx)
 	if err != nil {
@@ -276,7 +245,7 @@ func buildMathAgent(ctx context.Context) (adk.Agent, error) {
 		- an subtract_agent, a multiply_agent, a divide_agent. Assign math-related tasks to these agents.
 		- Assign work to one agent at a time, do not call agents in parallel.
 		- Do not do any real math work yourself, always transfer to your sub agents to do actual computation.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				UnknownToolsHandler: func(ctx context.Context, name, input string) (string, error) {
@@ -293,13 +262,7 @@ func buildMathAgent(ctx context.Context) (adk.Agent, error) {
 }
 
 func buildSupervisor(ctx context.Context) (adk.Agent, error) {
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
-	})
-	if err != nil {
-		return nil, err
-	}
+	m := model.NewChatModel()
 
 	sv, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:        "supervisor",
@@ -311,7 +274,7 @@ func buildSupervisor(ctx context.Context) (adk.Agent, error) {
         - a math agent. Assign math-related tasks to this agent
         Assign work to one agent at a time, do not call agents in parallel.
         Do not do any work yourself.`,
-		Model: arkModel,
+		Model: m,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				UnknownToolsHandler: func(ctx context.Context, name, input string) (string, error) {
