@@ -71,7 +71,7 @@ func loadCoderMsg(ctx context.Context, name string, opts ...any) (output []*sche
 			"CURRENT_TIME":        time.Now().Format("2006-01-02 15:04:05"),
 			"user_input":          msg,
 		}
-		output, err = promptTemp.Format(context.Background(), variables)
+		output, err = promptTemp.Format(ctx, variables)
 		return err
 	})
 	return output, err

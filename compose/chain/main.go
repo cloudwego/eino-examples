@@ -40,7 +40,7 @@ func main() {
 	ctx := context.Background()
 	// build branch func
 	const randLimit = 2
-	branchCond := func(ctx context.Context, input map[string]any) (string, error) { // nolint: byted_all_nil_return
+	branchCond := func(ctx context.Context, input map[string]any) (string, error) {
 		if rand.Intn(randLimit) == 1 {
 			return "b1", nil
 		}
@@ -110,7 +110,7 @@ func main() {
 			logs.Infof("in view lambda: %v", kvs)
 			return kvs, nil
 		})).
-		AppendBranch(compose.NewChainBranch(branchCond).AddLambda("b1", b1).AddLambda("b2", b2)). // nolint: byted_use_receiver_without_nilcheck
+		AppendBranch(compose.NewChainBranch(branchCond).AddLambda("b1", b1).AddLambda("b2", b2)).
 		AppendPassthrough().
 		AppendParallel(parallel).
 		AppendGraph(rolePlayerChain).
