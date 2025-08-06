@@ -58,9 +58,16 @@ func CorsMw() app.HandlerFunc {
 
 func runServer() {
 	ilog.SetGlobalLogLevel(ilog.LevelInfo)
-	conf.LoadDeerConfig(context.Background())
+	ctx := context.Background()
+	conf.LoadDeerConfig(ctx)
 	infra.InitModel()
 	infra.InitMCP()
+	_, shutdown := infra.InitAPMPlusCallback(ctx)
+	defer func() {
+		if shutdown != nil {
+			shutdown(ctx)
+		}
+	}()
 
 	h := server.Default(server.WithHostPorts(":8000"))
 	h.Use(CorsMw())
@@ -72,6 +79,14 @@ func runConsole() {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ilog.LogLevelKey, ilog.LevelInfo)
 	conf.LoadDeerConfig(ctx)
+	_, shutdown := infra.InitAPMPlusCallback(ctx)
+	defer func() {
+		if shutdown != nil {
+			shutdown(ctx)
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
 	infra.InitModel()
 	infra.InitMCP()
 	reader := bufio.NewReader(os.Stdin)
