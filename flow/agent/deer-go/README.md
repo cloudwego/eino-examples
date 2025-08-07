@@ -24,3 +24,8 @@ cp ./conf/deer-go.yaml.1 ./conf/deer-go.yaml
 ./run.sh -s
 ```
 
+5. 如果想采集调用 trace 和 metrics 埋点信息，可通过配置 `APMPLUS_APP_KEY` 环境变量，来开启埋点采集。采集数据将上报至 APMPlus 。可在 [APMPlus 控制台](https://console.volcengine.com/apmplus-server) 中查看采集到的调用 trace 和 metrics 埋点信息。
+``` bash
+export APMPLUS_APP_KEY=your_app_key
+```
+[火山引擎 APMPlus 文档](https://www.volcengine.com/docs/6431/69092)

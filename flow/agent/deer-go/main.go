@@ -38,6 +38,8 @@ import (
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
+	"github.com/hertz-contrib/obs-opentelemetry/provider"
+	hertztracing "github.com/hertz-contrib/obs-opentelemetry/tracing"
 )
 
 func CorsMw() app.HandlerFunc {
@@ -70,6 +72,20 @@ func runServer() {
 	}()
 
 	h := server.Default(server.WithHostPorts(":8000"))
+
+	if os.Getenv("APMPLUS_APP_KEY") != "" {
+		// add hertz tracing
+		_ = provider.NewOpenTelemetryProvider(
+			provider.WithServiceName("deer-go"),
+			provider.WithExportEndpoint(fmt.Sprintf("apmplus-%s.volces.com:4317", "cn-beijing")),
+			provider.WithInsecure(),
+			provider.WithHeaders(map[string]string{"X-ByteAPM-AppKey": os.Getenv("APMPLUS_APP_KEY")}),
+		)
+		tracer, cfg := hertztracing.NewServerTracer()
+		h = server.Default(server.WithHostPorts(":8000"), tracer)
+		h.Use(hertztracing.ServerMiddleware(cfg))
+	}
+
 	h.Use(CorsMw())
 	register(h)
 	h.Spin()
