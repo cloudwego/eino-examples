@@ -38,7 +38,6 @@ import (
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
-	"github.com/hertz-contrib/obs-opentelemetry/provider"
 	hertztracing "github.com/hertz-contrib/obs-opentelemetry/tracing"
 )
 
@@ -64,24 +63,15 @@ func runServer() {
 	conf.LoadDeerConfig(ctx)
 	infra.InitModel()
 	infra.InitMCP()
-	_, shutdown := infra.InitAPMPlusCallback(ctx)
+	tracer, cfg, shutdown := infra.InitAPMPlusTracing(ctx, true)
 	defer func() {
 		if shutdown != nil {
 			shutdown(ctx)
 		}
 	}()
 
-	h := server.Default(server.WithHostPorts(":8000"))
-
-	if os.Getenv("APMPLUS_APP_KEY") != "" {
-		// add hertz tracing
-		_ = provider.NewOpenTelemetryProvider(
-			provider.WithServiceName("deer-go"),
-			provider.WithExportEndpoint(fmt.Sprintf("apmplus-%s.volces.com:4317", "cn-beijing")),
-			provider.WithInsecure(),
-			provider.WithHeaders(map[string]string{"X-ByteAPM-AppKey": os.Getenv("APMPLUS_APP_KEY")}),
-		)
-		tracer, cfg := hertztracing.NewServerTracer()
+	h := server.Default(server.WithHostPorts(":8000"), tracer)
+	if tracer.F != nil && cfg != nil {
 		h = server.Default(server.WithHostPorts(":8000"), tracer)
 		h.Use(hertztracing.ServerMiddleware(cfg))
 	}
@@ -95,7 +85,7 @@ func runConsole() {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ilog.LogLevelKey, ilog.LevelInfo)
 	conf.LoadDeerConfig(ctx)
-	_, shutdown := infra.InitAPMPlusCallback(ctx)
+	_, _, shutdown := infra.InitAPMPlusTracing(ctx, false)
 	defer func() {
 		if shutdown != nil {
 			shutdown(ctx)
@@ -140,6 +130,7 @@ func runConsole() {
 	if err != nil {
 		ilog.EventError(ctx, err, "run failed")
 	}
+	ilog.EventInfo(ctx, "run console finish", time.Now())
 }
 
 func main() {
