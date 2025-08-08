@@ -38,6 +38,7 @@ import (
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/infra"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
+	hertztracing "github.com/hertz-contrib/obs-opentelemetry/tracing"
 )
 
 func CorsMw() app.HandlerFunc {
@@ -58,11 +59,23 @@ func CorsMw() app.HandlerFunc {
 
 func runServer() {
 	ilog.SetGlobalLogLevel(ilog.LevelInfo)
-	conf.LoadDeerConfig(context.Background())
+	ctx := context.Background()
+	conf.LoadDeerConfig(ctx)
 	infra.InitModel()
 	infra.InitMCP()
+	tracer, cfg, shutdown := infra.InitAPMPlusTracing(ctx, true)
+	defer func() {
+		if shutdown != nil {
+			shutdown(ctx)
+		}
+	}()
 
-	h := server.Default(server.WithHostPorts(":8000"))
+	h := server.Default(server.WithHostPorts(":8000"), tracer)
+	if tracer.F != nil && cfg != nil {
+		h = server.Default(server.WithHostPorts(":8000"), tracer)
+		h.Use(hertztracing.ServerMiddleware(cfg))
+	}
+
 	h.Use(CorsMw())
 	register(h)
 	h.Spin()
@@ -72,6 +85,14 @@ func runConsole() {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, ilog.LogLevelKey, ilog.LevelInfo)
 	conf.LoadDeerConfig(ctx)
+	_, _, shutdown := infra.InitAPMPlusTracing(ctx, false)
+	defer func() {
+		if shutdown != nil {
+			shutdown(ctx)
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
 	infra.InitModel()
 	infra.InitMCP()
 	reader := bufio.NewReader(os.Stdin)
@@ -109,6 +130,7 @@ func runConsole() {
 	if err != nil {
 		ilog.EventError(ctx, err, "run failed")
 	}
+	ilog.EventInfo(ctx, "run console finish", time.Now())
 }
 
 func main() {
