@@ -24,7 +24,7 @@ import (
 	"github.com/cloudwego/eino/components/model"
 )
 
-func createOllamaChatModel(ctx context.Context) model.ChatModel {
+func createOllamaChatModel(ctx context.Context) model.ToolCallingChatModel {
 	chatModel, err := ollama.NewChatModel(ctx, &ollama.ChatModelConfig{
 		BaseURL: "http://localhost:11434", // Ollama 服务地址
 		Model:   "llama2",                 // 模型名称

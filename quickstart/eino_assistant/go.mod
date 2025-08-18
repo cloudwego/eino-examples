@@ -1,15 +1,17 @@
 module github.com/cloudwego/eino-examples/quickstart/eino_assistant
 
-go 1.22.0
+go 1.23.0
+
+toolchain go1.24.1
 
 require (
-	github.com/cloudwego/eino v0.3.14
-	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.0-20250226083455-1ccdc82184a9
+	github.com/cloudwego/eino v0.3.51
+	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/model/ark v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250225083118-fd27d80f189c
-	github.com/cloudwego/eino-ext/devops v0.1.3
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20250707031732-1bfb5847488c
+	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/cloudwego/hertz v0.9.5
 	github.com/google/uuid v1.6.0
 	github.com/hertz-contrib/obs-opentelemetry/provider v0.3.0
@@ -20,12 +22,14 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.10.3 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bytedance/gopkg v0.1.0 // indirect
-	github.com/bytedance/sonic v1.12.7 // indirect
-	github.com/bytedance/sonic/loader v0.2.2 // indirect
+	github.com/bytedance/sonic v1.13.2 // indirect
+	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudwego/base64x v0.1.4 // indirect
+	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/eino-ext/components/document/loader/file v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/document/transformer/splitter/markdown v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250225083118-fd27d80f189c
@@ -33,14 +37,15 @@ require (
 	github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250113033825-eb19b2b6b386 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/opentelemetry v0.0.0-20250225080340-5935633151d3 // indirect
 	github.com/cloudwego/netpoll v0.6.4 // indirect
+	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/getkin/kin-openapi v0.118.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/jsonpointer v0.19.5 // indirect
-	github.com/go-openapi/swag v0.19.5 // indirect
+	github.com/go-openapi/jsonpointer v0.21.0 // indirect
+	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/goph/emperror v0.17.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
@@ -51,6 +56,7 @@ require (
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/matoous/go-nanoid v1.5.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
@@ -84,9 +90,9 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/net v0.41.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/text v0.26.0 // indirect
 	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc // indirect
 	google.golang.org/grpc v1.69.4 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect

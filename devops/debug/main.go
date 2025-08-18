@@ -43,6 +43,7 @@ func main() {
 	chain.RegisterSimpleChain(ctx)
 	graph.RegisterSimpleGraph(ctx)
 	graph.RegisterSimpleStateGraph(ctx)
+	graph.RegisterAnyInputGraph(ctx)
 
 	// Blocking process exits
 	sigs := make(chan os.Signal, 1)

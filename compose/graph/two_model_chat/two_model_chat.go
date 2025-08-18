@@ -75,16 +75,17 @@ func main() {
 	_ = g.AddBranch("writer", compose.NewStreamGraphBranch(func(ctx context.Context, input *schema.StreamReader[*schema.Message]) (string, error) {
 		input.Close()
 
-		s, err := compose.GetState[*state](ctx)
-		if err != nil {
+		next := "toList1"
+		if err = compose.ProcessState[*state](ctx, func(ctx context.Context, state *state) error {
+			if state.currentRound >= 3 {
+				next = compose.END
+			}
+			return nil
+		}); err != nil {
 			return "", err
 		}
 
-		if s.currentRound >= 3 {
-			return compose.END, nil
-		}
-
-		return "toList1", nil
+		return next, nil
 	}, map[string]bool{compose.END: true, "toList1": true}))
 	_ = g.AddEdge("toList1", "critic")
 	_ = g.AddEdge("critic", "toList2")

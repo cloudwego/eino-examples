@@ -19,8 +19,10 @@ package open
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 
 	"github.com/cloudwego/eino/components/tool"
@@ -66,13 +68,14 @@ func (of *OpenFileToolImpl) Invoke(ctx context.Context, req OpenReq) (res OpenRe
 
 	// if is file or dir, check if exists
 	if isFilePath(req.URI) {
-		if _, err := os.Stat(req.URI); os.IsNotExist(err) {
+		req.URI = strings.TrimPrefix(req.URI, "file:///")
+		if _, err := os.Stat(req.URI); err != nil {
 			res.Message = fmt.Sprintf("file not exists: %s", req.URI)
 			return res, nil
 		}
 	}
 
-	err = exec.Command("open", req.URI).Run()
+	err = openURI(req.URI)
 	if err != nil {
 		res.Message = fmt.Sprintf("failed to open %s: %s", req.URI, err.Error())
 		return res, nil
@@ -90,6 +93,22 @@ type OpenRes struct {
 	Message string `json:"message" jsonschema:"description=The message of the operation"`
 }
 
+func openURI(uri string) error {
+	var cmd *exec.Cmd
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", uri)
+	case "darwin":
+		cmd = exec.Command("open", uri)
+	case "linux":
+		cmd = exec.Command("xdg-open", uri)
+	default:
+		return fmt.Errorf("Unsupported Platform")
+	}
+	return cmd.Run()
+}
+
 func isFilePath(path string) bool {
-	return strings.HasPrefix(path, "file://") && !strings.Contains(path, "://")
+	s, err := url.Parse(path)
+	return err == nil && s.Scheme == "file" && s.Path != ""
 }

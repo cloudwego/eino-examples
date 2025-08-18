@@ -21,7 +21,7 @@ import (
 	"os"
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
@@ -44,10 +44,10 @@ func main() {
 		return
 	}
 
-	// 创建 Google Search 工具
-	searchTool, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
+	// 创建 DuckDuckGo 工具
+	searchTool, err := duckduckgo.NewTextSearchTool(ctx, &duckduckgo.Config{})
 	if err != nil {
-		logs.Errorf("NewGoogleSearchTool failed, err=%v", err)
+		logs.Errorf("NewTextSearchTool failed, err=%v", err)
 		return
 	}
 

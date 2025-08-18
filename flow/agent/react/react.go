@@ -37,14 +37,17 @@ import (
 )
 
 func main() {
-	arkAPIKey := os.Getenv("ARK_API_KEY")
-	arkModelName := os.Getenv("ARK_MODEL_NAME")
-
 	ctx := context.Background()
-	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey: arkAPIKey,
-		Model:  arkModelName,
-	})
+
+	config := &ark.ChatModelConfig{
+		APIKey: os.Getenv("ARK_API_KEY"),
+		Model:  os.Getenv("ARK_MODEL_NAME"),
+	}
+
+	// Create a new cached ark chat model.
+	//arkModel, err = NewCachedARKChatModel(ctx, config)
+
+	arkModel, err := ark.NewChatModel(ctx, config)
 	if err != nil {
 		logs.Errorf("failed to create chat model: %v", err)
 		return
@@ -83,12 +86,10 @@ func main() {
 	}*/
 
 	ragent, err := react.NewAgent(ctx, &react.AgentConfig{
-		Model: arkModel,
+		ToolCallingModel: arkModel,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{restaurantTool, dishTool},
 		},
-
-		MessageModifier: react.NewPersonaModifier(persona),
 		// StreamToolCallChecker: toolCallChecker, // uncomment it to replace the default tool call checker with custom one
 	})
 	if err != nil {
@@ -109,12 +110,31 @@ func main() {
 	// }
 	// fmt.Println(msg.String())
 
+	// If you want to use cached ark chat model, define a cache option and pass it to the agent.
+	// cacheOption := &ark.CacheOption{
+	//		APIType: ark.ResponsesAPI,
+	//		SessionCache: &ark.SessionCacheConfig{
+	//			EnableCache: true,
+	//			TTL:         3600,
+	//		},
+	//	}
+	// ctx = WithCacheCtx(ctx, cacheOption)
+
+	opt := []agent.AgentOption{
+		agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
+		//react.WithChatModelOptions(ark.WithCache(cacheOption)),
+	}
+
 	sr, err := ragent.Stream(ctx, []*schema.Message{
+		{
+			Role:    schema.System,
+			Content: persona,
+		},
 		{
 			Role:    schema.User,
 			Content: "我在北京，给我推荐一些菜，需要有口味辣一点的菜，至少推荐有 2 家餐厅",
 		},
-	}, agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})))
+	}, opt...)
 	if err != nil {
 		logs.Errorf("failed to stream: %v", err)
 		return
@@ -141,7 +161,6 @@ func main() {
 	}
 
 	logs.Infof("\n\n===== finished =====\n")
-
 }
 
 type LoggerCallback struct {
@@ -150,14 +169,14 @@ type LoggerCallback struct {
 
 func (cb *LoggerCallback) OnStart(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
 	fmt.Println("==================")
-	inputStr, _ := json.MarshalIndent(input, "", "  ") // nolint: byted_s_returned_err_check
+	inputStr, _ := json.MarshalIndent(input, "", "  ")
 	fmt.Printf("[OnStart] %s\n", string(inputStr))
 	return ctx
 }
 
 func (cb *LoggerCallback) OnEnd(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
 	fmt.Println("=========[OnEnd]=========")
-	outputStr, _ := json.MarshalIndent(output, "", "  ") // nolint: byted_s_returned_err_check
+	outputStr, _ := json.MarshalIndent(output, "", "  ")
 	fmt.Println(string(outputStr))
 	return ctx
 }
@@ -171,7 +190,7 @@ func (cb *LoggerCallback) OnError(ctx context.Context, info *callbacks.RunInfo, 
 func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callbacks.RunInfo,
 	output *schema.StreamReader[callbacks.CallbackOutput]) context.Context {
 
-	var graphInfoName = "PregelGraph"
+	var graphInfoName = react.GraphName
 
 	go func() {
 		defer func() {

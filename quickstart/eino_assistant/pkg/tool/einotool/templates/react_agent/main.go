@@ -24,7 +24,7 @@ import (
 	"io"
 
 	"github.com/cloudwego/eino-ext/components/model/ark"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
@@ -118,11 +118,11 @@ func PrepareModel(ctx context.Context) (model.ChatModel, error) {
 }
 
 func PrepareTools(ctx context.Context) ([]tool.BaseTool, error) {
-	duckduckgo, err := duckduckgo.NewTool(ctx, &duckduckgo.Config{})
+	ddg, err := duckduckgo.NewTextSearchTool(ctx, &duckduckgo.Config{})
 	if err != nil {
 		return nil, err
 	}
-	return []tool.BaseTool{duckduckgo}, nil
+	return []tool.BaseTool{ddg}, nil
 }
 
 // log with color

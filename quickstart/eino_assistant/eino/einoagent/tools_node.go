@@ -23,7 +23,7 @@ import (
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/tool/gitclone"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/tool/open"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/tool/task"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
 	"github.com/cloudwego/eino/components/tool"
 )
 
@@ -74,7 +74,7 @@ func NewDDGSearch(ctx context.Context, config *duckduckgo.Config) (tn tool.BaseT
 			return nil, err
 		}
 	}
-	tn, err = duckduckgo.NewTool(ctx, config)
+	tn, err = duckduckgo.NewTextSearchTool(ctx, config)
 	if err != nil {
 		return nil, err
 	}

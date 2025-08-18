@@ -98,8 +98,6 @@ func main() {
 			panic(err)
 		}
 
-		defer out.Close()
-
 		println("\nAnswer:")
 
 		for {
@@ -112,6 +110,8 @@ func main() {
 
 			print(msg.Content)
 		}
+
+		out.Close()
 	}
 }
 

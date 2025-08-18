@@ -1,0 +1,25 @@
+mcp:
+  servers:
+    tavily:
+      command: "npx"
+      args: ["-y", "tavily-mcp@0.1.3"]
+      env: { "TAVILY_API_KEY": "<your api key>" }
+    firecrawl:
+      command: "npx"
+      args: [ "-y", "firecrawl-mcp" ]
+      env: { "FIRECRAWL_API_KEY": "<your api key>" }
+    python:
+      command: "uv"
+      args: [ "--directory",
+              "<your deer-go dir>/biz/mcps/python",
+              "run",
+              "server.py",
+      ]
+model:
+  default_model: "<your model>"
+  api_key: "<your api key>"
+  base_url: "<your base url>"
+
+setting:
+  max_plan_iterations: 1
+  max_step_num: 3
