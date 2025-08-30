@@ -70,7 +70,7 @@ func runServer() {
 		}
 	}()
 
-	h := server.Default(server.WithHostPorts(":8000"), tracer)
+	h := server.Default(server.WithHostPorts(":8000"))
 	if tracer.F != nil && cfg != nil {
 		h = server.Default(server.WithHostPorts(":8000"), tracer)
 		h.Use(hertztracing.ServerMiddleware(cfg))
