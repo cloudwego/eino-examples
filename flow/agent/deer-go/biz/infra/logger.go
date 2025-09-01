@@ -133,12 +133,6 @@ func (cb *LoggerCallback) OnStart(ctx context.Context, info *callbacks.RunInfo, 
 }
 
 func (cb *LoggerCallback) OnEnd(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
-	//fmt.Println("=========[OnEnd]=========", info.Name, "|", info.Component, "|", info.Type)
-	//outputStr, _ := json.MarshalIndent(output, "", "  ") // nolint: byted_s_returned_err_check
-	//if len(outputStr) > 200 {
-	//	outputStr = outputStr[:200]
-	//}
-	//fmt.Println(string(outputStr))
 	return ctx
 }
 
@@ -177,10 +171,10 @@ func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callb
 				for _, m := range v {
 					_ = cb.pushMsg(ctx, msgID, m)
 				}
-			//case string:
+			// case string:
 			//	ilog.EventInfo(ctx, "frame_type", "type", "str", "v", v)
 			default:
-				//ilog.EventInfo(ctx, "frame_type", "type", "unknown", "v", v)
+				// ilog.EventInfo(ctx, "frame_type", "type", "unknown", "v", v)
 			}
 		}
 

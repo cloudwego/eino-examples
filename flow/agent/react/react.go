@@ -152,14 +152,14 @@ type LoggerCallback struct {
 
 func (cb *LoggerCallback) OnStart(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
 	fmt.Println("==================")
-	inputStr, _ := json.MarshalIndent(input, "", "  ") // nolint: byted_s_returned_err_check
+	inputStr, _ := json.MarshalIndent(input, "", "  ")
 	fmt.Printf("[OnStart] %s\n", string(inputStr))
 	return ctx
 }
 
 func (cb *LoggerCallback) OnEnd(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
 	fmt.Println("=========[OnEnd]=========")
-	outputStr, _ := json.MarshalIndent(output, "", "  ") // nolint: byted_s_returned_err_check
+	outputStr, _ := json.MarshalIndent(output, "", "  ")
 	fmt.Println(string(outputStr))
 	return ctx
 }

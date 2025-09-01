@@ -144,7 +144,7 @@ func (rd *restaurantDatabase) GetDishesByRestaurant(ctx context.Context, restaur
 	return res, nil
 }
 
-func getData() map[string][]restaurantDataItem { // nolint: byted_s_too_many_lines_in_func
+func getData() map[string][]restaurantDataItem {
 	return map[string][]restaurantDataItem{
 		"北京": {
 			{
