@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package main
 
 import (
@@ -9,7 +25,6 @@ import (
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/multiagent/plan-execute-replan/agent"
-	"github.com/cloudwego/eino-examples/adk/multiagent/plan-execute-replan/store"
 	"github.com/cloudwego/eino-examples/adk/multiagent/plan-execute-replan/trace"
 )
 
@@ -45,8 +60,7 @@ func main() {
 	}
 
 	r := adk.NewRunner(ctx, adk.RunnerConfig{
-		Agent:           entryAgent,
-		CheckPointStore: store.NewInMemoryStore(),
+		Agent: entryAgent,
 	})
 
 	query := `Plan a 3-day trip to Beijing in Next Month. I need flights from New York, hotel recommendations, and must-see attractions.

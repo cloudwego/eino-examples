@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tools
 
 import (
@@ -139,26 +155,26 @@ func NewFlightSearchTool(ctx context.Context) (tool.BaseTool, error) {
 			for i := 0; i < 3; i++ {
 				flightHash := fmt.Sprintf("%s%d", hashInput, i)
 				airlineIdx := consistentHashing(flightHash+"airline", 0, len(airlines)-1)
-				
+
 				// Generate departure and arrival times
 				depHour := consistentHashing(flightHash+"dephour", 0, 23)
 				depMin := consistentHashing(flightHash+"depmin", 0, 59)
 				arrHour := consistentHashing(flightHash+"arrhour", 0, 23)
 				arrMin := consistentHashing(flightHash+"arrmin", 0, 59)
-				
+
 				// Calculate duration based on departure and arrival times
 				depTotalMin := depHour*60 + depMin
 				arrTotalMin := arrHour*60 + arrMin
-				
+
 				// Handle case where arrival is next day (if arrival < departure)
 				if arrTotalMin <= depTotalMin {
 					arrTotalMin += 24 * 60 // Add 24 hours
 				}
-				
+
 				durationMin := arrTotalMin - depTotalMin
 				durationHour := durationMin / 60
 				durationMinRemainder := durationMin % 60
-				
+
 				flights[i] = Flight{
 					Airline:   airlines[airlineIdx],
 					FlightNo:  fmt.Sprintf("%s%d", airlines[airlineIdx][:2], consistentHashing(flightHash+"flightno", 1000, 9999)),
