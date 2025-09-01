@@ -71,7 +71,6 @@ func main() {
 
 		sr, sw := schema.Pipe[string](utf8.RuneCountInString(outStr))
 
-		// nolint: byted_goroutine_recover
 		go func() {
 			for _, field := range strings.Fields(outStr) {
 				sw.Send(field+" ", nil)
