@@ -18,9 +18,13 @@ package main
 
 import (
 	"context"
+	"os"
 	"strconv"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
+	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
@@ -30,6 +34,24 @@ import (
 // (by using AddInput without field mappings),
 // this simple workflow is equivalent to a Graph: START -> lambda -> END.
 func main() {
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
+	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
+
 	// create a Workflow, just like creating a Graph
 	wf := compose.NewWorkflow[int, string]()
 

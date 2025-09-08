@@ -123,7 +123,7 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 				return append([]*schema.Message{schema.SystemMessage(systemPrompt)}, convertMessagesForDeepSeek(state.messages)...), nil
 			}
 
-			return append([]*schema.Message{schema.SystemMessage(systemPrompt)}, state.messages...), nil
+			return append([]*schema.Message{schema.SystemMessage(systemPrompt)}, convertMessagesForArk(state.messages)...), nil
 		}
 	}
 
@@ -248,7 +248,9 @@ func convertMessagesForDeepSeek(messages []*schema.Message) (converted []*schema
 			converted = append(converted, schema.AssistantMessage(message.Content, nil))
 		} else if message.Role == schema.Assistant {
 			if len(message.ToolCalls) == 0 {
-				converted = append(converted, message)
+				if len(message.Content) > 0 {
+					converted = append(converted, message)
+				}
 			} else {
 				if len(message.Content) > 0 {
 					converted = append(converted, schema.AssistantMessage(message.Content, nil))
@@ -256,6 +258,25 @@ func convertMessagesForDeepSeek(messages []*schema.Message) (converted []*schema
 				for _, toolCall := range message.ToolCalls {
 					converted = append(converted, schema.AssistantMessage(fmt.Sprintf("call %s with %s, got response:", toolCall.Function.Name, toolCall.Function.Arguments), nil))
 				}
+			}
+		} else {
+			converted = append(converted, message)
+		}
+	}
+
+	return converted
+}
+
+func convertMessagesForArk(messages []*schema.Message) (converted []*schema.Message) {
+	converted = make([]*schema.Message, 0, len(messages)*2)
+	for _, message := range messages {
+		if message.Role == schema.Assistant {
+			if len(message.ToolCalls) == 0 {
+				if len(message.Content) > 0 {
+					converted = append(converted, message)
+				}
+			} else {
+				converted = append(converted, message)
 			}
 		} else {
 			converted = append(converted, message)

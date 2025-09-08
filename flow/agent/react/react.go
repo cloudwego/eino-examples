@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/tool"
@@ -31,17 +33,36 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/flow/agent/react/tools"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func main() {
+	arkApiKey := os.Getenv("ARK_API_KEY")
+	arkModelName := os.Getenv("ARK_MODEL_NAME")
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
 	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
 
 	config := &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
+		APIKey: arkApiKey,
+		Model:  arkModelName,
 	}
 
 	// Create a new cached ark chat model.
@@ -161,6 +182,7 @@ func main() {
 	}
 
 	logs.Infof("\n\n===== finished =====\n")
+	time.Sleep(2 * time.Second)
 }
 
 type LoggerCallback struct {

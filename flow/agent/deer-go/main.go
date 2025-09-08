@@ -69,6 +69,7 @@ func runServer() {
 			shutdown(ctx)
 		}
 	}()
+	infra.InitCozeLoopTracing()
 
 	h := server.Default(server.WithHostPorts(":8000"), tracer)
 	if tracer.F != nil && cfg != nil {
@@ -92,6 +93,7 @@ func runConsole() {
 			time.Sleep(5 * time.Second)
 		}
 	}()
+	infra.InitCozeLoopTracing()
 
 	infra.InitModel()
 	infra.InitMCP()

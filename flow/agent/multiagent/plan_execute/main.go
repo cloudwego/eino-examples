@@ -24,8 +24,12 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/debug"
+	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/tools"
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/deepseek"
 	callbacks2 "github.com/cloudwego/eino/callbacks"
@@ -35,13 +39,27 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/schema"
 	"github.com/cloudwego/eino/utils/callbacks"
-
-	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/debug"
-	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/tools"
+	"github.com/coze-dev/cozeloop-go"
 )
 
 func main() {
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
 	ctx := context.Background()
+	var handlers []callbacks2.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks2.AppendGlobalHandlers(handlers...)
 
 	deepSeekModel, err := deepseek.NewChatModel(ctx, &deepseek.ChatModelConfig{
 		Model:   os.Getenv("DEEPSEEK_MODEL_NAME"),
@@ -99,7 +117,8 @@ func main() {
 		log.Fatalf("stream error: %v", err)
 	}
 
-	printer.wait() // 等待所有输出都处理完再结束
+	printer.wait()              // 等待所有输出都处理完再结束
+	time.Sleep(3 * time.Second) // 确保trace上报后再结束
 }
 
 type coloredString struct {

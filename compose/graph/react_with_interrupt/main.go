@@ -24,19 +24,39 @@ import (
 	"os"
 	"strings"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 )
 
 func main() {
-	compose.RegisterSerializableType[myState]("state")
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
 
 	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
+
+	compose.RegisterSerializableType[myState]("state")
+
 	runner, err := composeGraph[map[string]any, *schema.Message](
 		ctx,
 		newChatTemplate(ctx),
@@ -98,7 +118,7 @@ func newChatTemplate(_ context.Context) prompt.ChatTemplate {
 func newChatModel(ctx context.Context) model.ChatModel {
 	cm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		APIKey:  os.Getenv("OPENAI_API_KEY"),
-		Model:   os.Getenv("OPENAI_MODEL"),
+		Model:   os.Getenv("OPENAI_MODEL_NAME"),
 		BaseURL: os.Getenv("OPENAI_BASE_URL"),
 	})
 	if err != nil {
