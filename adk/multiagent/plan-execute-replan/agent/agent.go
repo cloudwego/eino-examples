@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/prebuilt"
+	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
@@ -33,7 +33,7 @@ import (
 
 func NewPlanner(ctx context.Context) (adk.Agent, error) {
 
-	return prebuilt.NewPlanner(ctx, &prebuilt.PlannerConfig{
+	return planexecute.NewPlanner(ctx, &planexecute.PlannerConfig{
 		ToolCallingChatModel: model.NewChatModel(),
 	})
 }
@@ -61,7 +61,7 @@ func formatInput(in []adk.Message) string {
 	return in[0].Content
 }
 
-func formatExecutedSteps(in []prebuilt.ExecutedStep) string {
+func formatExecutedSteps(in []planexecute.ExecutedStep) string {
 	var sb strings.Builder
 	for idx, m := range in {
 		sb.WriteString(fmt.Sprintf("## %d. Step: %v\n  Result: %v\n\n", idx+1, m.Step, m.Result))
@@ -76,16 +76,15 @@ func NewExecutor(ctx context.Context) (adk.Agent, error) {
 		return nil, err
 	}
 
-	return prebuilt.NewExecutor(ctx, &prebuilt.ExecutorConfig{
+	return planexecute.NewExecutor(ctx, &planexecute.ExecutorConfig{
 		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: travelTools,
 			},
 		},
-		MaxStep: 20,
 
-		GenInputFn: func(ctx context.Context, in *prebuilt.PlanExecuteInput) ([]adk.Message, error) {
+		GenInputFn: func(ctx context.Context, in *planexecute.ExecutionContext) ([]adk.Message, error) {
 			planContent, err_ := in.Plan.MarshalJSON()
 			if err_ != nil {
 				return nil, err_
@@ -94,7 +93,7 @@ func NewExecutor(ctx context.Context) (adk.Agent, error) {
 			firstStep := in.Plan.FirstStep()
 
 			msgs, err_ := executorPrompt.Format(ctx, map[string]any{
-				"input":          formatInput(in.Input),
+				"input":          formatInput(in.UserInput),
 				"plan":           string(planContent),
 				"executed_steps": formatExecutedSteps(in.ExecutedSteps),
 				"step":           firstStep,
@@ -109,7 +108,7 @@ func NewExecutor(ctx context.Context) (adk.Agent, error) {
 }
 
 func NewReplanAgent(ctx context.Context) (adk.Agent, error) {
-	return prebuilt.NewReplanner(ctx, &prebuilt.ReplannerConfig{
+	return planexecute.NewReplanner(ctx, &planexecute.ReplannerConfig{
 		ChatModel: model.NewChatModel(),
 	})
 }

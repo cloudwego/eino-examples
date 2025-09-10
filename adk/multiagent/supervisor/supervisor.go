@@ -20,32 +20,39 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"testing"
+	"time"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/common/trace"
 )
 
-func TestLayeredSupervisor(t *testing.T) {
-	sv, err := buildSupervisor(context.Background())
+func main() {
+	ctx := context.Background()
+
+	traceCloseFn, startSpanFn := trace.AppendCozeLoopCallbackIfConfigured(ctx)
+	defer traceCloseFn(ctx)
+
+	sv, err := buildSupervisor(ctx)
 	if err != nil {
-		log.Fatalf("build layered supervisor failed: %v", err)
+		log.Fatalf("build supervisor failed: %v", err)
 	}
 
-	query := "find US and New York state GDP in 2024. what % of US GDP was New York state? " +
-		"Then multiply that percentage by 1.589."
+	query := "find US and New York state GDP in 2024. what % of US GDP was New York state?"
 
-	iter := sv.Run(context.Background(), &adk.AgentInput{
-		Messages: []adk.Message{
-			schema.UserMessage(query),
-		},
+	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+		Agent:           sv,
 		EnableStreaming: true,
 	})
 
+	ctx, endSpanFn := startSpanFn(ctx, "Supervisor", query)
+
+	iter := runner.Query(ctx, query)
+
 	fmt.Println("\nuser query: ", query)
 
+	var lastMessage adk.Message
 	for {
 		event, hasEvent := iter.Next()
 		if !hasEvent {
@@ -53,5 +60,14 @@ func TestLayeredSupervisor(t *testing.T) {
 		}
 
 		prints.Event(event)
+
+		if event.Output != nil {
+			lastMessage, _, err = adk.GetMessage(event)
+		}
 	}
+
+	endSpanFn(ctx, lastMessage)
+
+	// wait for all span to be ended
+	time.Sleep(5 * time.Second)
 }

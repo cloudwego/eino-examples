@@ -21,7 +21,7 @@ import (
 	"fmt"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/prebuilt"
+	"github.com/cloudwego/eino/adk/prebuilt/supervisor"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
@@ -255,7 +255,7 @@ func buildMathAgent(ctx context.Context) (adk.Agent, error) {
 		},
 	})
 
-	return prebuilt.NewSupervisor(ctx, &prebuilt.SupervisorConfig{
+	return supervisor.New(ctx, &supervisor.Config{
 		Supervisor: mathA,
 		SubAgents:  []adk.Agent{sa, ma, da},
 	})
@@ -297,7 +297,7 @@ func buildSupervisor(ctx context.Context) (adk.Agent, error) {
 		return nil, err
 	}
 
-	return prebuilt.NewSupervisor(ctx, &prebuilt.SupervisorConfig{
+	return supervisor.New(ctx, &supervisor.Config{
 		Supervisor: sv,
 		SubAgents:  []adk.Agent{searchAgent, mathAgent},
 	})

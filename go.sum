@@ -116,8 +116,12 @@ github.com/clbanning/mxj v1.8.4/go.mod h1:BVjHeAH+rl9rs6f+QIpeRl0tfu10SXn1pUSa5P
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudwego/base64x v0.1.5 h1:XPciSp1xaq2VCSt6lF0phncD4koWyULpl5bUxbfCyP4=
 github.com/cloudwego/base64x v0.1.5/go.mod h1:0zlkT4Wn5C6NdauXdJRhSKRlJvmclQ1hhJgA0rcu/8w=
+github.com/cloudwego/eino v0.4.8 h1:wptTU24tQad1mFCHw0+4zSzH+p8dLEBk6HtggPlcvP0=
+github.com/cloudwego/eino v0.4.8/go.mod h1:1TDlOmwGSsbCJaWB92w9YLZi2FL0WRZoRcD4eMvqikg=
 github.com/cloudwego/eino v0.5.0-alpha.11 h1:KhjJ8JTAI/Ed5iCHWKUn1v4j1sDCxqV26HRoUQpSRFc=
 github.com/cloudwego/eino v0.5.0-alpha.11/go.mod h1:S38tlNO4cNqFfGJKQSJZimxjzc9JDJKdf2eW3FEEfdc=
+github.com/cloudwego/eino v0.5.0 h1:hlNCfBeHGtD+UnLV3xF8pfjA7zxTHQywoUCQ7xeI7w8=
+github.com/cloudwego/eino v0.5.0/go.mod h1:S38tlNO4cNqFfGJKQSJZimxjzc9JDJKdf2eW3FEEfdc=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4 h1:Cwm80+fMEAoY7uI9XUukDEV5J3Adb9HiXKmcXpXcDiM=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4/go.mod h1:xxjNsJeZwdIooEYTt6tjw/YJzkA6xPcxn1u/HvA5xc0=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76 h1:kK4f2kunb5xlc0XTkg6wkjy8Z/BDfJjWAVm9EOdRErg=

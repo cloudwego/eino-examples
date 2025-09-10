@@ -19,19 +19,20 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/prebuilt"
+	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/common/trace"
 	"github.com/cloudwego/eino-examples/adk/multiagent/plan-execute-replan/agent"
-	"github.com/cloudwego/eino-examples/adk/multiagent/plan-execute-replan/trace"
 )
 
 func main() {
 	ctx := context.Background()
 
-	traceCloseFn, client := trace.AppendCozeLoopCallbackIfConfigured(ctx)
+	traceCloseFn, startSpanFn := trace.AppendCozeLoopCallbackIfConfigured(ctx)
 	defer traceCloseFn(ctx)
 
 	planAgent, err := agent.NewPlanner(ctx)
@@ -49,7 +50,7 @@ func main() {
 		log.Fatalf("agent.NewReplanAgent failed, err: %v", err)
 	}
 
-	entryAgent, err := prebuilt.NewPlanExecuteAgent(ctx, &prebuilt.PlanExecuteConfig{
+	entryAgent, err := planexecute.New(ctx, &planexecute.Config{
 		Planner:       planAgent,
 		Executor:      executeAgent,
 		Replanner:     replanAgent,
@@ -65,7 +66,7 @@ func main() {
 
 	query := `Plan a 3-day trip to Beijing in Next Month. I need flights from New York, hotel recommendations, and must-see attractions.
 Today is 2025-09-09.`
-	ctx, finishFn := trace.StartRootSpan(client, ctx, query)
+	ctx, endSpanFn := startSpanFn(ctx, "plan-execute-replan", query)
 	iter := r.Query(ctx, query)
 	var lastMessage adk.Message
 	for {
@@ -81,5 +82,8 @@ Today is 2025-09-09.`
 		}
 	}
 
-	finishFn(ctx, lastMessage)
+	endSpanFn(ctx, lastMessage)
+
+	// wait for all span to be ended
+	time.Sleep(5 * time.Second)
 }
