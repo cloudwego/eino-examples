@@ -77,7 +77,7 @@ func Event(event *adk.AgentEvent) {
 						fmt.Printf("\n")
 						charNumOfOneRow = 0
 					}
-					fmt.Printf(chunk.Content)
+					fmt.Printf("%v", chunk.Content)
 				}
 
 				if len(chunk.ToolCalls) > 0 {
