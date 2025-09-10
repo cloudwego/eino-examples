@@ -22,6 +22,7 @@ require (
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/ollama/ollama v0.4.0
 	github.com/stretchr/testify v1.10.0
+	github.com/volcengine/volcengine-go-sdk v1.1.21
 )
 
 require (
@@ -79,7 +80,6 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.196 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.1.21 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.14.0 // indirect
