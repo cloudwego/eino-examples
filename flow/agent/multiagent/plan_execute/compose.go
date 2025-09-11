@@ -26,19 +26,21 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/prompt"
 )
 
 // Config “计划——执行”多智能体的配置.
 type Config struct {
-	PlannerModel        model.ChatModel // planner 智能体使用的大模型
-	PlannerSystemPrompt string          // planner 智能体的 system prompt
+	PlannerModel        model.BaseChatModel // planner 智能体使用的大模型
+	PlannerSystemPrompt string              // planner 智能体的 system prompt
 
-	ExecutorModel        model.ChatModel         // executor 智能体使用的大模型
-	ToolsConfig          compose.ToolsNodeConfig // executor 智能体使用的工具执行器配置
-	ExecutorSystemPrompt string                  // executor 智能体的 system prompt
+	ExecutorModel        model.ToolCallingChatModel // executor 智能体使用的大模型
+	ToolsConfig          compose.ToolsNodeConfig    // executor 智能体使用的工具执行器配置
+	ExecutorSystemPrompt string                     // executor 智能体的 system prompt
 
-	ReviserModel        model.ChatModel // reviser 智能体使用的大模型
-	ReviserSystemPrompt string          // reviser 智能体的 system prompt
+	ReviserModel        model.BaseChatModel // reviser 智能体使用的大模型
+	ReviserSystemPrompt string              // reviser 智能体的 system prompt
 
 	MaxStep int // 多智能体的最大执行步骤数，避免无限循环
 }
@@ -78,15 +80,15 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 	)
 
 	if len(plannerPrompt) == 0 {
-		plannerPrompt = defaultPlannerPrompt
+		plannerPrompt = prompt.DefaultPlannerPrompt
 	}
 
 	if len(executorPrompt) == 0 {
-		executorPrompt = defaultExecutorPrompt
+		executorPrompt = prompt.DefaultExecutorPrompt
 	}
 
 	if len(reviserPrompt) == 0 {
-		reviserPrompt = defaultReviserPrompt
+		reviserPrompt = prompt.DefaultReviserPrompt
 	}
 
 	if maxStep == 0 {
@@ -98,7 +100,7 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 	}
 
 	// 为 Executor 配置工具
-	if err = config.ExecutorModel.BindTools(toolInfos); err != nil {
+	if config.ExecutorModel, err = config.ExecutorModel.WithTools(toolInfos); err != nil {
 		return nil, err
 	}
 
