@@ -46,7 +46,7 @@ func main() {
 		handlers = append(handlers, clc.NewLoopHandler(client))
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
-	
+
 	type calculator struct {
 		Add      []int
 		Multiply int

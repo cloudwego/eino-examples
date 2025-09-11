@@ -51,7 +51,7 @@ func main() {
 		handlers = append(handlers, clc.NewLoopHandler(client))
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
-	
+
 	type counter struct {
 		FullStr string // exported because we will do field mapping for this field
 		SubStr  string // exported because we will do field mapping for this field

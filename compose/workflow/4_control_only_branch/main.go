@@ -46,7 +46,7 @@ func main() {
 		handlers = append(handlers, clc.NewLoopHandler(client))
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
-	
+
 	bidder1 := func(ctx context.Context, in float64) (float64, error) {
 		return in + 1.0, nil
 	}
