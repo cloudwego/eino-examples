@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cloudwego/eino-examples/adk/common/trace"
 	"github.com/cloudwego/eino/adk"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
@@ -29,6 +30,9 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	traceCloseFn, startSpanFn := trace.AppendCozeLoopCallbackIfConfigured(ctx)
+	defer traceCloseFn(ctx)
 
 	a, err := adk.NewSequentialAgent(ctx, &adk.SequentialAgentConfig{
 		Name:        "ResearchAgent",
@@ -39,12 +43,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	query := "The history of Large Language Models"
+	ctx, endSpanFn := startSpanFn(ctx, "layered-supervisor", query)
+
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
 	})
 
-	iter := runner.Query(ctx, "The history of Large Language Models")
+	var lastMessage adk.Message
+
+	iter := runner.Query(ctx, query)
 	for {
 		event, ok := iter.Next()
 		if !ok {
@@ -56,5 +65,10 @@ func main() {
 		}
 
 		prints.Event(event)
+		if event.Output != nil {
+			lastMessage, _, err = adk.GetMessage(event)
+		}
 	}
+
+	endSpanFn(ctx, lastMessage)
 }

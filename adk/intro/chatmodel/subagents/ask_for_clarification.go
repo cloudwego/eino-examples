@@ -48,7 +48,9 @@ func NewAskForClarificationTool() tool.InvokableTool {
 			if o.NewInput == nil {
 				return "", compose.NewInterruptAndRerunErr(input.Question)
 			}
-			return *o.NewInput, nil
+			output = *o.NewInput
+			o.NewInput = nil
+			return output, nil
 		})
 	if err != nil {
 		log.Fatal(err)

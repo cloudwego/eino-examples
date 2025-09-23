@@ -21,11 +21,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cloudwego/eino-examples/adk/common/trace"
-	"github.com/cloudwego/eino/adk"
-
 	"github.com/cloudwego/eino-examples/adk/common/prints"
-	"github.com/cloudwego/eino-examples/adk/intro/workflow/loop/subagents"
+	"github.com/cloudwego/eino-examples/adk/common/trace"
+	"github.com/cloudwego/eino-examples/adk/intro/workflow/parallel/subagents"
+	"github.com/cloudwego/eino/adk"
 )
 
 func main() {
@@ -34,17 +33,20 @@ func main() {
 	traceCloseFn, startSpanFn := trace.AppendCozeLoopCallbackIfConfigured(ctx)
 	defer traceCloseFn(ctx)
 
-	a, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
-		Name:          "ReflectionAgent",
-		Description:   "Reflection agent with main and critique agent for iterative task solving.",
-		SubAgents:     []adk.Agent{subagents.NewMainAgent(), subagents.NewCritiqueAgent()},
-		MaxIterations: 5,
+	a, err := adk.NewParallelAgent(ctx, &adk.ParallelAgentConfig{
+		Name:        "DataCollectionAgent",
+		Description: "Data Collection Agent could collect data from multiple sources.",
+		SubAgents: []adk.Agent{
+			subagents.NewStockDataCollectionAgent(),
+			subagents.NewNewsDataCollectionAgent(),
+			subagents.NewSocialMediaInfoCollectionAgent(),
+		},
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	query := "briefly introduce what a multimodal embedding model is."
+	query := "give me today's market research"
 	ctx, endSpanFn := startSpanFn(ctx, "layered-supervisor", query)
 
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
