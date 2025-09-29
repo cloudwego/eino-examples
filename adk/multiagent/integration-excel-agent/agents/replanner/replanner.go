@@ -1,0 +1,139 @@
+package replanner
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	"github.com/bytedance/sonic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
+	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
+	"github.com/cloudwego/eino/components/prompt"
+	"github.com/cloudwego/eino/schema"
+	arkmodel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
+)
+
+var (
+	replannerPromptTemplate = prompt.FromMessages(schema.Jinja2,
+		schema.SystemMessage(`You are an expert planner specializing in Excel data processing tasks. Your goal is to understand user requirements and break them down into a clear, step-by-step plan.
+
+**1. Understanding the Goal:**
+- Carefully analyze the user's request to determine the ultimate objective.
+- Identify the input data (Excel files) and the desired output format.
+
+**2. Deliverables:**
+- The final output should be a JSON object representing the plan, containing a list of steps.
+- Each step must be a clear and concise instruction for the agent that will execute this step.
+
+**3. Plan Decomposition Principles:**
+- **Granularity:** Break down the task into the smallest possible logical steps. For example, instead of "process the data," use "read the Excel file," "filter out rows with missing values," "calculate the average of the 'Sales' column," etc.
+- **Sequence:** The steps should be in the correct order of execution.
+- **Clarity:** Each step should be unambiguous and easy for the for the agent that will execute this step to understand.
+
+**4. Output Format (Few-shot Example):**
+Here is an example of a good plan:
+User Request: "Please calculate the average sales for each product category in the attached 'sales_data.xlsx' file and generate a report."
+{
+  "steps": [
+    {
+      "instruction": "Read the 'sales_data.xlsx' file into a pandas DataFrame."
+    },
+    {
+      "instruction": "Group the DataFrame by 'Product Category' and calculate the mean of the 'Sales' column for each group."
+    },
+    {
+      "instruction": "Summarize the average sales for each product category and present the results in a table."
+    }
+  ]
+}
+
+**5. Restrictions:**
+- Do not generate code directly in the plan.
+- Ensure that the plan is logical and achievable.
+- The final step should always be to generate a report or provide the final result.
+
+**6. Replanning:**
+- If the current plan is complete, call the 'submit_result' tool.
+- If the plan needs to be modified or extended, call the 'create_plan' tool with the new plan.
+`),
+		schema.UserMessage(`
+User Query: {{ user_query }}
+Current Time: {{ current_time }}
+File Preview:
+{{ file_preview }}
+Executed Steps: {{ executed_steps }}
+Remaining Steps: {{ remaining_steps }}
+`),
+	)
+)
+
+func NewReplanner(ctx context.Context) (adk.Agent, error) {
+	cm, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
+		APIKey:  os.Getenv("ARK_API_KEY"),
+		BaseURL: os.Getenv("ARK_BASE_URL"),
+		Region:  os.Getenv("ARK_REGION"),
+		Model:   os.Getenv("ARK_MODEL"),
+		Thinking: &arkmodel.Thinking{
+			Type: arkmodel.ThinkingTypeDisabled,
+		},
+		TopP:        utils.PtrOf[float32](0),
+		MaxTokens:   utils.PtrOf(4096),
+		Temperature: utils.PtrOf[float32](1.0),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	respondInfo, err := tools.NewToolSubmitResultReplanner().Info(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	a, err := planexecute.NewReplanner(ctx, &planexecute.ReplannerConfig{
+		ChatModel:   cm,
+		PlanTool:    agents.PlanToolInfo,
+		GenInputFn:  replannerInputGen,
+		RespondTool: respondInfo,
+		NewPlan: func(ctx context.Context) planexecute.Plan {
+			return &agents.Plan{}
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return agents.NewWrite2PlanMDWrapper(a), nil
+}
+
+func replannerInputGen(ctx context.Context, in *planexecute.ExecutionContext) ([]adk.Message, error) {
+	pf, _ := consts.GetSessionValue[string](ctx, consts.UserAllPreviewFilesSessionKey)
+	plan, ok := in.Plan.(*agents.Plan)
+	if !ok {
+		return nil, fmt.Errorf("plan is not Plan type")
+	}
+
+	// remove the first step
+	plan.Steps = plan.Steps[1:]
+	planStr, err := sonic.MarshalString(plan)
+	if err != nil {
+		return nil, err
+	}
+
+	userInput, err := sonic.MarshalString(in.UserInput)
+	if err != nil {
+		return nil, err
+	}
+
+	return replannerPromptTemplate.Format(ctx, map[string]any{
+		"current_time":    utils.GetCurrentTime(),
+		"files_preview":   pf,
+		"user_input":      userInput,
+		"remaining_steps": planStr,
+		"executed_steps":  in.ExecutedSteps,
+	})
+}
