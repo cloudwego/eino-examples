@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
+	"github.com/kaptinlin/jsonrepair"
 	"golang.org/x/sync/errgroup"
 
 	"github.com/cloudwego/eino/adk"
@@ -137,42 +139,33 @@ func RepairJSON(input string) string {
 	input = strings.TrimPrefix(input, "<|FunctionCallBegin|>")
 	input = strings.TrimSuffix(input, "<|FunctionCallEnd|>")
 	input = strings.TrimPrefix(input, "<think>")
-	s := fixBrackets(input)
-	return s
+	output, err := jsonrepair.JSONRepair(input)
+	if err != nil {
+		return input
+	}
+
+	return output
 }
 
-func fixBrackets(s string) string {
-	var stack []rune
-	var result []rune
-
-	for _, ch := range s {
-		if ch == '{' || ch == '[' {
-			stack = append(stack, ch)
-			result = append(result, ch)
-		} else if ch == '}' || ch == ']' {
-			if len(stack) > 0 {
-				top := stack[len(stack)-1]
-				if (ch == '}' && top == '{') || (ch == ']' && top == '[') {
-					stack = stack[:len(stack)-1] // 匹配成功，出栈
-					result = append(result, ch)
-				} else {
-					continue
-				}
-			} else {
-				continue
-			}
-		} else {
-			result = append(result, ch)
-		}
+func GetSessionValue[T any](ctx context.Context, key string) (T, bool) {
+	v, ok := adk.GetSessionValue(ctx, key)
+	if !ok {
+		var zero T
+		return zero, false
+	}
+	t, ok := v.(T)
+	if !ok {
+		var zero T
+		return zero, false
 	}
 
-	for i := len(stack) - 1; i >= 0; i-- {
-		if stack[i] == '{' {
-			result = append(result, '}')
-		} else if stack[i] == '[' {
-			result = append(result, ']')
-		}
-	}
+	return t, true
+}
 
-	return string(result)
+func FormatExecutedSteps(in []planexecute.ExecutedStep) string {
+	var sb strings.Builder
+	for idx, m := range in {
+		sb.WriteString(fmt.Sprintf("## %d. Step: %v\n  Result: %v\n\n", idx+1, m.Step, m.Result))
+	}
+	return sb.String()
 }

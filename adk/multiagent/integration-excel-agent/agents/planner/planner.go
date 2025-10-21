@@ -2,18 +2,18 @@ package planner
 
 import (
 	"context"
-	"os"
 
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/schema"
-	arkmodel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 )
 
 var (
@@ -64,7 +64,7 @@ File Preview (If file has xlsx extension, the preview will provide the specific 
 	)
 )
 
-func NewPlanner(ctx context.Context) (adk.Agent, error) {
+func NewPlanner(ctx context.Context, op commandline.Operator) (adk.Agent, error) {
 	cm, err := newPlannerChatModel(ctx)
 	if err != nil {
 		return nil, err
@@ -74,48 +74,39 @@ func NewPlanner(ctx context.Context) (adk.Agent, error) {
 		ChatModelWithFormattedOutput: cm,
 		GenInputFn:                   newPlannerInputGen(plannerPromptTemplate),
 		NewPlan: func(ctx context.Context) planexecute.Plan {
-			return &agents.Plan{}
+			return &generic.Plan{}
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return agents.NewWrite2PlanMDWrapper(a), nil
+	return agents.NewWrite2PlanMDWrapper(a, op), nil
 }
 
 func newPlannerChatModel(ctx context.Context) (model.ToolCallingChatModel, error) {
-	sc, err := agents.PlanToolInfo.ToJSONSchema()
+	sc, err := generic.PlanToolInfo.ToJSONSchema()
 	if err != nil {
 		return nil, err
 	}
 
-	return ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey:  os.Getenv("ARK_API_KEY"),
-		BaseURL: os.Getenv("ARK_BASE_URL"),
-		Region:  os.Getenv("ARK_REGION"),
-		Model:   os.Getenv("ARK_MODEL"),
-		Thinking: &arkmodel.Thinking{
-			Type: arkmodel.ThinkingTypeDisabled,
-		},
-		ResponseFormat: &ark.ResponseFormat{
-			Type: arkmodel.ResponseFormatJSONSchema,
-			JSONSchema: &arkmodel.ResponseFormatJSONSchemaJSONSchemaParam{
-				Name:        agents.PlanToolInfo.Name,
-				Description: agents.PlanToolInfo.Desc,
-				Schema:      sc,
-				Strict:      true,
-			},
-		},
-		MaxTokens:   utils.PtrOf(4096),
-		Temperature: utils.PtrOf(float32(0)),
-		TopP:        utils.PtrOf(float32(0)),
-	})
+	return utils.NewChatModel(ctx,
+		utils.WithMaxTokens(4096),
+		utils.WithTemperature(0),
+		utils.WithTopP(0),
+		utils.WithDisableThinking(true),
+		utils.WithResponseFormatJsonSchema(&openai.ChatCompletionResponseFormatJSONSchema{
+			Name:        generic.PlanToolInfo.Name,
+			Description: generic.PlanToolInfo.Desc,
+			JSONSchema:  sc,
+			Strict:      true,
+		}),
+	)
 }
 
 func newPlannerInputGen(plannerPrompt prompt.ChatTemplate) planexecute.GenPlannerModelInputFn {
 	return func(ctx context.Context, userInput []adk.Message) ([]adk.Message, error) {
-		pf, _ := consts.GetSessionValue[string](ctx, consts.UserAllPreviewFilesSessionKey)
+		pf, _ := params.GetTypedContextParams[string](ctx, params.UserAllPreviewFilesSessionKey)
 
 		msgs, err := plannerPrompt.Format(ctx, map[string]any{
 			"user_query":   utils.FormatInput(userInput),

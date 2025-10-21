@@ -1,14 +1,9 @@
 package tools
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
 
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
@@ -19,7 +14,7 @@ var (
 	readFileToolInfo = &schema.ToolInfo{
 		Name: "ReadFile",
 		Desc: `This tool is used for reading file content, with parameters including the file path, starting line, and the number of lines to read. Content will be truncated if it is too long.  
-For xls and xlsx files, each sheet's information will be returned sequentially upon a single call. If multiple sheets' information is needed, only one call is required. The call will return the headers, merged cell information, and the first n_rows of data for each sheet.`,
+For xlsx files, each sheet's information will be returned sequentially upon a single call. If multiple sheets' information is needed, only one call is required. The call will return the headers, merged cell information, and the first n_rows of data for each sheet.`,
 		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
 			"path": {
 				Type:     schema.String,
@@ -65,38 +60,19 @@ func (r *readFile) InvokableRun(ctx context.Context, argumentsInJSON string, opt
 	if input.Path == "" {
 		return "path can not be empty", nil
 	}
-	if input.StartRow == 0 {
+	if input.StartRow <= 0 {
 		input.StartRow = 1
 	}
-	if input.NRows == 0 {
+	if input.NRows <= 0 {
 		input.NRows = 20
 	}
 	o := tool.GetImplSpecificOptions(&options{op: r.op})
-	fileContent, err := o.op.ReadFile(ctx, input.Path)
+	cmd := fmt.Sprintf("python3 -c \"import sys; lines = (line for idx, line in enumerate(open(sys.argv[1], encoding='utf-8')) if %d <= idx < %d); print(''.join(lines))\" %s",
+		input.StartRow, input.StartRow+input.NRows, input.Path)
+	content, err := o.op.RunCommand(ctx, cmd)
 	if err != nil {
 		return "", err
 	}
-	fileName := filepath.Base(filepath.Clean(input.Path))
 
-	tmpDir, err := os.MkdirTemp("", "process_dir")
-	if err != nil {
-		return "", fmt.Errorf("failed to create temp dir: %w", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	tmpFile := filepath.Join(tmpDir, fileName)
-	err = os.WriteFile(tmpFile, []byte(fileContent), 0644)
-	if err != nil {
-		return "", fmt.Errorf("failed to write temp file: %v\n", err)
-	}
-
-	cmd := exec.Command("python", os.Getenv("tool_preview_path"), tmpFile, strconv.Itoa(input.StartRow), strconv.Itoa(input.NRows))
-	buf := bytes.NewBuffer(nil)
-	cmd.Stdout = buf
-	cmd.Stderr = buf
-	err = cmd.Run()
-	if err != nil {
-		return "", err
-	}
-	return buf.String(), nil
+	return content, nil
 }

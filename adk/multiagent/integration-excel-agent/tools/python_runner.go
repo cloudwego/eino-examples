@@ -3,6 +3,8 @@ package tools
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -21,7 +23,8 @@ var (
 			"code": {
 				Type: "string",
 				Desc: "Python code to be executed should be output using Markdown code block syntax." +
-					"Starting with ```python and end with ```, enclosing the complete Python code within.",
+					"Starting with ```python and end with ```, enclosing the complete Python code within." +
+					"Do not generate code comment.",
 				Required: true,
 			},
 		}),
@@ -41,32 +44,54 @@ func (p *pythonRunnerTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
 }
 
 func (p *pythonRunnerTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
-	var input struct {
-		Code string `json:"code"`
-	}
-
-	err := jsoniter.Unmarshal([]byte(argumentsInJSON), &input)
-	if err != nil {
-		return "", err
-	}
-
-	code := extractCodeSnippet(input.Code)
+	code := tryExtractCodeSnippet(argumentsInJSON)
 	if code == "" {
-		return "", fmt.Errorf("python code is empty")
+		return "", fmt.Errorf("python code is empty, original=%s", argumentsInJSON)
 	}
-	taskID := params.GetCozeSpaceTaskID(ctx)
-	fileName := fmt.Sprintf("script_%s.py", taskID)
+	taskID := params.MustGetContextParams[string](ctx, params.TaskIDKey)
+	wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
+	if !ok {
+		return "", fmt.Errorf("work dir not found")
+	}
+	filePath := filepath.Join(wd, fmt.Sprintf("%s.py", taskID))
 
-	if err = p.op.WriteFile(ctx, fileName, code); err != nil {
-		return fmt.Sprintf("failed to create python file %s: %v", fileName, err), nil
+	if err := p.op.WriteFile(ctx, filePath, code); err != nil {
+		return fmt.Sprintf("failed to create python file %s: %v", filePath, err), nil
 	}
 
-	result, err := p.op.RunCommand(ctx, "python3 "+fileName)
+	pyExecutablePath := os.Getenv("EXCEL_AGENT_PYTHON_EXECUTABLE_PATH")
+	if pyExecutablePath == "" {
+		pyExecutablePath = "python"
+	}
+	result, err := p.op.RunCommand(ctx, fmt.Sprintf("%s %s", pyExecutablePath, filePath))
 	if err != nil {
 		return "", fmt.Errorf("execute error: %w", err)
 	}
 
 	return result, nil
+}
+
+func tryExtractCodeSnippet(res string) string {
+	var input struct {
+		Code string `json:"code"`
+	}
+
+	var rawCode string
+	err := jsoniter.Unmarshal([]byte(res), &input)
+	if err != nil {
+		rawCode = extractCodeSnippet(res)
+	} else {
+		rawCode = extractCodeSnippet(input.Code)
+	}
+
+	return strings.NewReplacer(
+		"\\\\", "\\",
+		"\\n", "\n",
+		"\\r", "\r",
+		"\\t", "\t",
+		"\\\"", "\"",
+		"\\'", "'",
+	).Replace(rawCode)
 }
 
 func extractCodeSnippet(res string) string {

@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
@@ -21,34 +19,22 @@ import (
 )
 
 func NewReportAgent(ctx context.Context, operator commandline.Operator) (adk.Agent, error) {
-	cm, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey:      os.Getenv("ARK_API_KEY"),
-		BaseURL:     os.Getenv("ARK_BASE_URL"),
-		Region:      os.Getenv("ARK_REGION"),
-		Model:       os.Getenv("ARK_MODEL"),
-		Temperature: utils.PtrOf(float32(0.1)),
-		MaxTokens:   utils.PtrOf(15000),
-		TopP:        utils.PtrOf(float32(1)),
-	})
+	cm, err := utils.NewChatModel(ctx,
+		utils.WithMaxTokens(15000),
+		utils.WithTemperature(0.1),
+		utils.WithTopP(1),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	getOrDefault := func(key, keyDefault string) string {
-		if v := os.Getenv(key); v != "" {
-			return v
-		}
-		return os.Getenv(keyDefault)
-	}
-
-	visionModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey:  getOrDefault("ARK_VISION_API_KEY", "ARK_API_KEY"),
-		BaseURL: getOrDefault("ARK_VISION_BASE_URL", "ARK_BASE_URL"),
-		Region:  getOrDefault("ARK_VISION_REGION", "ARK_REGION"),
-		Model:   getOrDefault("ARK_VISION_MODEL", "ARK_MODEL"),
-	})
-	if err != nil {
-		return nil, err
+	preprocess := []tools.ToolRequestPreprocess{tools.ToolRequestRepairJSON}
+	agentTools := []tool.BaseTool{
+		tools.NewWrapTool(tools.NewBashTool(operator), preprocess, nil),
+		tools.NewWrapTool(tools.NewTreeTool(operator), preprocess, nil),
+		tools.NewWrapTool(tools.NewEditFileTool(operator), preprocess, nil),
+		tools.NewWrapTool(tools.NewReadFileTool(operator), preprocess, nil),
+		tools.NewWrapTool(tools.NewToolSubmitResult(operator), preprocess, nil),
 	}
 
 	ra, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
@@ -64,19 +50,12 @@ If the file contains charts or visualizations, the agent will reference them app
 3.  Summarize the key findings and insights.
 4.  Generate a clear and concise report that addresses the user's query.
 5.  If there are any charts or visualizations, refer to them in your report.
-6.  If work is done, call SubmitResult tool to finish.
+6.  If work is done, must call SubmitResult tool before finishing.
 `,
 		Model: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: []tool.BaseTool{
-					tools.NewBashTool(operator),
-					tools.NewTreeTool(operator),
-					tools.NewEditFileTool(operator),
-					tools.NewReadFileTool(operator),
-					tools.NewToolImageReader(visionModel),
-					tools.NewToolSubmitResultReplanner(),
-				},
+				Tools: agentTools,
 			},
 			ReturnDirectly: tools.SubmitResultReturnDirectly,
 		},
@@ -87,21 +66,21 @@ If the file contains charts or visualizations, the agent will reference them app
 				planExecuteResult = []*schema.Message{input.Messages[len(input.Messages)-1]}
 			}
 
-			fp, ok := consts.GetSessionValue[string](ctx, consts.FilePathSessionKey)
+			fp, ok := params.GetTypedContextParams[string](ctx, params.FilePathSessionKey)
 			if !ok {
 				return nil, fmt.Errorf("file path session key not found")
 			}
 
-			pathUrlMap, ok := consts.GetSessionValue[map[string]string](ctx, consts.PathUrlMapSessionKey)
-			if !ok {
-				return nil, fmt.Errorf("path url map key not found")
-			}
 			var pathUrlMapStr string
-			for k, v := range pathUrlMap {
-				pathUrlMapStr += fmt.Sprintf("image_name:%s,url:%s\n", k, v)
+			pathUrlMap, ok := params.GetTypedContextParams[map[string]string](ctx, params.PathUrlMapSessionKey)
+			if ok {
+				for k, v := range pathUrlMap {
+					pathUrlMapStr += fmt.Sprintf("image_name:%s,url:%s\n", k, v)
+				}
+				// return nil, fmt.Errorf("path url map key not found")
 			}
 
-			plan, ok := consts.GetSessionValue[*agents.Plan](ctx, planexecute.PlanSessionKey)
+			plan, ok := utils.GetSessionValue[*generic.Plan](ctx, planexecute.PlanSessionKey)
 			if !ok {
 				return nil, fmt.Errorf("plan not found")
 			}
@@ -111,7 +90,7 @@ If the file contains charts or visualizations, the agent will reference them app
 				return nil, err
 			}
 
-			wd, ok := consts.GetSessionValue[string](ctx, consts.WorkDirSessionKey)
+			wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
 			if !ok {
 				return nil, fmt.Errorf("work dir not found")
 			}
@@ -135,7 +114,7 @@ Current Time: {{ current_time }}
 				"file_path":    fp,
 				"work_dir":     wd,
 				"user_query":   utils.FormatInput(planExecuteResult),
-				"plan":         planStr,
+				"plan":         string(planStr),
 				"path_url_map": pathUrlMapStr,
 				"current_time": utils.GetCurrentTime(),
 			})
@@ -145,7 +124,7 @@ Current Time: {{ current_time }}
 
 			return msgs, nil
 		},
-		MaxIterations: 5,
+		MaxIterations: 20,
 	})
 	if err != nil {
 		return nil, err
