@@ -3,22 +3,25 @@ package agents
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"runtime/debug"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 )
 
-func NewWrite2PlanMDWrapper(a adk.Agent) adk.Agent {
-	return &write2PlanMDWrapper{a: a}
+func NewWrite2PlanMDWrapper(a adk.Agent, op commandline.Operator) adk.Agent {
+	return &write2PlanMDWrapper{a: a, op: op}
 }
 
 type write2PlanMDWrapper struct {
-	a adk.Agent
+	a  adk.Agent
+	op commandline.Operator
 }
 
 func (r *write2PlanMDWrapper) Name(ctx context.Context) string {
@@ -47,7 +50,7 @@ func (r *write2PlanMDWrapper) Run(ctx context.Context, input *adk.AgentInput, op
 				break
 			}
 			if e.Action != nil && e.Action.Exit {
-				err := write2PlanMD(ctx)
+				err := write2PlanMD(ctx, r.op)
 				gen.Send(e)
 				if err != nil {
 					log.Print("write plan failed", err)
@@ -58,7 +61,7 @@ func (r *write2PlanMDWrapper) Run(ctx context.Context, input *adk.AgentInput, op
 			gen.Send(e)
 		}
 
-		err := write2PlanMD(ctx)
+		err := write2PlanMD(ctx, r.op)
 		if err != nil {
 			log.Print("write plan failed", err)
 			return
@@ -68,22 +71,25 @@ func (r *write2PlanMDWrapper) Run(ctx context.Context, input *adk.AgentInput, op
 	return nIter
 }
 
-func write2PlanMD(ctx context.Context) error {
+func write2PlanMD(ctx context.Context, op commandline.Operator) error {
 	var executedSteps []planexecute.ExecutedStep
-	var plan *Plan
-	p, ok := consts.GetSessionValue[*Plan](ctx, planexecute.PlanSessionKey)
+	var plan *generic.Plan
+	p, ok := utils.GetSessionValue[*generic.Plan](ctx, planexecute.PlanSessionKey)
 	if ok {
 		plan = p
 	}
-	es, ok := consts.GetSessionValue[[]planexecute.ExecutedStep](ctx, planexecute.ExecutedStepsSessionKey)
+	es, ok := utils.GetSessionValue[[]planexecute.ExecutedStep](ctx, planexecute.ExecutedStepsSessionKey)
 	if ok {
 		executedSteps = es
 	}
-
+	wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
+	if !ok {
+		return fmt.Errorf("work dir not found")
+	}
 	var plans []*generic.FullPlan
 	for i, step := range executedSteps {
 		var desc string
-		s := &Step{}
+		s := &generic.Step{}
 		err := json.Unmarshal([]byte(step.Step), s)
 		if err == nil {
 			desc = s.Desc
@@ -93,11 +99,10 @@ func write2PlanMD(ctx context.Context) error {
 			Status: generic.PlanStatusDone,
 			Desc:   desc,
 			ExecResult: &generic.SubmitResult{
-				IsSuccess: nil,
+				IsSuccess: utils.PtrOf(true), // todo
 				Result:    step.Result,
 				Files:     nil, // todo
 			},
-			EvaluatorExecResult: nil, // todo
 		})
 	}
 	if plan != nil {
@@ -109,7 +114,7 @@ func write2PlanMD(ctx context.Context) error {
 			})
 		}
 	}
-	err := generic.Write2PlanMD(params.GetCozeSpaceTaskID(ctx), plans)
+	err := generic.Write2PlanMD(ctx, op, wd, plans)
 	if err != nil {
 		return err
 	}

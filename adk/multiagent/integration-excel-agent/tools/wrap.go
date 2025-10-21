@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
@@ -121,7 +121,7 @@ func FilePostProcess(ctx context.Context, baseTool tool.InvokableTool, toolRespo
 		}
 	}
 
-	adk.AddSessionValue(ctx, consts.PathUrlMapSessionKey, path2UrlMap)
+	adk.AddSessionValue(ctx, params.PathUrlMapSessionKey, path2UrlMap)
 
 	type fileOutputFormat struct {
 		FileType string `json:"Change subject (file/directory)"`

@@ -2,27 +2,24 @@ package tools
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
 
 	"github.com/bytedance/sonic"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
+	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )
 
 var (
-	SubmitResultReturnDirectly = map[string]bool{
-		"SubmitResult": true,
-	}
-
-	toolSubmitResultInfo = &schema.ToolInfo{
+	submitResultToolInfo = &schema.ToolInfo{
 		Name: "SubmitResult",
-		Desc: `The tool used for submitting task results, with parameters including the task execution outcome as well as the file paths and descriptions of the files generated during task execution.
-
-- Note: Do not read and submit the original content of the files generated during task execution; instead, submit the file paths and descriptions.
-- Intermediate files must be specified as individual files, not folders.
-- It is necessary to make an overall assessment of the task’s completion status, such as whether the task is finished, failed, or requires re-execution.`,
+		Desc: "When all steps are completed without obvious problems, call this tool to end the task and report the final execution results to the user.",
 		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
 			"is_success": {
 				Type: schema.Boolean,
@@ -30,20 +27,22 @@ var (
 			},
 			"result": {
 				Type: schema.String,
-				Desc: "Task execution result probability, and data analysis (optional)",
+				Desc: "Task execution process and result",
 			},
 			"files": {
 				Type: schema.Array,
 				ElemInfo: &schema.ParameterInfo{
-					Desc: "Absolute paths and descriptions of files generated during task execution, by default excluding Python scripts.",
+					Desc: `The final file that needs to be delivered to the user (only the files that are successfully generated in the end are included, and Python scripts are not included by default unless explicitly requested by the user).
+Select only the documents that can meet the original needs of users, and put the documents that best meet the needs to the first.
+If there are many documents that meet the original needs of users, the report integrating these documents shall be delivered first, and the number of documents finally submitted shall be controlled within 3 as far as possible.`,
 					Type: schema.Object,
 					SubParams: map[string]*schema.ParameterInfo{
 						"path": {
-							Desc: "Absolute path of current file",
+							Desc: "absolute path",
 							Type: schema.String,
 						},
 						"desc": {
-							Desc: "Description of the file, and an overview of the file's data content (optional).",
+							Desc: "file content description",
 							Type: schema.String,
 						},
 					},
@@ -51,24 +50,61 @@ var (
 			},
 		}),
 	}
+
+	SubmitResultReturnDirectly = map[string]bool{
+		"SubmitResult": true,
+	}
 )
 
-func NewSubmitResultTool() tool.InvokableTool {
-	return &SubmitResult{}
+func NewToolSubmitResult(op commandline.Operator) tool.InvokableTool {
+	return &submitResultTool{op: op}
 }
 
-type SubmitResult struct{}
-
-func (t *SubmitResult) Info(ctx context.Context) (*schema.ToolInfo, error) {
-	return toolSubmitResultInfo, nil
+type submitResultTool struct {
+	op commandline.Operator
 }
 
-func (t *SubmitResult) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+func (t *submitResultTool) Info(ctx context.Context) (*schema.ToolInfo, error) {
+	return submitResultToolInfo, nil
+}
+
+func (t *submitResultTool) InvokableRun(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
 	args := &generic.SubmitResult{}
 	if err := sonic.Unmarshal([]byte(argumentsInJSON), args); err != nil {
 		return "", err
 	}
-	args.IsSuccess = nil
-	params.SetCurrentAgentResult(ctx, args)
-	return utils.ToJSONString(args), nil
+
+	plan, _ := utils.GetSessionValue[*generic.Plan](ctx, planexecute.PlanSessionKey)
+	steps, _ := utils.GetSessionValue[[]planexecute.ExecutedStep](ctx, planexecute.ExecutedStepsSessionKey)
+
+	var fullPlan []*generic.FullPlan
+	for i, step := range steps {
+		fullPlan = append(fullPlan, &generic.FullPlan{
+			TaskID: i + 1,
+			Status: generic.PlanStatusDone,
+			Desc:   step.Step,
+			ExecResult: &generic.SubmitResult{
+				IsSuccess: utils.PtrOf(true),
+				Result:    step.Result,
+			},
+		})
+	}
+
+	for i := len(steps); i < len(plan.Steps); i++ {
+		step := plan.Steps[i]
+		fullPlan = append(fullPlan, &generic.FullPlan{
+			TaskID: len(fullPlan) + 1,
+			Status: generic.PlanStatusSkipped,
+			Desc:   step.Desc,
+		})
+	}
+
+	wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
+	if !ok {
+		return "", fmt.Errorf("work dir not found")
+	}
+
+	_ = t.op.WriteFile(ctx, filepath.Join(wd, "final_report.json"), argumentsInJSON)
+	_ = generic.Write2PlanMD(ctx, t.op, wd, fullPlan)
+	return utils.ToJSONString(&generic.FullPlan{AgentName: compose.END}), nil
 }

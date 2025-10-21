@@ -1,4 +1,4 @@
-package agents
+package generic
 
 import (
 	"encoding/json"
@@ -47,12 +47,6 @@ var PlanToolInfo = &schema.ToolInfo{
 						"index": {
 							Type:     schema.Integer,
 							Desc:     "The sequential number of this step in the overall plan. **Must start from 1 and increment by exactly 1 for each subsequent step.**",
-							Required: true,
-						},
-						"agent_name": {
-							Type:     schema.String,
-							Desc:     "The name of the agent responsible for executing this specific step. **Must be one of the following exact values: 'GeneralAgent', 'CodeAgent', 'ReportAgent'.**",
-							Enum:     []string{"GeneralAgent", "CodeAgent", "ReportAgent"},
 							Required: true,
 						},
 						"desc": {

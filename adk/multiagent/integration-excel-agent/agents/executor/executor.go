@@ -2,32 +2,51 @@ package executor
 
 import (
 	"context"
-	"os"
 
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
+	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
+	"github.com/cloudwego/eino/schema"
 )
 
+var executorPrompt = prompt.FromMessages(schema.FString,
+	schema.SystemMessage(`You are a diligent and meticulous executor agent. Follow the given plan and execute your tasks carefully and thoroughly.
+
+Available Tools:
+- CodeAgent: This tool is a code agent specialized in Excel file handling. It takes step-by-step plans, processes each task by generating Python code (leveraging pandas for data analysis/manipulation, matplotlib for plotting/visualization, and openpyxl for Excel reading/writing), and executes tasks sequentially. The React agent should invoke it when stepwise Python coding for Excel operations is needed to ensure precise, efficient task completion.
+
+Notice:
+- Do not transfer to other agents, use tools only.
+`),
+	schema.UserMessage(`## OBJECTIVE
+{input}
+## Given the following plan:
+{plan}
+## COMPLETED STEPS & RESULTS
+{executed_steps}
+## Your task is to execute the first step, which is: 
+{step}`))
+
 func NewExecutor(ctx context.Context, operator commandline.Operator) (adk.Agent, error) {
-	cm, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey:      os.Getenv("ARK_API_KEY"),
-		BaseURL:     os.Getenv("ARK_BASE_URL"),
-		Region:      os.Getenv("ARK_REGION"),
-		Model:       os.Getenv("ARK_MODEL"),
-		MaxTokens:   utils.PtrOf(4096),
-		Temperature: utils.PtrOf(float32(0)),
-		TopP:        utils.PtrOf(float32(0)),
-	})
+	cm, err := utils.NewChatModel(ctx,
+		utils.WithMaxTokens(4096),
+		utils.WithTemperature(float32(0)),
+		utils.WithTopP(float32(0)),
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	ca, err := newCodeAgent(ctx, operator)
+	if err != nil {
+		return nil, err
+	}
+
+	sa, err := newWebSearchAgent(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -38,10 +57,24 @@ func NewExecutor(ctx context.Context, operator commandline.Operator) (adk.Agent,
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{
 					adk.NewAgentTool(ctx, ca),
+					adk.NewAgentTool(ctx, sa),
 				},
 			},
 		},
 		MaxIterations: 20,
+		GenInputFn: func(ctx context.Context, in *planexecute.ExecutionContext) ([]adk.Message, error) {
+			planContent, err := in.Plan.MarshalJSON()
+			if err != nil {
+				return nil, err
+			}
+
+			return executorPrompt.Format(ctx, map[string]any{
+				"input":          utils.FormatInput(in.UserInput),
+				"plan":           string(planContent),
+				"executed_steps": utils.FormatExecutedSteps(in.ExecutedSteps),
+				"step":           in.Plan.FirstStep(),
+			})
+		},
 	})
 	if err != nil {
 		return nil, err

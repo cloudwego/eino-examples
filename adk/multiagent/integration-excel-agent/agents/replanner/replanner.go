@@ -3,19 +3,18 @@ package replanner
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/bytedance/sonic"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/consts"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/schema"
-	arkmodel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 )
 
 var (
@@ -72,47 +71,41 @@ Remaining Steps: {{ remaining_steps }}
 	)
 )
 
-func NewReplanner(ctx context.Context) (adk.Agent, error) {
-	cm, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-		APIKey:  os.Getenv("ARK_API_KEY"),
-		BaseURL: os.Getenv("ARK_BASE_URL"),
-		Region:  os.Getenv("ARK_REGION"),
-		Model:   os.Getenv("ARK_MODEL"),
-		Thinking: &arkmodel.Thinking{
-			Type: arkmodel.ThinkingTypeDisabled,
-		},
-		TopP:        utils.PtrOf[float32](0),
-		MaxTokens:   utils.PtrOf(4096),
-		Temperature: utils.PtrOf[float32](1.0),
-	})
+func NewReplanner(ctx context.Context, op commandline.Operator) (adk.Agent, error) {
+	cm, err := utils.NewChatModel(ctx,
+		utils.WithMaxTokens(4096),
+		utils.WithTopP(0),
+		utils.WithTemperature(1.0),
+		utils.WithDisableThinking(true),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	respondInfo, err := tools.NewToolSubmitResultReplanner().Info(context.Background())
+	respondInfo, err := tools.NewToolSubmitResult(op).Info(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
 	a, err := planexecute.NewReplanner(ctx, &planexecute.ReplannerConfig{
 		ChatModel:   cm,
-		PlanTool:    agents.PlanToolInfo,
+		PlanTool:    generic.PlanToolInfo,
 		GenInputFn:  replannerInputGen,
 		RespondTool: respondInfo,
 		NewPlan: func(ctx context.Context) planexecute.Plan {
-			return &agents.Plan{}
+			return &generic.Plan{}
 		},
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return agents.NewWrite2PlanMDWrapper(a), nil
+	return agents.NewWrite2PlanMDWrapper(a, op), nil
 }
 
 func replannerInputGen(ctx context.Context, in *planexecute.ExecutionContext) ([]adk.Message, error) {
-	pf, _ := consts.GetSessionValue[string](ctx, consts.UserAllPreviewFilesSessionKey)
-	plan, ok := in.Plan.(*agents.Plan)
+	pf, _ := params.GetTypedContextParams[string](ctx, params.UserAllPreviewFilesSessionKey)
+	plan, ok := in.Plan.(*generic.Plan)
 	if !ok {
 		return nil, fmt.Errorf("plan is not Plan type")
 	}
@@ -131,9 +124,9 @@ func replannerInputGen(ctx context.Context, in *planexecute.ExecutionContext) ([
 
 	return replannerPromptTemplate.Format(ctx, map[string]any{
 		"current_time":    utils.GetCurrentTime(),
-		"files_preview":   pf,
-		"user_input":      userInput,
+		"file_preview":    pf,
+		"user_query":      userInput,
 		"remaining_steps": planStr,
-		"executed_steps":  in.ExecutedSteps,
+		"executed_steps":  utils.FormatExecutedSteps(in.ExecutedSteps),
 	})
 }

@@ -21,9 +21,9 @@ import (
 )
 
 func main() {
-	// query := schema.UserMessage("统计附件文件中推荐的小说名称及推荐次数，凡是带有《》内容都是小说名称，形成表格，表头为小说名称和推荐次数，同名小说只列一行，推荐次数相加"),
-	// query := schema.UserMessage("读取工作目录下 模拟出题.csv 中的表格内容，规范格式将题目、答案、解析、选项放在同一行，简答题只把答案写入解析即可"),
-	query := schema.UserMessage("请帮我将 question.csv 表格中的第一列提取到一个新的 csv 中")
+	// query := schema.UserMessage("统计附件文件中推荐的小说名称及推荐次数，凡是带有《》内容都是小说名称，形成表格，表头为小说名称和推荐次数，同名小说只列一行，推荐次数相加")
+	query := schema.UserMessage("读取 模拟出题.csv 中的表格内容，规范格式将题目、答案、解析、选项放在同一行，简答题只把答案写入解析即可")
+	// query := schema.UserMessage("请帮我将 question.csv 表格中的第一列提取到一个新的 csv 中")
 
 	ctx := context.Background()
 	agent, err := newExcelAgent(ctx)
