@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package executor
 
 import (
@@ -63,6 +79,7 @@ The React agent should invoke this sub-agent whenever stepwise Python coding for
 1. You will be given a clear task to handle Excel files.
 2. You should analyse the task and use right tools to help coding.
 3. You should write python code to finish the task.
+4. You are preferred to write code execution result to another file for further usages. 
 
 You are in a react mode, and you should use the following libraries to help you finish the task:
 - pandas: for data analysis and manipulation

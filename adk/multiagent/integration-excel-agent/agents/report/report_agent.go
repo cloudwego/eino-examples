@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package report
 
 import (
@@ -95,12 +111,18 @@ If the file contains charts or visualizations, the agent will reference them app
 				return nil, fmt.Errorf("work dir not found")
 			}
 
+			files, err := generic.ListDir(wd)
+			if err != nil {
+				return nil, err
+			}
+
 			tpl := prompt.FromMessages(schema.Jinja2,
 				schema.SystemMessage(instruction),
 				schema.UserMessage(`
 User Query: {{ user_query }}
 Input File Path: {{ file_path }}
 Working Directory: {{ work_dir }}
+Working Directory Files: {{ work_dir_files }}
 Current Time: {{ current_time }}
 
 **Plan Details:**
@@ -111,12 +133,13 @@ Current Time: {{ current_time }}
 `))
 
 			msgs, err := tpl.Format(ctx, map[string]any{
-				"file_path":    fp,
-				"work_dir":     wd,
-				"user_query":   utils.FormatInput(planExecuteResult),
-				"plan":         string(planStr),
-				"path_url_map": pathUrlMapStr,
-				"current_time": utils.GetCurrentTime(),
+				"file_path":      fp,
+				"work_dir":       wd,
+				"work_dir_files": utils.ToJSONString(files),
+				"user_query":     utils.FormatInput(planExecuteResult),
+				"plan":           string(planStr),
+				"path_url_map":   pathUrlMapStr,
+				"current_time":   utils.GetCurrentTime(),
 			})
 			if err != nil {
 				return nil, err
