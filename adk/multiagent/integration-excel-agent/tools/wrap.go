@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tools
 
 import (
@@ -8,12 +24,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 )
 
 type ToolRequestPreprocess func(ctx context.Context, baseTool tool.InvokableTool, toolArguments string) (string, error)
@@ -107,27 +122,11 @@ func FilePostProcess(ctx context.Context, baseTool tool.InvokableTool, toolRespo
 	if err := json.Unmarshal([]byte(toolResponse), &rawResult); err != nil {
 		return toolResponse, nil
 	}
-	var (
-		imgs        []*fileChangeData
-		path2UrlMap = make(map[string]string)
-	)
-	for _, d := range rawResult.FileChange {
-		data := d
-		if data.FileType == "file" && (data.Type == "create" || data.Type == "update") {
-			if isImage(data.Uri) {
-				imgs = append(imgs, data)
-				path2UrlMap[data.Path] = data.Url
-			}
-		}
-	}
-
-	adk.AddSessionValue(ctx, params.PathUrlMapSessionKey, path2UrlMap)
 
 	type fileOutputFormat struct {
 		FileType string `json:"Change subject (file/directory)"`
 		Path     string `json:"File/directory relative path"`
 		Type     string `json:"Change type (create/delete/update)"`
-		Uri      string `json:"File URI"`
 	}
 	var (
 		stdOut     []string
@@ -145,7 +144,6 @@ func FilePostProcess(ctx context.Context, baseTool tool.InvokableTool, toolRespo
 				FileType: item.FileType,
 				Path:     item.Path,
 				Type:     item.Type,
-				Uri:      item.Uri,
 			})
 		}
 	}

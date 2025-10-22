@@ -1,14 +1,28 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package report
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
+	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
@@ -16,6 +30,11 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 )
 
 func NewReportAgent(ctx context.Context, operator commandline.Operator) (adk.Agent, error) {
@@ -28,6 +47,20 @@ func NewReportAgent(ctx context.Context, operator commandline.Operator) (adk.Age
 		return nil, err
 	}
 
+	var imageReaderTool tool.InvokableTool
+	if modelName := os.Getenv("ARK_VISION_MODEL"); modelName != "" {
+		visionModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
+			APIKey:  os.Getenv("ARK_VISION_API_KEY"),
+			BaseURL: os.Getenv("ARK_VISION_BASE_URL"),
+			Region:  os.Getenv("ARK_VISION_REGION"),
+			Model:   modelName,
+		})
+		if err != nil {
+			return nil, err
+		}
+		imageReaderTool = tools.NewToolImageReader(visionModel)
+	}
+
 	preprocess := []tools.ToolRequestPreprocess{tools.ToolRequestRepairJSON}
 	agentTools := []tool.BaseTool{
 		tools.NewWrapTool(tools.NewBashTool(operator), preprocess, nil),
@@ -35,6 +68,9 @@ func NewReportAgent(ctx context.Context, operator commandline.Operator) (adk.Age
 		tools.NewWrapTool(tools.NewEditFileTool(operator), preprocess, nil),
 		tools.NewWrapTool(tools.NewReadFileTool(operator), preprocess, nil),
 		tools.NewWrapTool(tools.NewToolSubmitResult(operator), preprocess, nil),
+	}
+	if imageReaderTool != nil {
+		agentTools = append(agentTools, tools.NewWrapTool(imageReaderTool, preprocess, nil))
 	}
 
 	ra, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
@@ -62,22 +98,12 @@ If the file contains charts or visualizations, the agent will reference them app
 		GenModelInput: func(ctx context.Context, instruction string, input *adk.AgentInput) ([]adk.Message, error) {
 			planExecuteResult := input.Messages
 			if len(input.Messages) > 0 && input.Messages[len(input.Messages)-1].Role == schema.Tool {
-				fmt.Println("got submit result !!")
 				planExecuteResult = []*schema.Message{input.Messages[len(input.Messages)-1]}
 			}
 
 			fp, ok := params.GetTypedContextParams[string](ctx, params.FilePathSessionKey)
 			if !ok {
 				return nil, fmt.Errorf("file path session key not found")
-			}
-
-			var pathUrlMapStr string
-			pathUrlMap, ok := params.GetTypedContextParams[map[string]string](ctx, params.PathUrlMapSessionKey)
-			if ok {
-				for k, v := range pathUrlMap {
-					pathUrlMapStr += fmt.Sprintf("image_name:%s,url:%s\n", k, v)
-				}
-				// return nil, fmt.Errorf("path url map key not found")
 			}
 
 			plan, ok := utils.GetSessionValue[*generic.Plan](ctx, planexecute.PlanSessionKey)
@@ -95,28 +121,31 @@ If the file contains charts or visualizations, the agent will reference them app
 				return nil, fmt.Errorf("work dir not found")
 			}
 
+			files, err := generic.ListDir(wd)
+			if err != nil {
+				return nil, err
+			}
+
 			tpl := prompt.FromMessages(schema.Jinja2,
 				schema.SystemMessage(instruction),
 				schema.UserMessage(`
 User Query: {{ user_query }}
 Input File Path: {{ file_path }}
 Working Directory: {{ work_dir }}
+Working Directory Files: {{ work_dir_files }}
 Current Time: {{ current_time }}
 
 **Plan Details:**
 {{ plan }}
-
-**Image Mappings:**
-{{ path_url_map }}
 `))
 
 			msgs, err := tpl.Format(ctx, map[string]any{
-				"file_path":    fp,
-				"work_dir":     wd,
-				"user_query":   utils.FormatInput(planExecuteResult),
-				"plan":         string(planStr),
-				"path_url_map": pathUrlMapStr,
-				"current_time": utils.GetCurrentTime(),
+				"file_path":      fp,
+				"work_dir":       wd,
+				"work_dir_files": utils.ToJSONString(files),
+				"user_query":     utils.FormatInput(planExecuteResult),
+				"plan":           string(planStr),
+				"current_time":   utils.GetCurrentTime(),
 			})
 			if err != nil {
 				return nil, err

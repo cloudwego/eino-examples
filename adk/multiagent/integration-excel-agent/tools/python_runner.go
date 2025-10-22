@@ -1,3 +1,19 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package tools
 
 import (
@@ -8,23 +24,28 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 )
 
 var (
 	toolPythonRunnerInfo = &schema.ToolInfo{
-		Name: "PythonRunner",
-		Desc: `Write Python code to a file and execute it, and return the execution result.`,
+		Name: "python_runner",
+		Desc: `Write Python code to a file and execute it, and return the execution result. 
+Code would be overwritten to the same file when this tool is called multiple times.`,
 		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
 			"code": {
 				Type: "string",
-				Desc: "Python code to be executed should be output using Markdown code block syntax." +
-					"Starting with ```python and end with ```, enclosing the complete Python code within." +
-					"Do not generate code comment.",
+				Desc: "Python code to be executed. " +
+					"The code MUST be enclosed in a Markdown code block starting with ```python and ending with ```. " +
+					"CRITICAL: The code within the block must be a raw, multi-line string with real newlines. " +
+					"It MUST NOT be a JSON-escaped string containing literal '\\n' or '\\\"' sequences. " +
+					"The code must be ready for direct execution without any unescaping. " +
+					"Do not generate code comments.",
 				Required: true,
 			},
 		}),
@@ -67,7 +88,9 @@ func (p *pythonRunnerTool) InvokableRun(ctx context.Context, argumentsInJSON str
 	if err != nil {
 		return "", fmt.Errorf("execute error: %w", err)
 	}
-
+	if strings.HasPrefix(result, "internal error") {
+		result = fmt.Sprintf("%s\n\n code after parse:\n%v", result, code)
+	}
 	return result, nil
 }
 
@@ -76,15 +99,16 @@ func tryExtractCodeSnippet(res string) string {
 		Code string `json:"code"`
 	}
 
-	var rawCode string
+	var codeToProcess string
 	err := jsoniter.Unmarshal([]byte(res), &input)
 	if err != nil {
-		rawCode = extractCodeSnippet(res)
+		codeToProcess = res
 	} else {
-		rawCode = extractCodeSnippet(input.Code)
+		codeToProcess = input.Code
 	}
 
-	return strings.NewReplacer(
+	rawCode := extractCodeSnippet(codeToProcess)
+	unescapedCode := strings.NewReplacer(
 		"\\\\", "\\",
 		"\\n", "\n",
 		"\\r", "\r",
@@ -92,6 +116,8 @@ func tryExtractCodeSnippet(res string) string {
 		"\\\"", "\"",
 		"\\'", "'",
 	).Replace(rawCode)
+
+	return unescapedCode
 }
 
 func extractCodeSnippet(res string) string {

@@ -1,20 +1,31 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package utils
 
 import (
 	"context"
 	"fmt"
-	"log"
-	"runtime/debug"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/kaptinlin/jsonrepair"
-	"golang.org/x/sync/errgroup"
-
-	"github.com/cloudwego/eino/adk"
 )
 
 type panicErr struct {
@@ -50,57 +61,9 @@ func FormatInput(input []adk.Message) string {
 	return sb.String()
 }
 
-func GenErrorIter(err error) *adk.AsyncIterator[*adk.AgentEvent] {
-	iterator, generator := adk.NewAsyncIteratorPair[*adk.AgentEvent]()
-	generator.Send(&adk.AgentEvent{Err: err})
-	generator.Close()
-	return iterator
-}
-
 type TaskGroup interface {
 	Go(f func() error)
 	Wait() error
-}
-
-type taskGroup struct {
-	errGroup    *errgroup.Group
-	ctx         context.Context
-	execAllTask atomic.Bool
-}
-
-// NewTaskGroup if one task return error, the rest task will stop
-func NewTaskGroup(ctx context.Context, concurrentCount int) TaskGroup {
-	t := &taskGroup{}
-	t.errGroup, t.ctx = errgroup.WithContext(ctx)
-	t.errGroup.SetLimit(concurrentCount)
-	t.execAllTask.Store(false)
-
-	return t
-}
-
-func (t *taskGroup) Go(f func() error) {
-	t.errGroup.Go(func() error {
-		defer func() {
-			if err := recover(); err != nil {
-				err_ := NewPanicErr(err, debug.Stack())
-				fmt.Println(fmt.Errorf("[TaskGroup] exec panic recover:%+v", err_))
-			}
-		}()
-
-		if !t.execAllTask.Load() {
-			select {
-			case <-t.ctx.Done():
-				return t.ctx.Err()
-			default:
-			}
-		}
-
-		return f()
-	})
-}
-
-func (t *taskGroup) Wait() error {
-	return t.errGroup.Wait()
 }
 
 func ToJSONString(v interface{}) string {
@@ -115,24 +78,6 @@ func GetCurrentTime() string {
 		return time.Now().Format("2006-01-02 15:04:05 MST")
 	}
 	return time.Now().In(loc).Format("2006-01-02 15:04:05 MST")
-}
-
-func Recovery(ctx context.Context) {
-	e := recover()
-	if e == nil {
-		return
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	log.Printf("[utils.Recovery] catch panic!!! err: %+v \nstacktrace:\n%s", e, debug.Stack())
-}
-
-func SafeGo(ctx context.Context, fn func()) {
-	go func() {
-		defer Recovery(ctx)
-		fn()
-	}()
 }
 
 func RepairJSON(input string) string {

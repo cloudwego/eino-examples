@@ -1,20 +1,35 @@
+/*
+ * Copyright 2025 CloudWeGo Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package executor
 
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
-	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/tools"
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 )
 
 func newCodeAgent(ctx context.Context, operator commandline.Operator) (adk.Agent, error) {
@@ -27,31 +42,7 @@ func newCodeAgent(ctx context.Context, operator commandline.Operator) (adk.Agent
 		return nil, err
 	}
 
-	var imageReaderTool tool.InvokableTool
-	if modelName := os.Getenv("ARK_VISION_MODEL"); modelName != "" {
-		visionModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
-			APIKey:  os.Getenv("ARK_VISION_API_KEY"),
-			BaseURL: os.Getenv("ARK_VISION_BASE_URL"),
-			Region:  os.Getenv("ARK_VISION_REGION"),
-			Model:   modelName,
-		})
-		if err != nil {
-			return nil, err
-		}
-		imageReaderTool = tools.NewToolImageReader(visionModel)
-	}
-
 	preprocess := []tools.ToolRequestPreprocess{tools.ToolRequestRepairJSON}
-	agentTools := []tool.BaseTool{
-		tools.NewWrapTool(tools.NewBashTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.FilePostProcess}),
-		tools.NewWrapTool(tools.NewTreeTool(operator), preprocess, nil),
-		tools.NewWrapTool(tools.NewEditFileTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.EditFilePostProcess}),
-		tools.NewWrapTool(tools.NewReadFileTool(operator), preprocess, nil), // TODO: compress post process
-		tools.NewWrapTool(tools.NewPythonRunnerTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.FilePostProcess}),
-	}
-	if imageReaderTool != nil {
-		agentTools = append(agentTools, tools.NewWrapTool(imageReaderTool, preprocess, nil))
-	}
 
 	ca, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name: "CodeAgent",
@@ -63,6 +54,7 @@ The React agent should invoke this sub-agent whenever stepwise Python coding for
 1. You will be given a clear task to handle Excel files.
 2. You should analyse the task and use right tools to help coding.
 3. You should write python code to finish the task.
+4. You are preferred to write code execution result to another file for further usages. 
 
 You are in a react mode, and you should use the following libraries to help you finish the task:
 - pandas: for data analysis and manipulation
@@ -76,7 +68,13 @@ Notice:
 		Model: cm,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: agentTools,
+				Tools: []tool.BaseTool{
+					tools.NewWrapTool(tools.NewBashTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.FilePostProcess}),
+					tools.NewWrapTool(tools.NewTreeTool(operator), preprocess, nil),
+					tools.NewWrapTool(tools.NewEditFileTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.EditFilePostProcess}),
+					tools.NewWrapTool(tools.NewReadFileTool(operator), preprocess, nil), // TODO: compress post process
+					tools.NewWrapTool(tools.NewPythonRunnerTool(operator), preprocess, []tools.ToolResponsePostprocess{tools.FilePostProcess}),
+				},
 			},
 		},
 		GenModelInput: func(ctx context.Context, instruction string, input *adk.AgentInput) ([]adk.Message, error) {

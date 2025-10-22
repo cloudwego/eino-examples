@@ -1,8 +1,8 @@
 module github.com/cloudwego/eino-examples
 
-go 1.24.0
+go 1.24.7
 
-toolchain go1.24.4
+toolchain go1.24.9
 
 require (
 	github.com/bytedance/sonic v1.14.2
@@ -20,10 +20,10 @@ require (
 	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/coze-dev/cozeloop-go v0.1.11
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
+	github.com/eino-contrib/jsonschema v1.0.2
 	github.com/google/uuid v1.6.0
 	github.com/json-iterator/go v1.1.12
 	github.com/kaptinlin/jsonrepair v0.2.4
-	github.com/eino-contrib/jsonschema v1.0.2
 	github.com/ollama/ollama v0.11.4
 	github.com/stretchr/testify v1.11.1
 	github.com/volcengine/volcengine-go-sdk v1.1.44
@@ -97,11 +97,10 @@ require (
 	golang.org/x/arch v0.19.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
 	golang.org/x/exp v0.0.0-20250718183923-645b1fa84792 // indirect
-	golang.org/x/sync v0.16.0 // indirect
-	google.golang.org/protobuf v1.34.1 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sys v0.37.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
+	google.golang.org/protobuf v1.34.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
