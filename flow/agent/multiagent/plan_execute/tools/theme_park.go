@@ -37,70 +37,70 @@ type Activity struct {
 	Name               string       `json:"name"`
 	Desc               string       `json:"desc"`
 	Type               ActivityType `json:"type"`
-	Location           string       `json:"location" jsonschema:"description=项目所属的区域"`
-	MinHeight          int          `json:"min_height,omitempty" jsonschema:"description=参加游乐设施需要的最小身高，单位是厘米。如果为空，则没有身高要求"`
-	Duration           int          `json:"duration,omitempty" jsonschema:"description=一个项目参加一次需要的时间，注意不包括排队的时间。如果为空，则缺少具体的时间信息，可以默认为 10 分钟"`
-	TimeTable          []string     `json:"time_table,omitempty" jsonschema:"description=一个演出的时间表。如果为空，则使用 OpenTime 和 CloseTime 来表示这个项目的运营时间范围"`
-	OpenTime           string       `json:"open_time,omitempty" jsonschema:"description=一个项目开始运营的时间"`
-	CloseTime          string       `json:"close_time,omitempty" jsonschema:"description=一个项目结束运营的时间"`
-	RequireBooking     bool         `json:"require_booking,omitempty" jsonschema:"description=一个餐厅是否需要提前预约"`
-	HasPriorityAccess  bool         `json:"has_priority_access,omitempty" jsonschema:"description=一个项目是否有高速票服务"`
-	PriorityAccessCost int          `json:"priority_access_cost,omitempty" jsonschema:"description=一个项目如果有高速票服务，则一个人的高速票需要花多少钱"`
-	QueueTime          float64      `json:"queue_time,omitempty" jsonschema:"description=一个项目常规需要的排队时间，单位是分钟。如果为空，则这个项目一般不需要排队"`
+	Location           string       `json:"location" jsonschema_description:"项目所属的区域"`
+	MinHeight          int          `json:"min_height,omitempty" jsonschema_description:"参加游乐设施需要的最小身高，单位是厘米。如果为空，则没有身高要求"`
+	Duration           int          `json:"duration,omitempty" jsonschema_description:"一个项目参加一次需要的时间，注意不包括排队的时间。如果为空，则缺少具体的时间信息，可以默认为 10 分钟"`
+	TimeTable          []string     `json:"time_table,omitempty" jsonschema_description:"一个演出的时间表。如果为空，则使用 OpenTime 和 CloseTime 来表示这个项目的运营时间范围"`
+	OpenTime           string       `json:"open_time,omitempty" jsonschema_description:"一个项目开始运营的时间"`
+	CloseTime          string       `json:"close_time,omitempty" jsonschema_description:"一个项目结束运营的时间"`
+	RequireBooking     bool         `json:"require_booking,omitempty" jsonschema_description:"一个餐厅是否需要提前预约"`
+	HasPriorityAccess  bool         `json:"has_priority_access,omitempty" jsonschema_description:"一个项目是否有高速票服务"`
+	PriorityAccessCost int          `json:"priority_access_cost,omitempty" jsonschema_description:"一个项目如果有高速票服务，则一个人的高速票需要花多少钱"`
+	QueueTime          float64      `json:"queue_time,omitempty" jsonschema_description:"一个项目常规需要的排队时间，单位是分钟。如果为空，则这个项目一般不需要排队"`
 }
 
 // LocationAdjacency 主题乐园的一个区域到相邻区域的步行时间.
 type LocationAdjacency struct {
-	FromLocationName                string                   `json:"from_location_name" jsonschema:"description=从哪个区域开始计算距离"`
-	DestinationLocationWalkingTimes []DestinationWalkingTime `json:"destination_location_walking_times,omitempty" jsonschema:"description=相邻区域列表，包含走路的分钟数"`
+	FromLocationName                string                   `json:"from_location_name" jsonschema_description:"从哪个区域开始计算距离"`
+	DestinationLocationWalkingTimes []DestinationWalkingTime `json:"destination_location_walking_times,omitempty" jsonschema_description:"相邻区域列表，包含走路的分钟数"`
 }
 
 type DestinationWalkingTime struct {
-	DestinationName string  `json:"destination_name" jsonschema:"description=目标区域名称"`
-	WalkTime        float64 `json:"walk_time" jsonschema:"description=步行到目标区域所需要的分钟数"`
+	DestinationName string  `json:"destination_name" jsonschema_description:"目标区域名称"`
+	WalkTime        float64 `json:"walk_time" jsonschema_description:"步行到目标区域所需要的分钟数"`
 }
 
 // AttractionQueueTime 主题乐园的一个游乐项目的排队时间.
 type AttractionQueueTime struct {
-	Name      string  `json:"name" jsonschema:"description=游乐项目的名称"`
-	QueueTime float64 `json:"queue_time" jsonschema:"description=游乐项目的排队时间"`
+	Name      string  `json:"name" jsonschema_description:"游乐项目的名称"`
+	QueueTime float64 `json:"queue_time" jsonschema_description:"游乐项目的排队时间"`
 }
 
 type ListPerformanceRequest struct {
-	Name     string `json:"name,omitempty" jsonschema:"description=演出的名称，如果不需要查询具体的某个演出，此处传空"`
-	Location string `json:"location,omitempty" jsonschema:"description=演出所在的区域，如果不需要查询具体某个区域的演出，此处传空"`
+	Name     string `json:"name,omitempty" jsonschema_description:"演出的名称，如果不需要查询具体的某个演出，此处传空"`
+	Location string `json:"location,omitempty" jsonschema_description:"演出所在的区域，如果不需要查询具体某个区域的演出，此处传空"`
 }
 type ListPerformanceResponse struct {
-	Performances []Activity `json:"performances" jsonschema:"description=符合查询条件的所有演出的信息"`
+	Performances []Activity `json:"performances" jsonschema_description:"符合查询条件的所有演出的信息"`
 }
 
 type ListAttractionRequest struct {
-	Name     string `json:"name,omitempty" jsonschema:"description=游乐项目的名称，如果不需要查询具体的某个游乐项目，此处传空"`
-	Location string `json:"location,omitempty"  jsonschema:"description=游乐项目所在的区域，如果不需要查询具体某个区域的游乐项目，此处传空"`
+	Name     string `json:"name,omitempty" jsonschema_description:"游乐项目的名称，如果不需要查询具体的某个游乐项目，此处传空"`
+	Location string `json:"location,omitempty"  jsonschema_description:"游乐项目所在的区域，如果不需要查询具体某个区域的游乐项目，此处传空"`
 }
 type ListAttractionResponse struct {
-	Attractions []Activity `json:"attractions" jsonschema:"description=符合查询条件的所有游乐项目的信息"`
+	Attractions []Activity `json:"attractions" jsonschema_description:"符合查询条件的所有游乐项目的信息"`
 }
 
 type ListRestaurantRequest struct {
-	Name     string `json:"name,omitempty" jsonschema:"description=餐厅的名称，如果不需要查询具体的某个餐厅，此处传空"`
-	Location string `json:"location,omitempty"  jsonschema:"description=餐厅所在的区域，如果不需要查询具体某个区域的餐厅，此处传空"`
+	Name     string `json:"name,omitempty" jsonschema_description:"餐厅的名称，如果不需要查询具体的某个餐厅，此处传空"`
+	Location string `json:"location,omitempty"  jsonschema_description:"餐厅所在的区域，如果不需要查询具体某个区域的餐厅，此处传空"`
 }
 type ListRestaurantResponse struct {
-	Restaurants []Activity `json:"restaurants" jsonschema:"description=符合查询条件的所有餐厅的信息"`
+	Restaurants []Activity `json:"restaurants" jsonschema_description:"符合查询条件的所有餐厅的信息"`
 }
 
 type ListAttractionQueueTimeRequest struct {
-	Name     string `json:"name,omitempty" jsonschema:"description=游乐项目的名称，如果不需要查询具体的某个游乐项目的排队时间，此处传空"`
-	Location string `json:"location,omitempty"  jsonschema:"description=游乐项目所在的区域，如果不需要查询具体某个区域的游乐项目的排队时间，此处传空"`
+	Name     string `json:"name,omitempty" jsonschema_description:"游乐项目的名称，如果不需要查询具体的某个游乐项目的排队时间，此处传空"`
+	Location string `json:"location,omitempty"  jsonschema_description:"游乐项目所在的区域，如果不需要查询具体某个区域的游乐项目的排队时间，此处传空"`
 }
 type ListAttractionQueueTimeResponse struct {
-	QueueTime []AttractionQueueTime `json:"queue_time" jsonschema:"description=符合查询条件的所有游乐项目的排队时间"`
+	QueueTime []AttractionQueueTime `json:"queue_time" jsonschema_description:"符合查询条件的所有游乐项目的排队时间"`
 }
 
 type ListAdjacentLocationRequest struct{}
 type ListAdjacentLocationResponse struct {
-	AdjacencyList []LocationAdjacency `json:"adjacency_list" jsonschema:"description=所有区域的邻接区域"`
+	AdjacencyList []LocationAdjacency `json:"adjacency_list" jsonschema_description:"所有区域的邻接区域"`
 }
 
 type GetParkHourRequest struct{}
@@ -111,7 +111,7 @@ type GetParkHourResponse struct {
 
 type GetParkTicketPriceRequest struct{}
 type GetParkTicketPriceResponse struct {
-	Price string `json:"price" jsonschema:"description=乐园门票价格信息"`
+	Price string `json:"price" jsonschema_description:"乐园门票价格信息"`
 }
 
 type ListLocationsRequest struct{}
@@ -136,7 +136,7 @@ func ListLocations(_ context.Context, _ *ListLocationsRequest) (out *ListLocatio
 
 type QueryEntranceRequest struct{}
 type QueryEntranceResponse struct {
-	EntranceLocation string `json:"entrance_location" jsonschema:"description=园区入口区域名称"`
+	EntranceLocation string `json:"entrance_location" jsonschema_description:"园区入口区域名称"`
 }
 
 func QueryEntrance(_ context.Context, _ *QueryEntranceRequest) (out *QueryEntranceResponse, err error) {
@@ -321,10 +321,10 @@ func GetRestaurantInfo(_ context.Context, in *ListRestaurantRequest) (out *ListR
 
 type OnePerformanceStartTime struct {
 	PerformanceName string `json:"performance_name"`
-	StartTime       string `json:"start_time" jsonschema:"description=选中的演出开始时间，格式如15:30"`
+	StartTime       string `json:"start_time" jsonschema_description:"选中的演出开始时间，格式如15:30"`
 }
 type ValidatePerformanceTimeTableRequest struct {
-	PerformancesStartTime []OnePerformanceStartTime `json:"performances_start_time" jsonschema:"description=用户选择的演出名称和开始时间"`
+	PerformancesStartTime []OnePerformanceStartTime `json:"performances_start_time" jsonschema_description:"用户选择的演出名称和开始时间"`
 }
 type PerformanceStartTimeValidateResult struct {
 	PerformanceName string `json:"performance_name"`
@@ -333,7 +333,7 @@ type PerformanceStartTimeValidateResult struct {
 	ErrMessage      string `json:"err_message"`
 }
 type ValidatePerformanceTimeTableResponse struct {
-	PerformancesValidateResult []PerformanceStartTimeValidateResult `json:"performances_validate_result" jsonschema:"description=验证结果，只包含有问题的表演"`
+	PerformancesValidateResult []PerformanceStartTimeValidateResult `json:"performances_validate_result" jsonschema_description:"验证结果，只包含有问题的表演"`
 }
 
 func ValidatePerformanceTimeTable(_ context.Context, in *ValidatePerformanceTimeTableRequest) (out *ValidatePerformanceTimeTableResponse, err error) {
@@ -391,16 +391,16 @@ func contains(slice []string, item string) bool {
 }
 
 type ArrangePerformancesRequest struct {
-	ChosenPerformances []string `json:"chosen_performances" jsonschema:"description=用户选择的演出名称列表"`
+	ChosenPerformances []string `json:"chosen_performances" jsonschema_description:"用户选择的演出名称列表"`
 }
 type ArrangePerformancesResponse struct {
-	ArrangedPerformances    []PerformanceTime `json:"arranged_performances" jsonschema:"description=根据用户选择的演出，以及实际的时间表和演出时长，计算出的看演出的时间规划。包含了每场演出的排队、占座时间。"`
-	UnsatisfiedPerformances []string          `json:"unsatisfied_performances" jsonschema:"description=由于跟其他演出的时间冲突，无法完成时间安排的演出名称"`
+	ArrangedPerformances    []PerformanceTime `json:"arranged_performances" jsonschema_description:"根据用户选择的演出，以及实际的时间表和演出时长，计算出的看演出的时间规划。包含了每场演出的排队、占座时间。"`
+	UnsatisfiedPerformances []string          `json:"unsatisfied_performances" jsonschema_description:"由于跟其他演出的时间冲突，无法完成时间安排的演出名称"`
 }
 type PerformanceTime struct {
-	PerformanceName string `json:"performance_name" jsonschema:"description=演出名称"`
-	StartTime       string `json:"start_time" jsonschema:"description=演出开始时间"`
-	EndTime         string `json:"end_time" jsonschema:"description=演出结束时间"`
+	PerformanceName string `json:"performance_name" jsonschema_description:"演出名称"`
+	StartTime       string `json:"start_time" jsonschema_description:"演出开始时间"`
+	EndTime         string `json:"end_time" jsonschema_description:"演出结束时间"`
 }
 
 func getPerformances() []Activity {
@@ -510,26 +510,26 @@ func ArrangePerformances(_ context.Context, in *ArrangePerformancesRequest) (out
 }
 
 type PlanItem struct {
-	ActivityType         ActivityType `json:"activity_type" jsonschema:"description=活动类型,enum:attraction,enum:performance,enum:restaurant,enum:other"`
-	StartTime            string       `json:"start_time" jsonschema:"description=活动开始时间，格式为15:04"`
-	PerformanceStartTime *string      `json:"performance_start_time" jsonschema:"description=如果为 performance 类型，是演出开始时间，格式为15:04. 否则忽略这个参数或传 NULL"`
-	Duration             *int         `json:"duration" jsonschema:"description=如果为 performance 类型，是演出时长，如果为 attraction 类型，是实际玩的时长，单位为分钟，否则忽略这个参数或传 Null"`
-	QueueTime            *int         `json:"queue_time" jsonschema:"description=排队时间，单位为分钟，attraction 类型必填，否则忽略这个参数或传 NULL。如果用了高速票，QueueTime使用0"`
-	Location             string       `json:"location" jsonschema:"description=计划所在的区域，如果是 move 类型的计划，这里是目标区域。可以填写的区域列表为通过 list_locations 获取的清单"`
-	ActivityName         string       `json:"activity_name,omitempty" jsonschema:"description=move 之外的其他类型的计划，这里是项目的准确名称，如 attraction，performance，restaurant 的准确名称"`
+	ActivityType         ActivityType `json:"activity_type" jsonschema_description:"活动类型,enum:attraction,enum:performance,enum:restaurant,enum:other"`
+	StartTime            string       `json:"start_time" jsonschema_description:"活动开始时间，格式为15:04"`
+	PerformanceStartTime *string      `json:"performance_start_time" jsonschema_description:"如果为 performance 类型，是演出开始时间，格式为15:04. 否则忽略这个参数或传 NULL"`
+	Duration             *int         `json:"duration" jsonschema_description:"如果为 performance 类型，是演出时长，如果为 attraction 类型，是实际玩的时长，单位为分钟，否则忽略这个参数或传 Null"`
+	QueueTime            *int         `json:"queue_time" jsonschema_description:"排队时间，单位为分钟，attraction 类型必填，否则忽略这个参数或传 NULL。如果用了高速票，QueueTime使用0"`
+	Location             string       `json:"location" jsonschema_description:"计划所在的区域，如果是 move 类型的计划，这里是目标区域。可以填写的区域列表为通过 list_locations 获取的清单"`
+	ActivityName         string       `json:"activity_name,omitempty" jsonschema_description:"move 之外的其他类型的计划，这里是项目的准确名称，如 attraction，performance，restaurant 的准确名称"`
 }
 
 type PlanItemValidationResult struct {
-	PlanItem PlanItem `json:"plan_item" jsonschema:"description=完整一日计划其中的一个计划项"`
+	PlanItem PlanItem `json:"plan_item" jsonschema_description:"完整一日计划其中的一个计划项"`
 	IsValid  bool     `json:"is_valid"`
 	ErrMsg   string   `json:"err_msg"`
 }
 
 type ValidatePlanItemsRequest struct {
-	PlanItems []PlanItem `json:"plan_items" jsonschema:"description=一个完整的一日日程计划，包含了所有的活动和移动计划，按时间先后顺序排列"`
+	PlanItems []PlanItem `json:"plan_items" jsonschema_description:"一个完整的一日日程计划，包含了所有的活动和移动计划，按时间先后顺序排列"`
 }
 type ValidatePlanItemsResponse struct {
-	ValidationResults []PlanItemValidationResult `json:"validation_results" jsonschema:"description=每个计划项的验证结果，包含是否有效和错误信息，只包含有问题的计划项"`
+	ValidationResults []PlanItemValidationResult `json:"validation_results" jsonschema_description:"每个计划项的验证结果，包含是否有效和错误信息，只包含有问题的计划项"`
 }
 
 func ValidatePlanItems(_ context.Context, in *ValidatePlanItemsRequest) (out *ValidatePlanItemsResponse, err error) {

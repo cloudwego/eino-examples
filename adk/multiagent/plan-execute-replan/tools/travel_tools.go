@@ -27,8 +27,8 @@ import (
 
 // WeatherRequest represents a weather query request
 type WeatherRequest struct {
-	City string `json:"city" jsonschema:"description=City name to get weather for"`
-	Date string `json:"date" jsonschema:"description=Date in YYYY-MM-DD format (optional)"`
+	City string `json:"city" jsonschema_description:"City name to get weather for"`
+	Date string `json:"date" jsonschema_description:"Date in YYYY-MM-DD format (optional)"`
 }
 
 // WeatherResponse represents weather information
@@ -42,10 +42,10 @@ type WeatherResponse struct {
 
 // FlightRequest represents a flight search request
 type FlightRequest struct {
-	From       string `json:"from" jsonschema:"description=Departure city"`
-	To         string `json:"to" jsonschema:"description=Destination city"`
-	Date       string `json:"date" jsonschema:"description=Departure date in YYYY-MM-DD format"`
-	Passengers int    `json:"passengers" jsonschema:"description=Number of passengers"`
+	From       string `json:"from" jsonschema_description:"Departure city"`
+	To         string `json:"to" jsonschema_description:"Destination city"`
+	Date       string `json:"date" jsonschema_description:"Departure date in YYYY-MM-DD format"`
+	Passengers int    `json:"passengers" jsonschema_description:"Number of passengers"`
 }
 
 // FlightResponse represents flight search results
@@ -65,10 +65,10 @@ type Flight struct {
 
 // HotelRequest represents a hotel search request
 type HotelRequest struct {
-	City     string `json:"city" jsonschema:"description=City to search hotels in"`
-	CheckIn  string `json:"check_in" jsonschema:"description=Check-in date in YYYY-MM-DD format"`
-	CheckOut string `json:"check_out" jsonschema:"description=Check-out date in YYYY-MM-DD format"`
-	Guests   int    `json:"guests" jsonschema:"description=Number of guests"`
+	City     string `json:"city" jsonschema_description:"City to search hotels in"`
+	CheckIn  string `json:"check_in" jsonschema_description:"Check-in date in YYYY-MM-DD format"`
+	CheckOut string `json:"check_out" jsonschema_description:"Check-out date in YYYY-MM-DD format"`
+	Guests   int    `json:"guests" jsonschema_description:"Number of guests"`
 }
 
 // HotelResponse represents hotel search results
@@ -87,8 +87,8 @@ type Hotel struct {
 
 // AttractionRequest represents a tourist attraction search request
 type AttractionRequest struct {
-	City     string `json:"city" jsonschema:"description=City to search attractions in"`
-	Category string `json:"category" jsonschema:"description=Category of attractions (museum, park, landmark, historic site, etc.)"`
+	City     string `json:"city" jsonschema_description:"City to search attractions in"`
+	Category string `json:"category" jsonschema_description:"Category of attractions (museum, park, landmark, historic site, etc.)"`
 }
 
 // AttractionResponse represents attraction search results

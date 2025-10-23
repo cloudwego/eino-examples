@@ -63,11 +63,11 @@ func getAddTaskTool() tool.InvokableTool {
 
 ```go
 type TaskUpdateParams struct {
-    ID        string  `json:"id" jsonschema:"description=id of the task"`
-    Content   *string `json:"content,omitempty" jsonschema:"description=content of the task"`
-    StartedAt *int64  `json:"started_at,omitempty" jsonschema:"description=start time in unix timestamp"`
-    Deadline  *int64  `json:"deadline,omitempty" jsonschema:"description=deadline of the task in unix timestamp"`
-    Done      *bool   `json:"done,omitempty" jsonschema:"description=done status"`
+    ID        string  `json:"id" jsonschema_description:"id of the task"`
+    Content   *string `json:"content,omitempty" jsonschema_description:"content of the task"`
+    StartedAt *int64  `json:"started_at,omitempty" jsonschema_description:"start time in unix timestamp"`
+    Deadline  *int64  `json:"deadline,omitempty" jsonschema_description:"deadline of the task in unix timestamp"`
+    Done      *bool   `json:"done,omitempty" jsonschema_description:"done status"`
 }
 
 // 使用 InferTool 创建工具

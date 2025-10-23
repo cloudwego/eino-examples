@@ -196,11 +196,11 @@ func (lt *ListTodoTool) Info(_ context.Context) (*schema.ToolInfo, error) {
 }
 
 type TodoUpdateParams struct {
-	ID        string  `json:"id" jsonschema:"description=id of the todo"`
-	Content   *string `json:"content,omitempty" jsonschema:"description=content of the todo"`
-	StartedAt *int64  `json:"started_at,omitempty" jsonschema:"description=start time in unix timestamp"`
-	Deadline  *int64  `json:"deadline,omitempty" jsonschema:"description=deadline of the todo in unix timestamp"`
-	Done      *bool   `json:"done,omitempty" jsonschema:"description=done status"`
+	ID        string  `json:"id" jsonschema_description:"id of the todo"`
+	Content   *string `json:"content,omitempty" jsonschema_description:"content of the todo"`
+	StartedAt *int64  `json:"started_at,omitempty" jsonschema_description:"start time in unix timestamp"`
+	Deadline  *int64  `json:"deadline,omitempty" jsonschema_description:"deadline of the todo in unix timestamp"`
+	Done      *bool   `json:"done,omitempty" jsonschema_description:"done status"`
 }
 
 type TodoAddParams struct {

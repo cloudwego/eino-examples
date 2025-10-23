@@ -178,14 +178,14 @@ const (
 )
 
 type EinoToolRequest struct {
-	Action       EinoToolAction `json:"action" jsonschema:"description='The action of the request',enum=get_example_project,enum=get_github_repo,enum=get_doc_url,enum=init_template"`
-	ExampleType  string         `json:"example_type,omitempty" jsonschema:"description='The type of the example project, only for action: get_example_project',enum=agent,enum=components,enum=graph,enum=quickstart"`
-	RepoType     string         `json:"repo_type,omitempty" jsonschema:"description='The type of the repo, only for action: get_github_repo',enum=eino,enum=eino-ext,enum=eino-examples"`
-	DocType      string         `json:"doc_type,omitempty" jsonschema:"description='The type of the doc, only for action: get_doc_url',enum=eino_index,enum=quickstart,enum=graph,enum=agent,enum=components,enum=integrate"`
-	TemplateType string         `json:"template_type,omitempty" jsonschema:"description='The template of the project, only for action: init_template',enum=react_agent,enum=simple_llm,enum=http_agent"`
+	Action       EinoToolAction `json:"action" jsonschema_description:"'The action of the request',enum=get_example_project,enum=get_github_repo,enum=get_doc_url,enum=init_template"`
+	ExampleType  string         `json:"example_type,omitempty" jsonschema_description:"'The type of the example project, only for action: get_example_project',enum=agent,enum=components,enum=graph,enum=quickstart"`
+	RepoType     string         `json:"repo_type,omitempty" jsonschema_description:"'The type of the repo, only for action: get_github_repo',enum=eino,enum=eino-ext,enum=eino-examples"`
+	DocType      string         `json:"doc_type,omitempty" jsonschema_description:"'The type of the doc, only for action: get_doc_url',enum=eino_index,enum=quickstart,enum=graph,enum=agent,enum=components,enum=integrate"`
+	TemplateType string         `json:"template_type,omitempty" jsonschema_description:"'The template of the project, only for action: init_template',enum=react_agent,enum=simple_llm,enum=http_agent"`
 }
 
 type EinoToolResponse struct {
-	Message string `json:"message" jsonschema:"description=The message of the response"`
-	Error   string `json:"error" jsonschema:"description=The error of the response"`
+	Message string `json:"message" jsonschema_description:"The message of the response"`
+	Error   string `json:"error" jsonschema_description:"The error of the response"`
 }

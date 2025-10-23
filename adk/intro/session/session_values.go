@@ -77,7 +77,7 @@ func main() {
 }
 
 type ToolAInput struct {
-	Name string `json:"input" jsonschema:"description=user's name'"`
+	Name string `json:"input" jsonschema_description:"user's name'"`
 }
 
 func toolAFn(ctx context.Context, in *ToolAInput) (string, error) {
@@ -87,7 +87,7 @@ func toolAFn(ctx context.Context, in *ToolAInput) (string, error) {
 }
 
 type ToolBInput struct {
-	Age int `json:"input" jsonschema:"description=user's age'"`
+	Age int `json:"input" jsonschema_description:"user's age'"`
 }
 
 func toolBFn(ctx context.Context, in *ToolBInput) (string, error) {

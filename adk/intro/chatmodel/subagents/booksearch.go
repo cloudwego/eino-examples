@@ -25,9 +25,9 @@ import (
 )
 
 type BookSearchInput struct {
-	Genre     string `json:"genre" jsonschema:"description=Preferred book genre,enum=fiction,enum=sci-fi,enum=mystery,enum=biography,enum=business"`
-	MaxPages  int    `json:"max_pages" jsonschema:"description=Maximum page length (0 for no limit)"`
-	MinRating int    `json:"min_rating" jsonschema:"description=Minimum user rating (0-5 scale)"`
+	Genre     string `json:"genre" jsonschema_description:"Preferred book genre,enum=fiction,enum=sci-fi,enum=mystery,enum=biography,enum=business"`
+	MaxPages  int    `json:"max_pages" jsonschema_description:"Maximum page length (0 for no limit)"`
+	MinRating int    `json:"min_rating" jsonschema_description:"Minimum user rating (0-5 scale)"`
 }
 
 type BookSearchOutput struct {

@@ -29,8 +29,8 @@ import (
 
 func NewCodeAgent(ctx context.Context, tcm model.ToolCallingChatModel) (adk.Agent, error) {
 	type RAGInput struct {
-		Query   string  `json:"query" jsonschema:"description=query for search"`
-		Context *string `json:"context" jsonschema:"description=user input context"`
+		Query   string  `json:"query" jsonschema_description:"query for search"`
+		Context *string `json:"context" jsonschema_description:"user input context"`
 	}
 	type RAGOutput struct {
 		Documents []string `json:"documents"`

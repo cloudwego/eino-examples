@@ -36,7 +36,7 @@ func WithNewInput(input string) tool.Option {
 }
 
 type AskForClarificationInput struct {
-	Question string `json:"question" jsonschema:"description=The specific question you want to ask the user to get the missing information"`
+	Question string `json:"question" jsonschema_description:"The specific question you want to ask the user to get the missing information"`
 }
 
 func NewAskForClarificationTool() tool.InvokableTool {

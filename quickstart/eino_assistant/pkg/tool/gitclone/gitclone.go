@@ -174,8 +174,8 @@ const (
 )
 
 type GitCloneRequest struct {
-	Url    string         `json:"url" jsonschema:"description=The URL of the repository to clone"`
-	Action GitCloneAction `json:"action" jsonschema:"description=The action to perform, 'clone' or 'pull'"`
+	Url    string         `json:"url" jsonschema_description:"The URL of the repository to clone"`
+	Action GitCloneAction `json:"action" jsonschema_description:"The action to perform, 'clone' or 'pull'"`
 }
 
 type GitCloneResponse struct {

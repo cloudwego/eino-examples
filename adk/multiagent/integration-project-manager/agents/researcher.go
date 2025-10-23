@@ -30,7 +30,7 @@ import (
 
 func NewResearchAgent(ctx context.Context, tcm model.ToolCallingChatModel) (adk.Agent, error) {
 	type webSearchInput struct {
-		CurrentContext string `json:"current_context" jsonschema:"description=current context for web search"`
+		CurrentContext string `json:"current_context" jsonschema_description:"current context for web search"`
 	}
 	type webSearchOutput struct {
 		Result []string
@@ -88,7 +88,7 @@ func WithNewInput(input string) tool.Option {
 }
 
 type AskForClarificationInput struct {
-	Question string `json:"question" jsonschema:"description=The specific question you want to ask the user to get the missing information"`
+	Question string `json:"question" jsonschema_description:"The specific question you want to ask the user to get the missing information"`
 }
 
 func newAskForClarificationTool() tool.InvokableTool {
