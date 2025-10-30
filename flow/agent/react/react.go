@@ -131,15 +131,14 @@ func main() {
 	// }
 	// fmt.Println(msg.String())
 
-	// If you want to use cached ark chat model, define a cache option and pass it to the agent.
-	// cacheOption := &ark.CacheOption{
-	//		APIType: ark.ResponsesAPI,
-	//		SessionCache: &ark.SessionCacheConfig{
-	//			EnableCache: true,
-	//			TTL:         3600,
-	//		},
-	//	}
-	// ctx = WithCacheCtx(ctx, cacheOption)
+	// If you want to use ark caching in react, call ark.WithCache()
+	//cacheOption := &ark.CacheOption{
+	//	APIType: ark.ResponsesAPI,
+	//	SessionCache: &ark.SessionCacheConfig{
+	//		EnableCache: true,
+	//		TTL:         3600,
+	//	},
+	//}
 
 	opt := []agent.AgentOption{
 		agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
