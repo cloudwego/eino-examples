@@ -6,7 +6,7 @@ toolchain go1.24.4
 
 require (
 	github.com/bytedance/sonic v1.14.2
-	github.com/cloudwego/eino v0.5.10
+	github.com/cloudwego/eino v0.5.12-0.20251104131321-460a6d33f43f
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20250117061805-cd80d1780d76
