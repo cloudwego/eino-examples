@@ -16,6 +16,40 @@ It showcases how to build an agent that attempts to perform a sensitive action, 
     *   If the user approves, the application calls `runner.TargetedResume`, sending back the approval. The framework then unpauses the agent, which proceeds to execute the `BookTicket` tool.
     *   If the user denies, the agent is also resumed, but it is informed of the denial, and it will not execute the tool.
 
+## Practical Example
+
+Here's a real trace from running the example, showing how the approval process works:
+
+```
+name: TicketBooker
+path: [{TicketBooker}]
+tool name: BookTicket
+arguments: {"location":"Beijing","passenger_name":"Martin","passenger_phone_number":"1234567"}
+
+name: TicketBooker
+path: [{TicketBooker}]
+tool 'BookTicket' interrupted with arguments '{"location":"Beijing","passenger_name":"Martin","passenger_phone_number":"1234567"}', waiting for your approval, please answer with Y/N
+
+your input here: Y
+
+name: TicketBooker
+path: [{TicketBooker}]
+tool response: success
+
+name: TicketBooker
+path: [{TicketBooker}]
+answer: The ticket for Martin to Beijing on 2025-12-01 has been successfully booked.
+```
+
+This trace demonstrates:
+- **Tool Identification**: The agent identifies the `BookTicket` tool with specific parameters
+- **Approval Request**: The framework interrupts and presents the tool call for human approval
+- **Human Decision**: The user approves with "Y"
+- **Tool Execution**: The tool executes successfully
+- **Final Response**: The agent provides a confirmation message
+
+The path notation shows the simple agent structure for this single-agent approval workflow.
+
 ## How to Run
 
 Ensure you have your environment variables set (e.g., for the LLM API key). Then, run the following command from the root of the `eino-examples` repository:
