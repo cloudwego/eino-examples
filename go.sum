@@ -117,6 +117,10 @@ github.com/cloudwego/eino v0.5.10 h1:/U5el2Ky5nKY1mE3nKHh8fnPKka5xlC19PW0s/jvbxw
 github.com/cloudwego/eino v0.5.10/go.mod h1:N6E+toMzWw/3ql0IVM5n5lbYFCeblCYx7ebH16kt1JQ=
 github.com/cloudwego/eino v0.5.12-0.20251104131321-460a6d33f43f h1:I7NKjpC/erQfu91WYDe5oRA0DXMOOxONE22Yu5EVF54=
 github.com/cloudwego/eino v0.5.12-0.20251104131321-460a6d33f43f/go.mod h1:N6E+toMzWw/3ql0IVM5n5lbYFCeblCYx7ebH16kt1JQ=
+github.com/cloudwego/eino v0.5.12-0.20251105072742-735af96a9dcb h1:l2Frsh047Wjjqc614nuBQ7TbLBI6VEcKQd6cWYb2i3E=
+github.com/cloudwego/eino v0.5.12-0.20251105072742-735af96a9dcb/go.mod h1:N6E+toMzWw/3ql0IVM5n5lbYFCeblCYx7ebH16kt1JQ=
+github.com/cloudwego/eino v0.5.12-0.20251105073836-10cb7724721d h1:9iRiwxMURqQLgW2hn6McQp7hVV2bVgIyXoWDHQ2yrQI=
+github.com/cloudwego/eino v0.5.12-0.20251105073836-10cb7724721d/go.mod h1:N6E+toMzWw/3ql0IVM5n5lbYFCeblCYx7ebH16kt1JQ=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4 h1:Cwm80+fMEAoY7uI9XUukDEV5J3Adb9HiXKmcXpXcDiM=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4/go.mod h1:xxjNsJeZwdIooEYTt6tjw/YJzkA6xPcxn1u/HvA5xc0=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20250117061805-cd80d1780d76 h1:kK4f2kunb5xlc0XTkg6wkjy8Z/BDfJjWAVm9EOdRErg=

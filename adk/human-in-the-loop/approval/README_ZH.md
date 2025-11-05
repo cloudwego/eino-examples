@@ -16,6 +16,40 @@
     *   如果用户批准，应用程序调用 `runner.TargetedResume`，发送回批准信息。框架随后恢复智能体的执行，智能体继续执行 `BookTicket` 工具。
     *   如果用户拒绝，智能体也会被恢复，但会收到拒绝通知，并且不会执行该工具。
 
+## 实际示例
+
+以下是运行示例的实际跟踪记录，展示了审批流程的工作原理：
+
+```
+name: TicketBooker
+path: [{TicketBooker}]
+tool name: BookTicket
+arguments: {"location":"Beijing","passenger_name":"Martin","passenger_phone_number":"1234567"}
+
+name: TicketBooker
+path: [{TicketBooker}]
+tool 'BookTicket' interrupted with arguments '{"location":"Beijing","passenger_name":"Martin","passenger_phone_number":"1234567"}', waiting for your approval, please answer with Y/N
+
+your input here: Y
+
+name: TicketBooker
+path: [{TicketBooker}]
+tool response: success
+
+name: TicketBooker
+path: [{TicketBooker}]
+answer: The ticket for Martin to Beijing on 2025-12-01 has been successfully booked.
+```
+
+此跟踪记录展示了：
+- **工具识别**：智能体识别出 `BookTicket` 工具及其具体参数
+- **审批请求**：框架中断执行并向用户呈现待审批的工具调用
+- **用户决策**：用户输入 "Y" 表示批准
+- **工具执行**：工具成功执行
+- **最终响应**：智能体提供确认消息
+
+路径表示法展示了这个单智能体审批工作流的简单结构。
+
 ## 如何运行
 
 确保您已设置好环境变量（例如，LLM API 密钥）。然后，在 `eino-examples` 仓库的根目录下运行以下命令：

@@ -21,10 +21,11 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/cloudwego/eino/adk"
+
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/trace"
 	"github.com/cloudwego/eino-examples/adk/intro/workflow/parallel/subagents"
-	"github.com/cloudwego/eino/adk"
 )
 
 func main() {
