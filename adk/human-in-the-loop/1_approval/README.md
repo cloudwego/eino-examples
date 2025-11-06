@@ -50,6 +50,29 @@ This trace demonstrates:
 
 The path notation shows the simple agent structure for this single-agent approval workflow.
 
+## How to Configure Environment Variables
+
+Before running the example, you need to set up the required environment variables for the LLM API. You have two options:
+
+### Option 1: OpenAI-Compatible Configuration
+```bash
+export OPENAI_API_KEY="{your api key}"
+export OPENAI_BASE_URL="{your model base url}"
+# Only configure this if you are using Azure-like LLM providers
+export OPENAI_BY_AZURE=true
+# 'gpt-4o' is just an example, configure the model name provided by your LLM provider
+export OPENAI_MODEL="gpt-4o-2024-05-13"
+```
+
+### Option 2: ARK Configuration
+```bash
+export MODEL_TYPE="ark"
+export ARK_API_KEY="{your ark api key}"
+export ARK_MODEL="{your ark model name}"
+```
+
+Alternatively, you can create a `.env` file in the project root with these variables.
+
 ## How to Run
 
 Ensure you have your environment variables set (e.g., for the LLM API key). Then, run the following command from the root of the `eino-examples` repository:
