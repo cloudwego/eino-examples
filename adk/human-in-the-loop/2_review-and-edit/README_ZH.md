@@ -34,6 +34,29 @@
 - **迭代优化**：支持多轮人工反馈和内容改进
 - **灵活退出条件**：允许人工指示内容何时令人满意
 
+## 如何配置环境变量
+
+在运行示例之前，您需要设置 LLM API 所需的环境变量。您有两个选项：
+
+### 选项 1: OpenAI 兼容配置
+```bash
+export OPENAI_API_KEY="{your api key}"
+export OPENAI_BASE_URL="{your model base url}"
+# 仅在使用 Azure 类 LLM 提供商时配置此项
+export OPENAI_BY_AZURE=true
+# 'gpt-4o' 只是一个示例，请配置您的 LLM 提供商提供的实际模型名称
+export OPENAI_MODEL="gpt-4o-2024-05-13"
+```
+
+### 选项 2: ARK 配置
+```bash
+export MODEL_TYPE="ark"
+export ARK_API_KEY="{your ark api key}"
+export ARK_MODEL="{your ark model name}"
+```
+
+或者，您可以在项目根目录创建一个 `.env` 文件来设置这些变量。
+
 ## 如何运行
 
 确保您已设置好环境变量（例如，LLM API 密钥）。然后，在 `eino-examples` 仓库的根目录下运行以下命令：
