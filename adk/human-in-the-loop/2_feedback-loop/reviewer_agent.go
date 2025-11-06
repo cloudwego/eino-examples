@@ -38,14 +38,14 @@ func (r ReviewAgent) Description(ctx context.Context) string {
 	return r.AgentDesc
 }
 
-type ReviewEditInfo struct {
+type FeedbackInfo struct {
 	OriginalContent string
-	ReviewComment   *string
+	Feedback        *string
 	NoNeedToEdit    bool
 }
 
-func (re *ReviewEditInfo) String() string {
-	return fmt.Sprintf("Original content to review: \n`\n%s\n`. \n\nIf you think the content is good as it is, please reply with \"No need to edit\". \nOtherwise, please provide a review comment.", re.OriginalContent)
+func (fi *FeedbackInfo) String() string {
+	return fmt.Sprintf("Original content to review: \n`\n%s\n`. \n\nIf you think the content is good as it is, please reply with \"No need to edit\". \nOtherwise, please provide your feedback.", fi.OriginalContent)
 }
 
 func (r ReviewAgent) Run(ctx context.Context, input *adk.AgentInput,
@@ -64,11 +64,11 @@ func (r ReviewAgent) Run(ctx context.Context, input *adk.AgentInput,
 			return
 		}
 
-		reInfo := &ReviewEditInfo{
+		feInfo := &FeedbackInfo{
 			OriginalContent: contentToReview.(string),
 		}
 
-		event := adk.StatefulInterrupt(ctx, reInfo, contentToReview.(string))
+		event := adk.StatefulInterrupt(ctx, feInfo, contentToReview.(string))
 		gen.Send(event)
 	}()
 
@@ -82,7 +82,7 @@ func (r ReviewAgent) Resume(ctx context.Context, info *adk.ResumeInfo,
 	go func() {
 		defer gen.Close()
 		if !info.IsResumeTarget { // not explicitly resumed, interrupt with the same review content again
-			event := adk.Interrupt(ctx, &ReviewEditInfo{
+			event := adk.Interrupt(ctx, &FeedbackInfo{
 				OriginalContent: info.InterruptState.(string),
 			})
 			gen.Send(event)
@@ -97,7 +97,7 @@ func (r ReviewAgent) Resume(ctx context.Context, info *adk.ResumeInfo,
 			return
 		}
 
-		reInfo, ok := info.ResumeData.(*ReviewEditInfo)
+		feInfo, ok := info.ResumeData.(*FeedbackInfo)
 		if !ok {
 			event := &adk.AgentEvent{
 				Err: errors.New("review agent receives invalid resume data"),
@@ -106,7 +106,7 @@ func (r ReviewAgent) Resume(ctx context.Context, info *adk.ResumeInfo,
 			return
 		}
 
-		if reInfo.NoNeedToEdit {
+		if feInfo.NoNeedToEdit {
 			event := &adk.AgentEvent{
 				Action: adk.NewExitAction(),
 			}
@@ -114,9 +114,9 @@ func (r ReviewAgent) Resume(ctx context.Context, info *adk.ResumeInfo,
 			return
 		}
 
-		if reInfo.ReviewComment == nil {
+		if feInfo.Feedback == nil {
 			event := &adk.AgentEvent{
-				Err: errors.New("review comment is nil"),
+				Err: errors.New("feedback is nil"),
 			}
 			gen.Send(event)
 			return
@@ -128,7 +128,7 @@ func (r ReviewAgent) Resume(ctx context.Context, info *adk.ResumeInfo,
 					IsStreaming: false,
 					Message: &schema.Message{
 						Role:    schema.Assistant,
-						Content: *reInfo.ReviewComment,
+						Content: *feInfo.Feedback,
 					},
 				},
 			},

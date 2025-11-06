@@ -68,7 +68,7 @@ func main() {
 			log.Fatal("last event is not an interrupt event")
 		}
 
-		reInfo := lastEvent.Action.Interrupted.InterruptContexts[0].Info.(*ReviewEditInfo)
+		reInfo := lastEvent.Action.Interrupted.InterruptContexts[0].Info.(*FeedbackInfo)
 		interruptID := lastEvent.Action.Interrupted.InterruptContexts[0].ID
 
 		for {
@@ -81,7 +81,7 @@ func main() {
 				reInfo.NoNeedToEdit = true
 				break
 			} else {
-				reInfo.ReviewComment = &nInput
+				reInfo.Feedback = &nInput
 				break
 			}
 		}
