@@ -49,7 +49,7 @@ Analyze the provided solution for accuracy, completeness, and quality.
 If you find issues or areas for improvement, provide specific feedback.
 If the work is satisfactory, call the 'exit' tool and provide a final summary response.`,
 		Model: model.NewChatModel(),
-		// Exit:  nil, // use default exit tool
+		Exit:  adk.ExitTool{},
 	})
 	if err != nil {
 		log.Fatal(err)
