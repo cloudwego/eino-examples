@@ -78,7 +78,7 @@ Alternatively, you can create a `.env` file in the project root with these varia
 Ensure you have your environment variables set (e.g., for the LLM API key). Then, run the following command from the root of the `eino-examples` repository:
 
 ```sh
-go run ./adk/human-in-the-loop/approval
+go run ./adk/human-in-the-loop/1_approval
 ```
 
 You will see the agent's reasoning, followed by a prompt asking for your approval to book the ticket. Enter `Y` to see the agent complete the action.
