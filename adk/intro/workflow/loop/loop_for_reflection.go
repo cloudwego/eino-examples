@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/cloudwego/eino/adk"
 
@@ -35,7 +36,7 @@ func main() {
 	defer traceCloseFn(ctx)
 
 	a, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
-		Name:          "ReflectionAgent",
+		Name:          "reflection_agent",
 		Description:   "Reflection agent with main and critique agent for iterative task solving.",
 		SubAgents:     []adk.Agent{subagents.NewMainAgent(), subagents.NewCritiqueAgent()},
 		MaxIterations: 5,
@@ -45,7 +46,7 @@ func main() {
 	}
 
 	query := "briefly introduce what a multimodal embedding model is."
-	ctx, endSpanFn := startSpanFn(ctx, "layered-supervisor", query)
+	ctx, endSpanFn := startSpanFn(ctx, "ReflectionAgents", query)
 
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
@@ -73,4 +74,5 @@ func main() {
 	}
 
 	endSpanFn(ctx, lastMessage)
+	time.Sleep(20 * time.Second)
 }
