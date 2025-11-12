@@ -59,7 +59,7 @@ func NewCritiqueAgent() adk.Agent {
 		Instruction: `You are a critique agent responsible for reviewing the main agent's work.
 Analyze the provided solution for accuracy, completeness, and quality.
 If you find issues or areas for improvement, provide specific feedback.
-If the work is satisfactory, call the 'break_loop' tool and provide a final summary response.`,
+If the work is satisfactory, call the 'exit_and_summarize' tool and provide a final summary response.`,
 		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
