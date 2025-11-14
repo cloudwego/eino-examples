@@ -25,9 +25,9 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/compose"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
+	"github.com/cloudwego/eino-examples/adk/common/store"
 	"github.com/cloudwego/eino-examples/adk/intro/chatmodel/subagents"
 )
 
@@ -37,7 +37,7 @@ func main() {
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
-		CheckPointStore: newInMemoryStore(),
+		CheckPointStore: store.NewInMemoryStore(),
 	})
 	iter := runner.Query(ctx, "recommend a book to me", adk.WithCheckPointID("1"))
 	for {
@@ -74,24 +74,4 @@ func main() {
 
 		prints.Event(event)
 	}
-}
-
-func newInMemoryStore() compose.CheckPointStore {
-	return &inMemoryStore{
-		mem: map[string][]byte{},
-	}
-}
-
-type inMemoryStore struct {
-	mem map[string][]byte
-}
-
-func (i *inMemoryStore) Set(ctx context.Context, key string, value []byte) error {
-	i.mem[key] = value
-	return nil
-}
-
-func (i *inMemoryStore) Get(ctx context.Context, key string) ([]byte, bool, error) {
-	v, ok := i.mem[key]
-	return v, ok, nil
 }

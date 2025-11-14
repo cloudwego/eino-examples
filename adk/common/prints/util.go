@@ -17,7 +17,6 @@
 package prints
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -120,9 +119,14 @@ func Event(event *adk.AgentEvent) {
 			fmt.Printf("\naction: transfer to %v", event.Action.TransferToAgent.DestAgentName)
 		}
 		if event.Action.Interrupted != nil {
-			ii, _ := json.MarshalIndent(event.Action.Interrupted.Data, "  ", "  ")
-			fmt.Printf("\naction: interrupted")
-			fmt.Printf("\ninterrupt snapshot: %v", string(ii))
+			for _, ic := range event.Action.Interrupted.InterruptContexts {
+				str, ok := ic.Info.(fmt.Stringer)
+				if ok {
+					fmt.Printf("\n%s", str.String())
+				} else {
+					fmt.Printf("\n%v", ic.Info)
+				}
+			}
 		}
 		if event.Action.Exit {
 			fmt.Printf("\naction: exit")
