@@ -104,7 +104,12 @@ func (i InvokableReviewEditTool) InvokableRun(ctx context.Context, argumentsInJS
 	}
 
 	if result.EditedArgumentsInJSON != nil {
-		return i.InvokableTool.InvokableRun(ctx, *result.EditedArgumentsInJSON, opts...)
+		res, err := i.InvokableTool.InvokableRun(ctx, *result.EditedArgumentsInJSON, opts...)
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("after presenting the tool call info to the user, the user explilcitly changed tool call arguments to %s. Tool called, final result: %s",
+			*result.EditedArgumentsInJSON, res), nil
 	}
 
 	return "", fmt.Errorf("invalid review result for tool '%s'", toolInfo.Name)
