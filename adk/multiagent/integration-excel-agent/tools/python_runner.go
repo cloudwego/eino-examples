@@ -24,6 +24,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
@@ -84,14 +85,14 @@ func (p *pythonRunnerTool) InvokableRun(ctx context.Context, argumentsInJSON str
 	if pyExecutablePath == "" {
 		pyExecutablePath = "python"
 	}
-	result, err := p.op.RunCommand(ctx, fmt.Sprintf("%s %s", pyExecutablePath, filePath))
+	result, err := p.op.RunCommand(ctx, []string{pyExecutablePath, filePath})
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "internal error") {
+			return err.Error(), nil
+		}
 		return "", fmt.Errorf("execute error: %w", err)
 	}
-	if strings.HasPrefix(result, "internal error") {
-		result = fmt.Sprintf("%s\n\n code after parse:\n%v", result, code)
-	}
-	return result, nil
+	return utils.FormatCommandOutput(result), nil
 }
 
 func tryExtractCodeSnippet(res string) string {

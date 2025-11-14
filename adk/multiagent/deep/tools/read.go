@@ -20,7 +20,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/utils"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
@@ -85,10 +87,12 @@ func (r *readFile) InvokableRun(ctx context.Context, argumentsInJSON string, opt
 	o := tool.GetImplSpecificOptions(&options{op: r.op})
 	cmd := fmt.Sprintf("python3 -c \"import sys; lines = (line for idx, line in enumerate(open(sys.argv[1], encoding='utf-8')) if %d <= idx < %d); print(''.join(lines))\" %s",
 		input.StartRow, input.StartRow+input.NRows, input.Path)
-	content, err := o.op.RunCommand(ctx, cmd)
+	content, err := o.op.RunCommand(ctx, []string{cmd})
 	if err != nil {
+		if strings.HasPrefix(err.Error(), "internal error") {
+			return err.Error(), nil
+		}
 		return "", err
 	}
-
-	return content, nil
+	return utils.FormatCommandOutput(content), nil
 }
