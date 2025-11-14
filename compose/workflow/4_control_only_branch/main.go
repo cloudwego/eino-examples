@@ -55,10 +55,22 @@ func main() {
 		return in + 2.0, nil
 	}
 
+	announcer := func(ctx context.Context, in any) (any, error) {
+		logs.Infof("bidder1 had lodged his bid!")
+		return nil, nil
+	}
+
 	wf := compose.NewWorkflow[float64, map[string]float64]()
 
 	wf.AddLambdaNode("b1", compose.InvokableLambda(bidder1)).
 		AddInput(compose.START)
+
+	// just add a node to announce bidder1 had lodged his bid!
+	// It should be executed strictly after bidder1, so we use `AddDependency("b1")`.
+	// Note that `AddDependency()` will only form control relationship,
+	// but not data passing relationship.
+	wf.AddLambdaNode("announcer", compose.InvokableLambda(announcer)).
+		AddDependency("b1")
 
 	// add a branch just like adding branch in Graph.
 	wf.AddBranch("b1", compose.NewGraphBranch(func(ctx context.Context, in float64) (string, error) {
@@ -69,9 +81,10 @@ func main() {
 	}, map[string]bool{compose.END: true, "b2": true}))
 
 	wf.AddLambdaNode("b2", compose.InvokableLambda(bidder2)).
-		// b2 executes strictly after b1, but does not rely on b1's output,
-		// which means b2 depends on b1, but no data passing between them.
-		AddDependency("b1").
+		// b2 executes strictly after b1 (through branch dependency),
+		// but does not rely on b1's output,
+		// which means b2 depends on b1 conditionally,
+		// but no data passing between them.
 		AddInputWithOptions(compose.START, nil, compose.WithNoDirectDependency())
 
 	wf.End().AddInput("b1", compose.ToField("bidder1")).
