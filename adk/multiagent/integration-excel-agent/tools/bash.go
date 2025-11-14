@@ -19,7 +19,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"strings"
 
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
@@ -72,5 +74,12 @@ func (b *bashTool) InvokableRun(ctx context.Context, argumentsInJSON string, opt
 		return "command cannot be empty", nil
 	}
 	o := tool.GetImplSpecificOptions(&options{b.op}, opts...)
-	return o.op.RunCommand(ctx, input.Command)
+	cmd, err := o.op.RunCommand(ctx, []string{input.Command})
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "internal error") {
+			return err.Error(), nil
+		}
+		return "", err
+	}
+	return utils.FormatCommandOutput(cmd), nil
 }

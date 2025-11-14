@@ -23,8 +23,10 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
 )
 
 type LocalOperator struct{}
@@ -49,18 +51,18 @@ func (l *LocalOperator) Exists(ctx context.Context, path string) (bool, error) {
 	return true, nil
 }
 
-func (l *LocalOperator) RunCommand(ctx context.Context, command string) (string, error) {
+func (l *LocalOperator) RunCommand(ctx context.Context, command []string) (*commandline.CommandOutput, error) {
 	wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
 	if !ok {
-		return "", fmt.Errorf("work dir not found")
+		return nil, fmt.Errorf("work dir not found")
 	}
 
 	var shellCmd []string
 	switch runtime.GOOS {
 	case "windows":
-		shellCmd = []string{"cmd.exe", "/C", command}
+		shellCmd = append([]string{"cmd.exe", "/C"}, command...)
 	default:
-		shellCmd = []string{"/bin/sh", "-c", command}
+		shellCmd = []string{"/bin/sh", "-c", strings.Join(command, " ")}
 	}
 
 	cmd := exec.CommandContext(ctx, shellCmd[0], shellCmd[1:]...)
@@ -72,7 +74,11 @@ func (l *LocalOperator) RunCommand(ctx context.Context, command string) (string,
 	cmd.Stderr = errBuf
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Sprintf("internal error:\ncommand: %v\n\nexec error: %v", cmd.String(), errBuf.String()), nil
+		err = fmt.Errorf("internal error:\ncommand: %v\n\nerr: %v\n\nexec error: %v", cmd.String(), err, errBuf.String())
+		return nil, err
 	}
-	return outBuf.String(), nil
+	return &commandline.CommandOutput{
+		Stdout: outBuf.String(),
+		Stderr: errBuf.String(),
+	}, nil
 }

@@ -15,7 +15,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.2
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250826125654-37d4a5029810
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20250319082935-6219ec437e56
-	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251020080234-ca9942893983
+	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251111090228-91a10bbc864f
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20250826125654-37d4a5029810
 	github.com/cloudwego/eino-ext/devops v0.1.7
 	github.com/coze-dev/cozeloop-go v0.1.11

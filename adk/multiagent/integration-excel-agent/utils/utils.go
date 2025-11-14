@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
 	"github.com/kaptinlin/jsonrepair"
@@ -113,4 +114,8 @@ func FormatExecutedSteps(in []planexecute.ExecutedStep) string {
 		sb.WriteString(fmt.Sprintf("## %d. Step: %v\n  Result: %v\n\n", idx+1, m.Step, m.Result))
 	}
 	return sb.String()
+}
+
+func FormatCommandOutput(output *commandline.CommandOutput) string {
+	return fmt.Sprintf("---\nstdout:%v\n---\nstderr:%v\n---", output.Stdout, output.Stderr)
 }

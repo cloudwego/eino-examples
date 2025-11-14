@@ -19,8 +19,9 @@ package tools
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"strings"
 
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/utils"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
@@ -67,5 +68,12 @@ func (t *tree) InvokableRun(ctx context.Context, argumentsInJSON string, opts ..
 		return "path can not be empty", nil
 	}
 	o := tool.GetImplSpecificOptions(&options{t.op}, opts...)
-	return o.op.RunCommand(ctx, fmt.Sprintf("find %s", input.Path))
+	output, err := o.op.RunCommand(ctx, []string{"find", input.Path})
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "internal error") {
+			return err.Error(), nil
+		}
+		return "", err
+	}
+	return utils.FormatCommandOutput(output), nil
 }
