@@ -1,0 +1,25 @@
+﻿type,question,options,answer,explanation
+multiple-choice, 计算机中存储数据的基本单位是？,A. 字节 (Byte); B. 位 (Bit); C. 千字节 (KB); D. 兆字节 (MB),B**,A. 位 (Bit)
+multiple-choice, 操作系统的主要功能不包括？,A. 管理硬件资源；B. 提供用户界面；C. 编写程序代码；D. 运行应用软件，C**,A. 管理硬件资源
+multiple-choice, 计算机网络中，IP 地址用于？,A. 标识网络设备；B. 加密数据传输；C. 存储网页内容；D. 连接外设，A**,A. 标识网络设备
+multiple-choice, 以下哪种存储设备是非易失性的？,A. RAM; B. 硬盘驱动器 (HDD); C. CPU 缓存；D. 寄存器，B**,A. RAM
+multiple-choice, 编程语言中，循环结构的作用是？,A. 条件判断；B. 重复执行代码；C. 存储变量；D. 输出结果，B**,A. 条件判断
+multiple-choice, 常见的计算机病毒传播方式不包括？,A. 电子邮件附件；B. 网络下载；C. 打印机传输；D. 可移动存储设备，C**,A. 电子邮件附件
+multiple-choice, 计算机的中央处理器 (CPU) 主要负责？,A. 数据存储；B. 指令执行；C. 网络连接；D. 显示图像，B**,A. 数据存储
+multiple-choice,HTML 用于？,A. 设计网页结构；B. 写操作系统；C. 开发数据库；D. 处理图像，A**,A. 设计网页结构
+multiple-choice, 软件测试的主要目的是？,A. 编写代码；B. 查找缺陷；C. 设计界面；D. 运行硬件，B**,A. 编写代码
+multiple-choice, 计算机中的 “云存储” 指的是？,A. 本地硬盘存储；B. 网络远程存储；C. USB 存储设备；D. 光盘存储，B**,A. 本地硬盘存储
+multiple-choice, 二进制数 1010 转换为十进制是？,A. 10; B. 12; C. 15; D. 8,A**,A. 10
+multiple-choice, 在网络协议中，HTTP 用于？,A. 电子邮件传输；B. 网页浏览；C. 文件传输；D. 数据加密，B**,A. 电子邮件传输
+multiple-choice, 计算机中的 RAM 是？,A. 只读存储器；B. 随机存取存储器；C. 永久存储；D. 外部存储，B**,A. 只读存储器
+multiple-choice, 软件开发生命周期不包括？,A. 需求分析；B. 设计；C. 编译硬件；D. 测试，C**,A. 需求分析
+multiple-choice, 防火墙的主要作用是？,A. 阻止病毒；B. 监控网络流量；C. 防止未授权访问；D. 加快网络速度，C**,A. 阻止病毒
+multiple-choice, 计算机中的 “缓存” 主要用来？,A. 存储大量数据；B. 提高数据访问速度；C. 备份数据；D. 连接外设，B**,A. 存储大量数据
+multiple-choice, 常见的编程语言不包括？,A. Python; B. Java; C. SQL; D. HTML,E**,A. Python
+multiple-choice, 软件许可证的作用是？,A. 保护软件版权；B. 增加软件功能；C. 提高软件速度；D. 备份软件，A**,A. 保护软件版权
+multiple-choice, 计算机病毒的防护措施包括？,A. 安装杀毒软件；B. 开启防火墙；C. 定期更新系统；D. 以上全部，D**,A. 安装杀毒软件
+multiple-choice,ASCII 码用于？,A. 图像编码；B. 文本编码；C. 音频编码；D. 视频编码，B**,A. 图像编码
+short-answer, 简述操作系统的主要功能。,,,答案：操作系统负责管理硬件资源，提供用户界面，协调软件运行，保障系统安全和稳定。
+short-answer, 列举三种常见的存储设备。,,,答案：硬盘驱动器 (HDD)、固态硬盘 (SSD)、随机存取存储器 (RAM)。
+short-answer, 解释什么是计算机网络的 IP 地址。,,,答案：IP 地址是分配给网络中每个设备的唯一标识符，用于设备间通信。
+short-answer, 描述软件开发生命周期的基本步骤。,,,答案：需求分析、设计、编码、测试、部署和维护。

@@ -24,19 +24,19 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/adk"
-	"github.com/cloudwego/eino/adk/prebuilt/planexecute"
+	"github.com/cloudwego/eino/adk/prebuilt/deep"
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/google/uuid"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/trace"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents/executor"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents/planner"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents/replanner"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/agents/report"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/generic"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
-	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/agents"
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/generic"
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/params"
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/tools"
+	"github.com/cloudwego/eino-examples/adk/multiagent/deep/utils"
 )
 
 func main() {
@@ -61,7 +61,7 @@ func main() {
 	}
 
 	// uuid as task id
-	uuid := uuid.New().String()
+	id := uuid.New().String()
 
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		Agent:           agent,
@@ -77,13 +77,13 @@ func main() {
 	if env := os.Getenv("EXCEL_AGENT_INPUT_DIR"); env != "" {
 		inputFileDir = env
 	} else {
-		inputFileDir = filepath.Join(wd, "adk/multiagent/integration-excel-agent/playground/input")
+		inputFileDir = filepath.Join(wd, "adk/multiagent/deep/playground/input")
 	}
 
 	if env := os.Getenv("EXCEL_AGENT_WORK_DIR"); env != "" {
-		workdir = filepath.Join(env, uuid)
+		workdir = filepath.Join(env, id)
 	} else {
-		workdir = filepath.Join(wd, "adk/multiagent/integration-excel-agent/playground", uuid)
+		workdir = filepath.Join(wd, "adk/multiagent/deep/playground", id)
 	}
 
 	if err = os.Mkdir(workdir, 0755); err != nil {
@@ -104,7 +104,7 @@ func main() {
 		params.FilePathSessionKey:            inputFileDir,
 		params.WorkDirSessionKey:             workdir,
 		params.UserAllPreviewFilesSessionKey: utils.ToJSONString(previews),
-		params.TaskIDKey:                     uuid,
+		params.TaskIDKey:                     id,
 	})
 
 	ctx, endSpanFn := startSpanFn(ctx, "plan-execute-replan", query)
@@ -153,46 +153,42 @@ func main() {
 func newExcelAgent(ctx context.Context) (adk.Agent, error) {
 	operator := &LocalOperator{}
 
-	p, err := planner.NewPlanner(ctx, operator)
+	cm, err := utils.NewChatModel(ctx,
+		utils.WithMaxTokens(4096),
+		utils.WithTemperature(float32(0)),
+		utils.WithTopP(float32(0)),
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	e, err := executor.NewExecutor(ctx, operator)
+	ca, err := agents.NewCodeAgent(ctx, operator)
+	if err != nil {
+		return nil, err
+	}
+	wa, err := agents.NewWebSearchAgent(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rp, err := replanner.NewReplanner(ctx, operator)
-	if err != nil {
-		return nil, err
-	}
-
-	planExecuteAgent, err := planexecute.New(ctx, &planexecute.Config{
-		Planner:       p,
-		Executor:      e,
-		Replanner:     rp,
-		MaxIterations: 20,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	reportAgent, err := report.NewReportAgent(ctx, operator)
-	if err != nil {
-		return nil, err
-	}
-
-	agent, err := adk.NewSequentialAgent(ctx, &adk.SequentialAgentConfig{
-		Name:        "SequentialAgent",
-		Description: "sequential agent",
-		SubAgents: []adk.Agent{
-			planExecuteAgent, reportAgent,
+	deepAgent, err := deep.New(ctx, &deep.Config{
+		Name:        "ExcelAgent",
+		Description: "an agent for excel task",
+		ChatModel:   cm,
+		SubAgents:   []adk.Agent{ca, wa},
+		ToolsConfig: adk.ToolsConfig{
+			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: []tool.BaseTool{
+					tools.NewWrapTool(tools.NewReadFileTool(operator), nil, nil),
+					tools.NewWrapTool(tools.NewTreeTool(operator), nil, nil),
+				},
+			},
 		},
+		MaxIteration: 100,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return agent, nil
+	return deepAgent, nil
 }
