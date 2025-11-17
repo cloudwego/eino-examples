@@ -62,7 +62,7 @@ export ARK_MODEL="{your ark model name}"
 确保您已设置好环境变量（例如，LLM API 密钥）。然后，在 `eino-examples` 仓库的根目录下运行以下命令：
 
 ```sh
-go run ./adk/human-in-the-loop/2_feedback-loop
+go run ./adk/human-in-the-loop/3_feedback-loop
 ```
 
 您将看到：

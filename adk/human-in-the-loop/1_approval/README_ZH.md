@@ -78,7 +78,7 @@ export ARK_MODEL="{your ark model name}"
 确保您已设置好环境变量（例如，LLM API 密钥）。然后，在 `eino-examples` 仓库的根目录下运行以下命令：
 
 ```sh
-go run ./adk/human-in-the-loop/approval
+go run ./adk/human-in-the-loop/1_approval
 ```
 
 您将看到智能体的推理过程，随后是一个提示，询问您是否批准订票。输入 `Y` 可查看智能体完成操作。
