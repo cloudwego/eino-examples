@@ -57,7 +57,7 @@ Alternatively, you can create a `.env` file in the project root with these varia
 Ensure you have your environment variables set (e.g., for the LLM API key). Then, run the following command from the root of the `eino-examples` repository:
 
 ```sh
-go run ./adk/human-in-the-loop/4_review-and-edit
+go run ./adk/human-in-the-loop/2_review-and-edit
 ```
 
 You will see:
