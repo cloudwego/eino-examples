@@ -87,8 +87,10 @@ func main() {
 		fmt.Println("invalid input, please input Y or N")
 	}
 
-	iter, err := runner.TargetedResume(ctx, "1", map[string]any{
-		interruptID: apInfo,
+	iter, err := runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
+		Targets: map[string]any{
+			interruptID: apInfo,
+		},
 	})
 	if err != nil {
 		log.Fatal(err)

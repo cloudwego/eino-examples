@@ -99,8 +99,10 @@ func main() {
 		reInfo.ReviewResult = result
 
 		var err error
-		iter, err = runner.TargetedResume(ctx, "1", map[string]any{
-			interruptCtx.ID: reInfo,
+		iter, err = runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
+			Targets: map[string]any{
+				interruptCtx.ID: reInfo,
+			},
 		})
 		if err != nil {
 			log.Fatal(err)

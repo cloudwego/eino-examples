@@ -13,7 +13,7 @@ It showcases how to build an agent that attempts to perform a sensitive action, 
 3.  **User Confirmation**: The `main.go` logic catches this interrupt and prints the details of the pending action to the console. It then prompts the user to input "Y" (Yes) or "N" (No).
 
 4.  **Targeted Resume**:
-    *   If the user approves, the application calls `runner.TargetedResume`, sending back the approval. The framework then unpauses the agent, which proceeds to execute the `BookTicket` tool.
+    *   If the user approves, the application calls `runner.ResumeWithParams`, sending back the approval. The framework then unpauses the agent, which proceeds to execute the `BookTicket` tool.
     *   If the user denies, the agent is also resumed, but it is informed of the denial, and it will not execute the tool.
 
 ## Practical Example

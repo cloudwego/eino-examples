@@ -85,8 +85,10 @@ func main() {
 		fuInfo.UserAnswer = nInput
 
 		var err error
-		iter, err = runner.TargetedResume(ctx, "1", map[string]any{
-			interruptCtx.ID: fuInfo,
+		iter, err = runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
+			Targets: map[string]any{
+				interruptCtx.ID: fuInfo,
+			},
 		})
 		if err != nil {
 			log.Fatal(err)

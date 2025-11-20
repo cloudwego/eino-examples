@@ -88,10 +88,6 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 		return "", fmt.Errorf("tool '%s' resumed with no approval result", toolInfo.Name)
 	}
 
-	if data.ApprovalResult == nil {
-		return "", fmt.Errorf("tool '%s' approval result is false", toolInfo.Name)
-	}
-
 	if data.ApprovalResult.Approved {
 		return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
 	}

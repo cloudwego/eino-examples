@@ -87,8 +87,10 @@ func main() {
 		}
 
 		var err error
-		iter, err = runner.TargetedResume(ctx, "1", map[string]any{
-			interruptID: reInfo,
+		iter, err = runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
+			Targets: map[string]any{
+				interruptID: reInfo,
+			},
 		})
 		if err != nil {
 			log.Fatal(err)
