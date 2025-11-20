@@ -27,7 +27,6 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/flow/agent/multiagent/host"
 	"github.com/cloudwego/eino/schema"
-	"github.com/ollama/ollama/api"
 )
 
 // create a specialist who can append text to the right local journal file
@@ -81,7 +80,7 @@ func newWriteJournalSpecialist(ctx context.Context, baseURL, model string) (*hos
 		BaseURL: baseURL,
 		Model:   model,
 
-		Options: &api.Options{
+		Options: &ollama.Options{
 			Temperature: 0.000001,
 		},
 	})
