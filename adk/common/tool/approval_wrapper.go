@@ -29,7 +29,6 @@ type ApprovalInfo struct {
 	ToolName        string
 	ArgumentsInJSON string
 	ToolCallID      string
-	ApprovalResult  *ApprovalResult
 }
 
 type ApprovalResult struct {
@@ -72,7 +71,7 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 		}, argumentsInJSON)
 	}
 
-	isResumeTarget, hasData, data := compose.GetResumeContext[*ApprovalInfo](ctx)
+	isResumeTarget, hasData, data := compose.GetResumeContext[*ApprovalResult](ctx)
 	if !isResumeTarget { // was interrupted but not explicitly resumed, reinterrupt and wait for approval again
 		return "", compose.StatefulInterrupt(ctx, &ApprovalInfo{
 			ToolName:        toolInfo.Name,
@@ -84,16 +83,12 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 		return "", fmt.Errorf("tool '%s' resumed with no data", toolInfo.Name)
 	}
 
-	if data.ApprovalResult == nil {
-		return "", fmt.Errorf("tool '%s' resumed with no approval result", toolInfo.Name)
-	}
-
-	if data.ApprovalResult.Approved {
+	if data.Approved {
 		return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
 	}
 
-	if data.ApprovalResult.DisapproveReason != nil {
-		return fmt.Sprintf("tool '%s' disapproved, reason: %s", toolInfo.Name, *data.ApprovalResult.DisapproveReason), nil
+	if data.DisapproveReason != nil {
+		return fmt.Sprintf("tool '%s' disapproved, reason: %s", toolInfo.Name, *data.DisapproveReason), nil
 	}
 
 	return fmt.Sprintf("tool '%s' disapproved", toolInfo.Name), nil

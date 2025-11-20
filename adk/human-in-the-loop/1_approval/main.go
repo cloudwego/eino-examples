@@ -37,6 +37,10 @@ func main() {
 	runner := adk.NewRunner(ctx, adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
+
+		// provide a CheckPointStore for eino to persist the execution state of the agent for later resumption.
+		// Here we use an in-memory store for simplicity.
+		// In the real world, you can use a distributed store like Redis to persist the checkpoints.
 		CheckPointStore: store.NewInMemoryStore(),
 	})
 	iter := runner.Query(ctx, "book a ticket for Martin, to Beijing, on 2025-12-01, the phone number is 1234567. directly call tool.", adk.WithCheckPointID("1"))
@@ -62,9 +66,12 @@ func main() {
 	if lastEvent.Action == nil || lastEvent.Action.Interrupted == nil {
 		log.Fatal("last event is not an interrupt event")
 	}
-	apInfo := lastEvent.Action.Interrupted.InterruptContexts[0].Info.(*tool.ApprovalInfo)
+
+	// this interruptID is crucial 'locator' for Eino to know where the interrupt happens,
+	// so when resuming later, you have to provide this same `interruptID` along with the approval result back to Eino
 	interruptID := lastEvent.Action.Interrupted.InterruptContexts[0].ID
 
+	var apResult *tool.ApprovalResult
 	for {
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Print("your input here: ")
@@ -72,7 +79,7 @@ func main() {
 		fmt.Println()
 		nInput := scanner.Text()
 		if strings.ToUpper(nInput) == "Y" {
-			apInfo.ApprovalResult = &tool.ApprovalResult{Approved: true}
+			apResult = &tool.ApprovalResult{Approved: true}
 			break
 		} else if strings.ToUpper(nInput) == "N" {
 			// Prompt for reason when denying
@@ -80,16 +87,20 @@ func main() {
 			scanner.Scan()
 			reason := scanner.Text()
 			fmt.Println()
-			apInfo.ApprovalResult = &tool.ApprovalResult{Approved: false, DisapproveReason: &reason}
+			apResult = &tool.ApprovalResult{Approved: false, DisapproveReason: &reason}
 			break
 		}
 
 		fmt.Println("invalid input, please input Y or N")
 	}
 
+	// here we directly resumes right in the same instance where the original `Runner.Query` happened.
+	// In the real world, the original `Runner.Run/Query` and the subsequent `Runner.ResumeWithParams`
+	// can happen in different processes or machines, as long as you use the same `CheckPointID`,
+	// and you provided a distributed `CheckPointStore` when creating the `Runner` instance.
 	iter, err := runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
 		Targets: map[string]any{
-			interruptID: apInfo,
+			interruptID: apResult,
 		},
 	})
 	if err != nil {

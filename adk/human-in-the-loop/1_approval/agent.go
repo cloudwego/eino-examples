@@ -22,13 +22,32 @@ import (
 	"log"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
 
 	"github.com/cloudwego/eino-examples/adk/common/model"
+	tool2 "github.com/cloudwego/eino-examples/adk/common/tool"
 )
 
 func NewTicketBookingAgent() adk.Agent {
 	ctx := context.Background()
+
+	type bookInput struct {
+		Location             string `json:"location"`
+		PassengerName        string `json:"passenger_name"`
+		PassengerPhoneNumber string `json:"passenger_phone_number"`
+	}
+
+	getWeather, err := utils.InferTool(
+		"BookTicket",
+		"this tool can book ticket of the specific location",
+		func(ctx context.Context, input bookInput) (output string, err error) {
+			return "success", nil
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	a, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:        "TicketBooker",
@@ -38,7 +57,9 @@ Based on the user's request, use the "BookTicket" tool to book tickets.`,
 		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: getTools(),
+				Tools: []tool.BaseTool{
+					&tool2.InvokableApprovableTool{InvokableTool: getWeather},
+				},
 			},
 		},
 	})
