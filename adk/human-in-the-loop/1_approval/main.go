@@ -23,8 +23,12 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/callbacks"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/store"
@@ -33,8 +37,29 @@ import (
 
 func main() {
 	ctx := context.Background()
+
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer func() {
+			time.Sleep(5 * time.Second)
+			client.Close(ctx)
+		}()
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
+
 	a := NewTicketBookingAgent()
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewRunner(context.Background(), adk.RunnerConfig{
 		EnableStreaming: true, // you can disable streaming here
 		Agent:           a,
 
@@ -43,7 +68,7 @@ func main() {
 		// In the real world, you can use a distributed store like Redis to persist the checkpoints.
 		CheckPointStore: store.NewInMemoryStore(),
 	})
-	iter := runner.Query(ctx, "book a ticket for Martin, to Beijing, on 2025-12-01, the phone number is 1234567. directly call tool.", adk.WithCheckPointID("1"))
+	iter := runner.Query(context.Background(), "book a ticket for Martin, to Beijing, on 2025-12-01, the phone number is 1234567. directly call tool.", adk.WithCheckPointID("1"))
 
 	var lastEvent *adk.AgentEvent
 	for {
@@ -98,7 +123,7 @@ func main() {
 	// In the real world, the original `Runner.Run/Query` and the subsequent `Runner.ResumeWithParams`
 	// can happen in different processes or machines, as long as you use the same `CheckPointID`,
 	// and you provided a distributed `CheckPointStore` when creating the `Runner` instance.
-	iter, err := runner.ResumeWithParams(ctx, "1", &adk.ResumeParams{
+	iter, err := runner.ResumeWithParams(context.Background(), "1", &adk.ResumeParams{
 		Targets: map[string]any{
 			interruptID: apResult,
 		},
