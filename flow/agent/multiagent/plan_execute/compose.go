@@ -27,6 +27,7 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/schema"
 
+	"github.com/cloudwego/eino-examples/devops/visualize"
 	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/prompt"
 )
 
@@ -196,11 +197,19 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 	}))
 	_ = graph.AddEdge(nodeKeyReviserToList, nodeKeyExecutor)
 
-	// 编译 graph，将节点、边、分支转化为面向运行时的结构。由于 graph 中存在环，使用 AnyPredecessor 模式，同时设置运行时最大步数。
-	runnable, err := graph.Compile(ctx, compose.WithNodeTriggerMode(compose.AnyPredecessor), compose.WithMaxRunSteps(maxStep))
+	// 编译 graph，并生成 Mermaid 拓扑图。由于 graph 中存在环，使用 AnyPredecessor 模式，同时设置运行时最大步数。
+	gen := visualize.NewMermaidAuto("flow/agent/multiagent/plan_execute")
+	runnable, err := graph.Compile(ctx,
+		compose.WithNodeTriggerMode(compose.AnyPredecessor),
+		compose.WithMaxRunSteps(maxStep),
+		compose.WithGraphCompileCallbacks(gen),
+		compose.WithGraphName("PlanExecuteMultiAgent"),
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Mermaid markdown and images are auto-generated in flow/agent/multiagent/plan_execute
 
 	return &PlanExecuteMultiAgent{
 		runnable: runnable,

@@ -35,6 +35,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
 
+	"github.com/cloudwego/eino-examples/devops/visualize"
 	"github.com/cloudwego/eino-examples/flow/agent/react/tools"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
@@ -60,14 +61,12 @@ func main() {
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
 
+	// minimal: we will export graph via API when available and compile a mermaid diagram
+
 	config := &ark.ChatModelConfig{
 		APIKey: arkApiKey,
 		Model:  arkModelName,
 	}
-
-	// Create a new cached ark chat model.
-	//arkModel, err = NewCachedARKChatModel(ctx, config)
-
 	arkModel, err := ark.NewChatModel(ctx, config)
 	if err != nil {
 		logs.Errorf("failed to create chat model: %v", err)
@@ -75,8 +74,8 @@ func main() {
 	}
 
 	// prepare tools
-	restaurantTool := tools.GetRestaurantTool() // 查询餐厅信息的工具
-	dishTool := tools.GetDishTool()             // 查询餐厅菜品信息的工具
+	restaurantTool := tools.GetRestaurantTool()
+	dishTool := tools.GetDishTool()
 
 	// prepare persona (system prompt) (optional)
 	persona := `# Character:
@@ -106,7 +105,7 @@ func main() {
 		return false, nil
 	}*/
 
-	ragent, err := react.NewAgent(ctx, &react.AgentConfig{
+	rAgent, err := react.NewAgent(ctx, &react.AgentConfig{
 		ToolCallingModel: arkModel,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{restaurantTool, dishTool},
@@ -145,7 +144,18 @@ func main() {
 		//react.WithChatModelOptions(ark.WithCache(cacheOption)),
 	}
 
-	sr, err := ragent.Stream(ctx, []*schema.Message{
+	// Export graph and compile with mermaid (non-critical path)
+	{
+		anyG, opts := rAgent.ExportGraph()
+		gen := visualize.NewMermaidAuto("flow/agent/react")
+		g := compose.NewGraph[[]*schema.Message, *schema.Message]()
+		_ = g.AddGraphNode("react_agent", anyG, opts...)
+		_ = g.AddEdge(compose.START, "react_agent")
+		_ = g.AddEdge("react_agent", compose.END)
+		_, _ = g.Compile(context.Background(), compose.WithGraphCompileCallbacks(gen))
+	}
+
+	sr, err := rAgent.Stream(ctx, []*schema.Message{
 		{
 			Role:    schema.System,
 			Content: persona,

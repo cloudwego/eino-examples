@@ -31,6 +31,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
 
+	"github.com/cloudwego/eino-examples/devops/visualize"
 	"github.com/cloudwego/eino-examples/internal/gptr"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
@@ -142,7 +143,7 @@ func main() {
 		}))
 
 	// compile
-	r, err := chain.Compile(ctx)
+    r, err := chain.Compile(ctx, compose.WithGraphCompileCallbacks(visualize.NewMermaidAuto("compose/chain")), compose.WithGraphName("chain"))
 	if err != nil {
 		log.Panic(err)
 		return

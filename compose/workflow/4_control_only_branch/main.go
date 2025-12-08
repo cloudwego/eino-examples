@@ -25,6 +25,7 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/coze-dev/cozeloop-go"
 
+	"github.com/cloudwego/eino-examples/devops/visualize"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
@@ -90,11 +91,14 @@ func main() {
 	wf.End().AddInput("b1", compose.ToField("bidder1")).
 		AddInput("b2", compose.ToField("bidder2"))
 
-	runner, err := wf.Compile(context.Background())
+	gen := visualize.NewMermaidAuto("compose/workflow/4_control_only_branch")
+	runner, err := wf.Compile(context.Background(), compose.WithGraphCompileCallbacks(gen), compose.WithGraphName("Workflow-Control-Only-Branch"))
 	if err != nil {
 		logs.Errorf("workflow compile error: %v", err)
 		return
 	}
+
+	// Mermaid markdown and images are auto-generated in compose/workflow/4_control_only_branch
 
 	result, err := runner.Invoke(context.Background(), 3.0)
 	if err != nil {

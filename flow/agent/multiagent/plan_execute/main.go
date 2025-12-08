@@ -27,8 +27,6 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/debug"
-	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/tools"
 	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino-ext/components/model/deepseek"
@@ -40,6 +38,9 @@ import (
 	"github.com/cloudwego/eino/schema"
 	"github.com/cloudwego/eino/utils/callbacks"
 	"github.com/coze-dev/cozeloop-go"
+
+	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/debug"
+	"github.com/cloudwego/eino-examples/flow/agent/multiagent/plan_execute/tools"
 )
 
 func main() {
