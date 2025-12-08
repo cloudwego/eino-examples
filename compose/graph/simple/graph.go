@@ -29,6 +29,8 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
+
+	"github.com/cloudwego/eino-examples/devops/visualize"
 )
 
 const (
@@ -68,10 +70,17 @@ func main() {
 	_ = g.AddEdge(nodeOfPrompt, nodeOfModel)
 	_ = g.AddEdge(nodeOfModel, compose.END)
 
-	r, err := g.Compile(ctx, compose.WithMaxRunSteps(10))
+	gen := visualize.NewMermaidGenerator("compose/graph/simple")
+	r, err := g.Compile(ctx,
+		compose.WithMaxRunSteps(10),
+		compose.WithGraphCompileCallbacks(gen),
+		compose.WithGraphName("SimpleGraph"),
+	)
 	if err != nil {
 		panic(err)
 	}
+
+	// Mermaid markdown and images are auto-generated in compose/graph/simple
 
 	in := map[string]any{"location": "beijing"}
 	ret, err := r.Invoke(ctx, in)
