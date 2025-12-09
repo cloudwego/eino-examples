@@ -53,6 +53,13 @@ import (
 	"strings"
 )
 
+// sanitizeLogValue removes line breaks and carriage returns to prevent log forging
+func sanitizeLogValue(s string) string {
+	s = strings.ReplaceAll(s, "\n", "")
+	s = strings.ReplaceAll(s, "\r", "")
+	return s
+}
+
 // Logger is a minimal printf-style logger used when no context is required.
 type Logger interface{ Printf(string, ...any) }
 
@@ -191,23 +198,23 @@ func (c *CurlRT) mask(name, value string) string {
 func (c *CurlRT) buildCurl(req *http.Request, body []byte) string {
 	var b bytes.Buffer
 	b.WriteString("curl -X ")
-	b.WriteString(req.Method)
+	b.WriteString(sanitizeLogValue(req.Method))
 	b.WriteString(" '")
-	b.WriteString(req.URL.String())
+	b.WriteString(sanitizeLogValue(req.URL.String()))
 	b.WriteString("'")
 	for k, vs := range req.Header {
 		for _, v := range vs {
 			v = c.mask(k, v)
 			b.WriteString(" -H '")
-			b.WriteString(k)
+			b.WriteString(sanitizeLogValue(k))
 			b.WriteString(": ")
-			b.WriteString(v)
+			b.WriteString(sanitizeLogValue(v))
 			b.WriteString("'")
 		}
 	}
 	if len(body) > 0 {
 		b.WriteString(" --data '")
-		b.WriteString(string(body))
+		b.WriteString(sanitizeLogValue(string(body)))
 		b.WriteString("'")
 	}
 	return b.String()
@@ -218,9 +225,9 @@ func (c *CurlRT) formatHeaders(h http.Header) string {
 	for k, vs := range h {
 		for _, v := range vs {
 			v = c.mask(k, v)
-			b.WriteString(k)
+			b.WriteString(sanitizeLogValue(k))
 			b.WriteString(": ")
-			b.WriteString(v)
+			b.WriteString(sanitizeLogValue(v))
 			b.WriteString("\n")
 		}
 	}
