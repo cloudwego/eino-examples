@@ -249,11 +249,11 @@ func newLoggingReadCloser(rc io.ReadCloser, ctx context.Context, c *CurlRT) io.R
 	if c.ctxLogger == nil {
 		buf = &bytes.Buffer{}
 	}
-	cap := c.maxStreamLogBytes
-	if cap <= 0 {
-		cap = 8192
+	ca := c.maxStreamLogBytes
+	if ca <= 0 {
+		ca = 8192
 	}
-	return &loggingReadCloser{rc: rc, ctx: ctx, l: c.logger, cl: c.ctxLogger, cap: cap, summary: buf}
+	return &loggingReadCloser{rc: rc, ctx: ctx, l: c.logger, cl: c.ctxLogger, cap: ca, summary: buf}
 }
 
 func (lrc *loggingReadCloser) Read(p []byte) (int, error) {

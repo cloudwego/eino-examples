@@ -28,7 +28,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino/schema"
 
-	httptransport "github.com/cloudwego/eino-examples/components/model/httptransport"
+	"github.com/cloudwego/eino-examples/components/model/httptransport"
 )
 
 func main() {
