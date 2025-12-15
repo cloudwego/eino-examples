@@ -23,13 +23,17 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/callbacks"
 
+	"github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/trace"
 )
 
 func main() {
 	ctx := context.Background()
+
+	callbacks.AppendGlobalHandlers(model.GetInputLoggerCallback())
 
 	traceCloseFn, startSpanFn := trace.AppendCozeLoopCallbackIfConfigured(ctx)
 	defer traceCloseFn(ctx)
