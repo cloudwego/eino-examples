@@ -19,6 +19,7 @@ require (
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5
 	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf
+	github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0
 	github.com/cloudwego/eino-ext/devops v0.1.8
 	github.com/coze-dev/cozeloop-go v0.1.11
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
@@ -26,6 +27,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/json-iterator/go v1.1.12
 	github.com/kaptinlin/jsonrepair v0.2.4
+	github.com/mark3labs/mcp-go v0.43.2
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/stretchr/testify v1.11.1
@@ -63,9 +65,11 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.3.2 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
+	github.com/google/jsonschema-go v0.3.0 // indirect
 	github.com/goph/emperror v0.17.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/invopop/jsonschema v0.13.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
@@ -75,6 +79,7 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/meguminnnnnnnnn/go-openai v0.1.0 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
+	github.com/modelcontextprotocol/go-sdk v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/nikolalohinski/gonja v1.5.3 // indirect
@@ -88,6 +93,7 @@ require (
 	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/slongfield/pyfmt v0.0.0-20220222012616-ea85ff4c361f // indirect
+	github.com/spf13/cast v1.7.1 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -100,6 +106,7 @@ require (
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
+	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/yuin/gopher-lua v1.1.1 // indirect
 	golang.org/x/arch v0.19.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
