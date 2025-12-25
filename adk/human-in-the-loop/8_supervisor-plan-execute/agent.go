@@ -19,6 +19,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -56,10 +58,26 @@ func (r *rateLimitedModel) Stream(ctx context.Context, input []*schema.Message, 
 	return r.m.Stream(ctx, input, opts...)
 }
 
+func getRateLimitDelay() time.Duration {
+	delayMs := os.Getenv("RATE_LIMIT_DELAY_MS")
+	if delayMs == "" {
+		return 0
+	}
+	ms, err := strconv.Atoi(delayMs)
+	if err != nil {
+		return 0
+	}
+	return time.Duration(ms) * time.Millisecond
+}
+
 func newRateLimitedModel() model.ToolCallingChatModel {
+	delay := getRateLimitDelay()
+	if delay == 0 {
+		return commonModel.NewChatModel()
+	}
 	return &rateLimitedModel{
 		m:     commonModel.NewChatModel(),
-		delay: time.Minute,
+		delay: delay,
 	}
 }
 
