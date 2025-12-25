@@ -45,6 +45,9 @@ func Invokable(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint
 		output, err := next(ctx, in)
 		// If an error occurs during execution.
 		if err != nil {
+			if _, ok := compose.IsInterruptRerunError(err); ok {
+				return nil, err
+			}
 			// Generate a custom error message using removeErrorHandler.
 			result := removeErrorHandler(ctx, in, err)
 			// Wrap the custom message in a successful ToolOutput and return it,
@@ -66,6 +69,9 @@ func Streamable(next compose.StreamableToolEndpoint) compose.StreamableToolEndpo
 		streamOutput, err := next(ctx, in)
 		// If an error occurs during execution.
 		if err != nil {
+			if _, ok := compose.IsInterruptRerunError(err); ok {
+				return nil, err
+			}
 			// Generate a custom error message using removeErrorHandler.
 			result := removeErrorHandler(ctx, in, err)
 			// Return the new stream as a successful output.

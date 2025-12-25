@@ -39,3 +39,6 @@ output/*
 adk/multiagent/integration-excel-agent/playground/*
 !adk/multiagent/integration-excel-agent/playground/test_data/
 !adk/multiagent/integration-excel-agent/playground/input/
+
+# Trae files
+.trae
