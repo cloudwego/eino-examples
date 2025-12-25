@@ -49,7 +49,8 @@ func main() {
 
 	fmt.Println("\n========================================")
 	fmt.Println("User Query:", query)
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	iter := runner.Query(ctx, query, adk.WithCheckPointID("deep-analysis-1"))
 
@@ -86,7 +87,8 @@ func main() {
 
 		fmt.Println("\n========================================")
 		fmt.Println("Resuming with your answers...")
-		fmt.Println("========================================\n")
+		fmt.Println("========================================")
+		fmt.Println()
 
 		iter, err = runner.ResumeWithParams(ctx, "deep-analysis-1", &adk.ResumeParams{
 			Targets: map[string]any{

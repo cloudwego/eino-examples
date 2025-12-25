@@ -43,7 +43,7 @@ type SearchResult struct {
 }
 
 type AnalyzeRequest struct {
-	Data       string `json:"data" jsonschema_description:"The data to analyze"`
+	Data         string `json:"data" jsonschema_description:"The data to analyze"`
 	AnalysisType string `json:"analysis_type" jsonschema_description:"Type of analysis (trend, comparison, summary, statistical)"`
 }
 

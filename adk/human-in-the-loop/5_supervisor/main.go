@@ -48,7 +48,8 @@ func main() {
 	query := "Check my checking account balance, and then transfer $500 from checking to savings account."
 	fmt.Println("\n========================================")
 	fmt.Println("User Query:", query)
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	iter := runner.Query(ctx, query, adk.WithCheckPointID("supervisor-1"))
 
@@ -88,7 +89,8 @@ func main() {
 
 		fmt.Println("\n========================================")
 		fmt.Println("Resuming execution...")
-		fmt.Println("========================================\n")
+		fmt.Println("========================================")
+		fmt.Println()
 
 		iter, err = runner.ResumeWithParams(ctx, "supervisor-1", &adk.ResumeParams{
 			Targets: map[string]any{

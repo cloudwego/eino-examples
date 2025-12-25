@@ -68,12 +68,12 @@ type AllocateBudgetRequest struct {
 }
 
 type AllocateBudgetResponse struct {
-	AllocationID   string  `json:"allocation_id"`
-	ProjectName    string  `json:"project_name"`
-	Amount         float64 `json:"amount"`
-	Department     string  `json:"department"`
+	AllocationID    string  `json:"allocation_id"`
+	ProjectName     string  `json:"project_name"`
+	Amount          float64 `json:"amount"`
+	Department      string  `json:"department"`
 	RemainingBudget float64 `json:"remaining_budget"`
-	Status         string  `json:"status"`
+	Status          string  `json:"status"`
 }
 
 type AssignTeamRequest struct {

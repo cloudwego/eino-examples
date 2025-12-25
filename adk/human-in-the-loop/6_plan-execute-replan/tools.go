@@ -61,24 +61,24 @@ type FlightBookingResponse struct {
 }
 
 type HotelBookingRequest struct {
-	City      string `json:"city" jsonschema_description:"City to book hotel in"`
-	CheckIn   string `json:"check_in" jsonschema_description:"Check-in date in YYYY-MM-DD format"`
-	CheckOut  string `json:"check_out" jsonschema_description:"Check-out date in YYYY-MM-DD format"`
-	Guests    int    `json:"guests" jsonschema_description:"Number of guests"`
-	RoomType  string `json:"room_type" jsonschema_description:"Room type preference (standard/deluxe/suite)"`
+	City     string `json:"city" jsonschema_description:"City to book hotel in"`
+	CheckIn  string `json:"check_in" jsonschema_description:"Check-in date in YYYY-MM-DD format"`
+	CheckOut string `json:"check_out" jsonschema_description:"Check-out date in YYYY-MM-DD format"`
+	Guests   int    `json:"guests" jsonschema_description:"Number of guests"`
+	RoomType string `json:"room_type" jsonschema_description:"Room type preference (standard/deluxe/suite)"`
 }
 
 type HotelBookingResponse struct {
-	BookingID   string   `json:"booking_id"`
-	HotelName   string   `json:"hotel_name"`
-	City        string   `json:"city"`
-	CheckIn     string   `json:"check_in"`
-	CheckOut    string   `json:"check_out"`
-	RoomType    string   `json:"room_type"`
-	PricePerNight int    `json:"price_per_night"`
-	TotalPrice  int      `json:"total_price"`
-	Amenities   []string `json:"amenities"`
-	Status      string   `json:"status"`
+	BookingID     string   `json:"booking_id"`
+	HotelName     string   `json:"hotel_name"`
+	City          string   `json:"city"`
+	CheckIn       string   `json:"check_in"`
+	CheckOut      string   `json:"check_out"`
+	RoomType      string   `json:"room_type"`
+	PricePerNight int      `json:"price_per_night"`
+	TotalPrice    int      `json:"total_price"`
+	Amenities     []string `json:"amenities"`
+	Status        string   `json:"status"`
 }
 
 type AttractionRequest struct {

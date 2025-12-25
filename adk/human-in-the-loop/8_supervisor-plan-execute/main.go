@@ -51,7 +51,8 @@ and assigning a team of Alice, Bob, and Charlie starting from 2025-02-01.`
 
 	fmt.Println("\n========================================")
 	fmt.Println("User Query:", query)
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	iter := runner.Query(ctx, query, adk.WithCheckPointID("project-setup-1"))
 
@@ -91,7 +92,8 @@ and assigning a team of Alice, Bob, and Charlie starting from 2025-02-01.`
 
 		fmt.Println("\n========================================")
 		fmt.Println("Resuming execution...")
-		fmt.Println("========================================\n")
+		fmt.Println("========================================")
+		fmt.Println()
 
 		iter, err = runner.ResumeWithParams(ctx, "project-setup-1", &adk.ResumeParams{
 			Targets: map[string]any{

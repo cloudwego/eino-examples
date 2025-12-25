@@ -51,7 +51,8 @@ Today is 2025-09-01.`
 
 	fmt.Println("\n========================================")
 	fmt.Println("User Query:", query)
-	fmt.Println("========================================\n")
+	fmt.Println("========================================")
+	fmt.Println()
 
 	iter := runner.Query(ctx, query, adk.WithCheckPointID("travel-plan-1"))
 
@@ -103,7 +104,8 @@ Today is 2025-09-01.`
 
 		fmt.Println("\n========================================")
 		fmt.Println("Resuming execution...")
-		fmt.Println("========================================\n")
+		fmt.Println("========================================")
+		fmt.Println()
 
 		iter, err = runner.ResumeWithParams(ctx, "travel-plan-1", &adk.ResumeParams{
 			Targets: map[string]any{
