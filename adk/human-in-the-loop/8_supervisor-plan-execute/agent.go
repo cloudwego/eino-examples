@@ -82,7 +82,7 @@ func newRateLimitedModel() model.ToolCallingChatModel {
 }
 
 type namedAgent struct {
-	adk.Agent
+	adk.ResumableAgent
 	name        string
 	description string
 }
@@ -215,9 +215,9 @@ func buildProjectExecutionAgent(ctx context.Context) (adk.Agent, error) {
 	}
 
 	return &namedAgent{
-		Agent:       agent,
-		name:        "project_execution_agent",
-		description: "the agent responsible for complex project execution tasks that require planning, including requirements analysis, design creation, budget allocation, and team assignment",
+		ResumableAgent: agent,
+		name:           "project_execution_agent",
+		description:    "the agent responsible for complex project execution tasks that require planning, including requirements analysis, design creation, budget allocation, and team assignment",
 	}, nil
 }
 
