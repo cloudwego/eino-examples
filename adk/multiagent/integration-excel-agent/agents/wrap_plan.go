@@ -103,6 +103,22 @@ func write2PlanMD(ctx context.Context, op commandline.Operator) error {
 	if !ok {
 		return fmt.Errorf("work dir not found")
 	}
+	files, err := generic.ListDir(wd)
+	if err != nil {
+		return err
+	}
+
+	plans := buildFullPlans(plan, executedSteps, files)
+
+	err = generic.Write2PlanMD(ctx, op, wd, plans)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func buildFullPlans(plan *generic.Plan, executedSteps []planexecute.ExecutedStep, files []*generic.SubmitResultFile) []*generic.FullPlan {
 	var plans []*generic.FullPlan
 	for i, step := range executedSteps {
 		var desc string
@@ -118,10 +134,11 @@ func write2PlanMD(ctx context.Context, op commandline.Operator) error {
 			ExecResult: &generic.SubmitResult{
 				IsSuccess: utils.PtrOf(true),
 				Result:    step.Result,
-				Files:     nil, // todo
+				Files:     files,
 			},
 		})
 	}
+
 	if plan != nil {
 		for i, step := range plan.Steps {
 			plans = append(plans, &generic.FullPlan{
@@ -131,10 +148,6 @@ func write2PlanMD(ctx context.Context, op commandline.Operator) error {
 			})
 		}
 	}
-	err := generic.Write2PlanMD(ctx, op, wd, plans)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return plans
 }
