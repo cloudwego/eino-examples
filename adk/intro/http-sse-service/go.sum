@@ -108,6 +108,7 @@ github.com/cloudwego/eino v0.7.8 h1:3a2j1UKZZuQ3SzqDToOI5g6lrlJ7xZEtMlNQkTgIvaI=
 github.com/cloudwego/eino v0.7.8/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.11/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.14-0.20251225084034-ff42791c540f/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
+github.com/cloudwego/eino v0.7.14/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.45 h1:LWvSHJVlvS1S/IxN9XUKNw/MI0I7YPePt3LMNxyCrZ0=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.45/go.mod h1:e8P5dGVI/JMQ1FYNgmu5EFRWA8fivBc6NwNJ9g8FBK8=
 github.com/cloudwego/eino-ext/components/model/openai v0.1.5 h1:+yvGbTPw93li9GSmdm6Rix88Yy8AXg5NNBcRbWx3CQU=
