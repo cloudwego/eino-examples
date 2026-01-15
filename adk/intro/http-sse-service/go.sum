@@ -109,6 +109,9 @@ github.com/cloudwego/eino v0.7.8/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyL
 github.com/cloudwego/eino v0.7.11/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.14-0.20251225084034-ff42791c540f/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.14/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
+github.com/cloudwego/eino v0.7.19-0.20260108113617-d04d4b5bda31/go.mod h1:OdDJi17QawFUJRIFrVJRgdc9grjrh3eFDD0k34ZRH8M=
+github.com/cloudwego/eino v0.7.19-0.20260113134107-0b72ca9f4030/go.mod h1:2gsj+xyPFnmZfz7jtnbA6VghaaJsThYh2appzPeslRE=
+github.com/cloudwego/eino v0.7.20-0.20260115134922-6816c8a31d1a/go.mod h1:2gsj+xyPFnmZfz7jtnbA6VghaaJsThYh2appzPeslRE=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.45 h1:LWvSHJVlvS1S/IxN9XUKNw/MI0I7YPePt3LMNxyCrZ0=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.45/go.mod h1:e8P5dGVI/JMQ1FYNgmu5EFRWA8fivBc6NwNJ9g8FBK8=
 github.com/cloudwego/eino-ext/components/model/openai v0.1.5 h1:+yvGbTPw93li9GSmdm6Rix88Yy8AXg5NNBcRbWx3CQU=
@@ -517,6 +520,7 @@ github.com/volcengine/volc-sdk-golang v1.0.199 h1:zv9QOqTl/IsLwtfC37GlJtcz6vMAHi
 github.com/volcengine/volc-sdk-golang v1.0.199/go.mod h1:stZX+EPgv1vF4nZwOlEe8iGcriUPRBKX8zA19gXycOQ=
 github.com/volcengine/volcengine-go-sdk v1.1.44 h1:WLoLlzt67ZlJeow55PPx65/Mh52DewVXqkHcFSodM9w=
 github.com/volcengine/volcengine-go-sdk v1.1.44/go.mod h1:oxoVo+A17kvkwPkIeIHPVLjSw7EQAm+l/Vau1YGHN+A=
+github.com/volcengine/volcengine-go-sdk v1.2.4/go.mod h1:oxoVo+A17kvkwPkIeIHPVLjSw7EQAm+l/Vau1YGHN+A=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
 github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
 github.com/x-cray/logrus-prefixed-formatter v0.5.2 h1:00txxvfBM9muc0jiLIEAkAcIMJzfthRT6usrui8uGmg=
