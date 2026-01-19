@@ -277,7 +277,7 @@ All orders require human approval before processing.`,
 			fmt.Println("Invalid input. Please enter Y or N.")
 		}
 
-		fmt.Println("\n--- Resuming order processing ---\n")
+		fmt.Println("\n--- Resuming order processing ---")
 
 		iter, err = runner.ResumeWithParams(ctx, checkpointID, &adk.ResumeParams{
 			Targets: map[string]any{
