@@ -72,24 +72,26 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 	}
 
 	isResumeTarget, hasData, data := compose.GetResumeContext[*ApprovalResult](ctx)
-	if !isResumeTarget { // was interrupted but not explicitly resumed, reinterrupt and wait for approval again
+	if isResumeTarget && hasData {
+		if data.Approved {
+			return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
+		}
+
+		if data.DisapproveReason != nil {
+			return fmt.Sprintf("tool '%s' disapproved, reason: %s", toolInfo.Name, *data.DisapproveReason), nil
+		}
+
+		return fmt.Sprintf("tool '%s' disapproved", toolInfo.Name), nil
+	}
+
+	isResumeTarget, _, _ = compose.GetResumeContext[any](ctx)
+	if !isResumeTarget {
 		return "", compose.StatefulInterrupt(ctx, &ApprovalInfo{
 			ToolName:        toolInfo.Name,
 			ArgumentsInJSON: storedArguments,
 			ToolCallID:      compose.GetToolCallID(ctx),
 		}, storedArguments)
 	}
-	if !hasData {
-		return "", fmt.Errorf("tool '%s' resumed with no data", toolInfo.Name)
-	}
 
-	if data.Approved {
-		return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
-	}
-
-	if data.DisapproveReason != nil {
-		return fmt.Sprintf("tool '%s' disapproved, reason: %s", toolInfo.Name, *data.DisapproveReason), nil
-	}
-
-	return fmt.Sprintf("tool '%s' disapproved", toolInfo.Name), nil
+	return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
 }
