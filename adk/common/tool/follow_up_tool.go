@@ -24,7 +24,6 @@ import (
 
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
-	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )
 
@@ -59,30 +58,26 @@ func init() {
 }
 
 func FollowUp(ctx context.Context, input *FollowUpToolInput) (string, error) {
-	wasInterrupted, _, storedState := compose.GetInterruptState[*FollowUpState](ctx)
+	wasInterrupted, _, storedState := tool.GetInterruptState[*FollowUpState](ctx)
 
 	if !wasInterrupted {
-		// First invocation: parse input, create info/state, and interrupt.
 		info := &FollowUpInfo{Questions: input.Questions}
 		state := &FollowUpState{Questions: input.Questions}
 
-		return "", compose.StatefulInterrupt(ctx, info, state)
+		return "", tool.StatefulInterrupt(ctx, info, state)
 	}
 
-	// Resume flow: check if we are the target and get the user's answer.
-	isResumeTarget, hasData, resumeData := compose.GetResumeContext[*FollowUpInfo](ctx)
+	isResumeTarget, hasData, resumeData := tool.GetResumeContext[*FollowUpInfo](ctx)
 
 	if !isResumeTarget {
-		// Not for us. Re-interrupt with the same questions from the stored state.
 		info := &FollowUpInfo{Questions: storedState.Questions}
-		return "", compose.StatefulInterrupt(ctx, info, storedState)
+		return "", tool.StatefulInterrupt(ctx, info, storedState)
 	}
 
 	if !hasData || resumeData.UserAnswer == "" {
 		return "", fmt.Errorf("tool resumed without a user answer")
 	}
 
-	// Success. The tool's output is the user's answer.
 	return resumeData.UserAnswer, nil
 }
 
