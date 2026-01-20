@@ -64,40 +64,6 @@ The summary should flow naturally and capture the essence of the original conten
 
 Create a summary in approximately {max_words} words:`))
 
-	chain := compose.NewChain[map[string]any, *SummarizeOutput]()
-
-	chain.
-		AppendChatTemplate(extractKeyPointsPrompt).
-		AppendChatModel(cm).
-		AppendLambda(compose.InvokableLambda(func(ctx context.Context, msg *schema.Message) (map[string]any, error) {
-			return map[string]any{
-				"key_points": msg.Content,
-				"max_words":  ctx.Value("max_words"),
-			}, nil
-		})).
-		AppendChatTemplate(condenseSummaryPrompt).
-		AppendChatModel(cm).
-		AppendLambda(compose.InvokableLambda(func(ctx context.Context, msg *schema.Message) (*SummarizeOutput, error) {
-			keyPoints := ctx.Value("key_points_list").([]string)
-			return &SummarizeOutput{
-				Summary:   msg.Content,
-				KeyPoints: keyPoints,
-				WordCount: countWords(msg.Content),
-			}, nil
-		}))
-
-	inputTransformChain := compose.NewChain[*SummarizeInput, map[string]any]()
-	inputTransformChain.AppendLambda(compose.InvokableLambda(func(ctx context.Context, input *SummarizeInput) (map[string]any, error) {
-		maxWords := input.MaxWords
-		if maxWords <= 0 {
-			maxWords = 100
-		}
-		return map[string]any{
-			"document":  input.Document,
-			"max_words": maxWords,
-		}, nil
-	}))
-
 	fullChain := compose.NewChain[*SummarizeInput, *SummarizeOutput]()
 	fullChain.
 		AppendLambda(compose.InvokableLambda(func(ctx context.Context, input *SummarizeInput) (map[string]any, error) {
