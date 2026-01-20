@@ -86,7 +86,7 @@ func (g *InvokableGraphTool[I, O]) InvokableRun(ctx context.Context, input strin
 	callOpts := tool.GetImplSpecificOptions(&graphToolOptions{}, opts...).composeOpts
 	callOpts = append(callOpts, compose.WithCheckPointID(graphToolCheckPointID))
 
-	wasInterrupted, hasState, state := compose.GetInterruptState[*graphToolInterruptState](ctx)
+	wasInterrupted, hasState, state := tool.GetInterruptState[*graphToolInterruptState](ctx)
 	if wasInterrupted && hasState {
 		input = state.ToolInput
 
@@ -130,7 +130,7 @@ func (g *InvokableGraphTool[I, O]) InvokableRun(ctx context.Context, input strin
 			return "", fmt.Errorf("interrupt has happened, but checkpoint not exist in store")
 		}
 
-		return "", compose.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
+		return "", tool.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
 			Data:      data,
 			ToolInput: input,
 		}, interruptErr)
@@ -181,7 +181,7 @@ func (g *StreamableGraphTool[I, O]) StreamableRun(ctx context.Context, input str
 	callOpts := tool.GetImplSpecificOptions(&graphToolOptions{}, opts...).composeOpts
 	callOpts = append(callOpts, compose.WithCheckPointID(graphToolCheckPointID))
 
-	wasInterrupted, hasState, state := compose.GetInterruptState[*graphToolInterruptState](ctx)
+	wasInterrupted, hasState, state := tool.GetInterruptState[*graphToolInterruptState](ctx)
 	if wasInterrupted && hasState {
 		input = state.ToolInput
 
@@ -233,7 +233,7 @@ func (g *StreamableGraphTool[I, O]) StreamableRun(ctx context.Context, input str
 				return
 			}
 
-			sw.Send("", compose.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
+			sw.Send("", tool.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
 				Data:      data,
 				ToolInput: input,
 			}, interruptErr))
@@ -264,7 +264,7 @@ func (g *StreamableGraphTool[I, O]) StreamableRun(ctx context.Context, input str
 					return
 				}
 
-				sw.Send("", compose.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
+				sw.Send("", tool.CompositeInterrupt(ctx, "graph tool interrupt", &graphToolInterruptState{
 					Data:      data,
 					ToolInput: input,
 				}, interruptErr))

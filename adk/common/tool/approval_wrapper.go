@@ -21,14 +21,12 @@ import (
 	"fmt"
 
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )
 
 type ApprovalInfo struct {
 	ToolName        string
 	ArgumentsInJSON string
-	ToolCallID      string
 }
 
 type ApprovalResult struct {
@@ -62,16 +60,15 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 		return "", err
 	}
 
-	wasInterrupted, _, storedArguments := compose.GetInterruptState[string](ctx)
-	if !wasInterrupted { // initial invocation, interrupt and wait for approval
-		return "", compose.StatefulInterrupt(ctx, &ApprovalInfo{
+	wasInterrupted, _, storedArguments := tool.GetInterruptState[string](ctx)
+	if !wasInterrupted {
+		return "", tool.StatefulInterrupt(ctx, &ApprovalInfo{
 			ToolName:        toolInfo.Name,
 			ArgumentsInJSON: argumentsInJSON,
-			ToolCallID:      compose.GetToolCallID(ctx),
 		}, argumentsInJSON)
 	}
 
-	isResumeTarget, hasData, data := compose.GetResumeContext[*ApprovalResult](ctx)
+	isResumeTarget, hasData, data := tool.GetResumeContext[*ApprovalResult](ctx)
 	if isResumeTarget && hasData {
 		if data.Approved {
 			return i.InvokableTool.InvokableRun(ctx, storedArguments, opts...)
@@ -84,12 +81,11 @@ func (i InvokableApprovableTool) InvokableRun(ctx context.Context, argumentsInJS
 		return fmt.Sprintf("tool '%s' disapproved", toolInfo.Name), nil
 	}
 
-	isResumeTarget, _, _ = compose.GetResumeContext[any](ctx)
+	isResumeTarget, _, _ = tool.GetResumeContext[any](ctx)
 	if !isResumeTarget {
-		return "", compose.StatefulInterrupt(ctx, &ApprovalInfo{
+		return "", tool.StatefulInterrupt(ctx, &ApprovalInfo{
 			ToolName:        toolInfo.Name,
 			ArgumentsInJSON: storedArguments,
-			ToolCallID:      compose.GetToolCallID(ctx),
 		}, storedArguments)
 	}
 
