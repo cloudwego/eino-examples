@@ -116,13 +116,23 @@ The tool automatically:
 2. Wraps the interrupt with `CompositeInterrupt` for proper propagation
 3. Restores state and resumes execution when `runner.ResumeWithParams` is called
 
+### Composable Tool Wrappers
+
+GraphTools implement standard `tool.InvokableTool` or `tool.StreamableTool` interfaces, making them compatible with any tool wrapper in the ecosystem. Examples of wrappers you can use:
+
+- **`InvokableApprovableTool`**: Adds human approval before tool execution
+- **`InvokableReviewEditTool`**: Allows users to review and edit tool arguments
+- **`FollowUpTool`**: Asks users follow-up questions during execution
+- Custom wrappers you create
+
 ### Nested Interrupts
 
-GraphTools can be wrapped with `InvokableApprovableTool` for two-level approval:
-1. **Outer interrupt**: Tool-level approval (via `InvokableApprovableTool`)
-2. **Inner interrupt**: Workflow-level approval (via `StatefulInterrupt` inside nodes)
+When a GraphTool with internal interrupts is wrapped by another interrupt-based wrapper (e.g., `InvokableApprovableTool`), both interrupt layers work independently:
 
-Both interrupts work independently due to distinct interrupt state types.
+1. **Outer interrupt**: Wrapper-level interrupt (e.g., approval via `InvokableApprovableTool`)
+2. **Inner interrupt**: Workflow-level interrupt (via `StatefulInterrupt` inside graph nodes)
+
+This works because each layer uses distinct interrupt state types, preventing conflicts.
 
 ## Tool Options
 
