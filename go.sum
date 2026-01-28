@@ -49,6 +49,8 @@ github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMx
 github.com/Shopify/toxiproxy/v2 v2.1.6-0.20210914104332-15ea381dcdae/go.mod h1:/cvHQkZ1fst0EmZnA5dFtiQdWCNCFYzb+uE2vqVgvx0=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/afex/hystrix-go v0.0.0-20180502004556-fa1af6a1f4f5/go.mod h1:SkGFH1ia65gfNATL8TAiHDNxPzPdmEL5uirI2Uyuz6c=
+github.com/agent-infra/sandbox-sdk-go v0.0.3 h1:RUDol4LX2txAIhp1iVaMsvRybW/Xi90lIlyqTysN+3Q=
+github.com/agent-infra/sandbox-sdk-go v0.0.3/go.mod h1:LcR1ZvwCSafPmNj1+RA6myQRMHWs1DZL7HoPMFJGSDo=
 github.com/airbrake/gobrake v3.6.1+incompatible/go.mod h1:wM4gu3Cn0W0K7GUuVWnlXZU11AGBXMILnrdOU8Kn00o=
 github.com/ajstarks/svgo v0.0.0-20180226025133-644b8db467af/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -127,12 +129,6 @@ github.com/clbanning/mxj v1.8.4/go.mod h1:BVjHeAH+rl9rs6f+QIpeRl0tfu10SXn1pUSa5P
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
 github.com/cloudwego/base64x v0.1.6 h1:t11wG9AECkCDk5fMSoxmufanudBtJ+/HemLstXDLI2M=
 github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gEHfghB2IPU=
-github.com/cloudwego/eino v0.7.14 h1:Ff62Z3dhdaGMFKG0cAVjcWfY7lb6mTkkBv4WFfdDU2k=
-github.com/cloudwego/eino v0.7.14/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
-github.com/cloudwego/eino v0.7.21 h1:kkq7hlHYzwkGOAMbY4ffym4oBT7e9g5hXpJTsZbhsik=
-github.com/cloudwego/eino v0.7.21/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
-github.com/cloudwego/eino v0.7.22-0.20260119120351-c3d518fff972 h1:qxtj2YY+Z0aMzBCyzeD/S9grWDguOJinAjyadlsXsaU=
-github.com/cloudwego/eino v0.7.22-0.20260119120351-c3d518fff972/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.22 h1:GiDt+MHoOsgjIN3rI6ECiQ+NX1UIr0NzLKMdjOltHBc=
 github.com/cloudwego/eino v0.7.22/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6 h1:gS4nAOpQQC5WItt1k32yjZt9O2UWMpnbgF6vkMQAWhg=
@@ -151,8 +147,6 @@ github.com/cloudwego/eino-ext/components/model/openai v0.1.5 h1:+yvGbTPw93li9GSm
 github.com/cloudwego/eino-ext/components/model/openai v0.1.5/go.mod h1:IPVYMFoZcuHeVEsDTGN6SZjvue0xr1iZFhdpq1SBWdQ=
 github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5 h1:HoXqcYm3x4eXk6i2HLBklvx8WeFW7/MxijpCsEBQLSE=
 github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5/go.mod h1:He7AHJpLTs0MXKPx5JpI8MdYtLUcKhUAZwCsgNtaq6k=
-github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf h1:LLyVGanJpHpSSiqsbRXkuSpdpc1UmuaUIEs/BiOQkH4=
-github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf/go.mod h1:cMZb1KM71kM+2hTJwxLwXT+HC66HimZirDDA5Oo64Hw=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf h1:54xcNETtXP1gYieDuNyOIvzE4Mk/jOxjlqCERr4cxTk=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf/go.mod h1:Np0BXy/9hPRu3wCgn+ij6L7YsjFcybVzg1k7uYOXh0M=
 github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0 h1:4haF2hnv7+t9JUc4E+6SHo7cRgpi+6hux+YeteT5CW8=

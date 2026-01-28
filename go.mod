@@ -39,6 +39,7 @@ require (
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
+	github.com/agent-infra/sandbox-sdk-go v0.0.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
@@ -115,3 +116,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// Use local eino-ext for aiosandbox (remove this after aiosandbox is merged)
+replace github.com/cloudwego/eino-ext/components/tool/commandline => ../eino-ext/components/tool/commandline
