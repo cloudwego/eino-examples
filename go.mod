@@ -116,6 +116,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-// Use local eino-ext for aiosandbox (remove this after aiosandbox is merged)
-replace github.com/cloudwego/eino-ext/components/tool/commandline => ../eino-ext/components/tool/commandline

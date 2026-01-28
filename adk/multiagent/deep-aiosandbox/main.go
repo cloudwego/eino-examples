@@ -75,7 +75,8 @@ func main() {
 	// Create work directory in sandbox
 	_, err = sandbox.RunCommand(ctx, []string{"mkdir", "-p", workdir})
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to create work directory: %v", err)
+		return
 	}
 
 	// Update sandbox work directory

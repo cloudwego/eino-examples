@@ -87,16 +87,11 @@ ARK_BASE_URL=https://ark.cn-beijing.volces.com/api/v3
 ### Run the example
 
 ```bash
-# Load environment variables
-source .env
-
-# Or export directly
 export AIO_SANDBOX_BASE_URL="https://xxxx.apigateway-cn-beijing.volceapi.com"
 export ARK_API_KEY="your-ark-api-key"
 export ARK_MODEL="your-model-endpoint"
 export ARK_BASE_URL="https://ark.cn-beijing.volces.com/api/v3"
 
-# Run
 go run .
 ```
 
