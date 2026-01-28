@@ -131,6 +131,8 @@ github.com/cloudwego/base64x v0.1.6 h1:t11wG9AECkCDk5fMSoxmufanudBtJ+/HemLstXDLI
 github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gEHfghB2IPU=
 github.com/cloudwego/eino v0.7.22 h1:GiDt+MHoOsgjIN3rI6ECiQ+NX1UIr0NzLKMdjOltHBc=
 github.com/cloudwego/eino v0.7.22/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
+github.com/cloudwego/eino v0.7.28 h1:mxMgx/UB0ohQlkllA+jQXZJR5jCapciSsDDWaO2Mrjk=
+github.com/cloudwego/eino v0.7.28/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6 h1:gS4nAOpQQC5WItt1k32yjZt9O2UWMpnbgF6vkMQAWhg=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6/go.mod h1:ZniRkgN+9FUFxtN60X7yzD6UOruqrKQusjrOiGcH4I8=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf h1:Uwh3VT+xPrfDjM677dj1pSidCzBFoTrYlC274kEci5w=
@@ -147,6 +149,7 @@ github.com/cloudwego/eino-ext/components/model/openai v0.1.5 h1:+yvGbTPw93li9GSm
 github.com/cloudwego/eino-ext/components/model/openai v0.1.5/go.mod h1:IPVYMFoZcuHeVEsDTGN6SZjvue0xr1iZFhdpq1SBWdQ=
 github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5 h1:HoXqcYm3x4eXk6i2HLBklvx8WeFW7/MxijpCsEBQLSE=
 github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5/go.mod h1:He7AHJpLTs0MXKPx5JpI8MdYtLUcKhUAZwCsgNtaq6k=
+github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf/go.mod h1:cMZb1KM71kM+2hTJwxLwXT+HC66HimZirDDA5Oo64Hw=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf h1:54xcNETtXP1gYieDuNyOIvzE4Mk/jOxjlqCERr4cxTk=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf/go.mod h1:Np0BXy/9hPRu3wCgn+ij6L7YsjFcybVzg1k7uYOXh0M=
 github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0 h1:4haF2hnv7+t9JUc4E+6SHo7cRgpi+6hux+YeteT5CW8=
