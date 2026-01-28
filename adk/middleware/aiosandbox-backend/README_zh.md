@@ -40,7 +40,7 @@
 | Read                      | File.ReadFile                 |
 | Write                     | File.WriteFile                |
 | Edit                      | File.ReplaceInFile            |
-| GrepRaw                   | File.FindFiles + SearchInFile |
+| GrepRaw                   | Ripgrep                       |
 | GlobInfo                  | File.FindFiles                |
 | Execute (ShellBackend)    | Shell.ExecCommand             |
 

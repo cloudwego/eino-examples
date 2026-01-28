@@ -40,7 +40,7 @@ The `filesystem.Backend` interface allows you to plug in any file system impleme
 | Read                      | File.ReadFile                 |
 | Write                     | File.WriteFile                |
 | Edit                      | File.ReplaceInFile            |
-| GrepRaw                   | File.FindFiles + SearchInFile |
+| GrepRaw                   | Ripgrep                       |
 | GlobInfo                  | File.FindFiles                |
 | Execute (ShellBackend)    | Shell.ExecCommand             |
 
