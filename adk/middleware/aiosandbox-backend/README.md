@@ -93,7 +93,7 @@ agent, err := deep.New(ctx, &deep.Config{
 ## Run the Example
 
 ```bash
-cd adk/middleware/aiosandbox-filesystem
+cd adk/middleware/aiosandbox-backend
 go run .
 ```
 
@@ -126,7 +126,7 @@ This example uses the **Middleware approach** with `filesystem.Backend`:
 - Includes built-in large result offloading
 - Clean interface-based design
 
-The [deep-aiosandbox](../multiagent/deep-aiosandbox) example uses the **Tool approach** with `commandline.Operator`:
+The [deep-aiosandbox](../../multiagent/deep-aiosandbox) example uses the **Tool approach** with `commandline.Operator`:
 - Manually registers tools: `bash`, `read_file`, `edit_file`, `tree`
 - More flexible for custom tool combinations
 - Requires more setup code

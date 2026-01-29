@@ -18,10 +18,11 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"path/filepath"
+	"path"
 	"strings"
 
 	sandboxsdk "github.com/agent-infra/sandbox-sdk-go"
@@ -69,6 +70,14 @@ func NewAIOSandboxBackend(ctx context.Context, config *AIOSandboxBackendConfig) 
 	parsedURL, err := url.Parse(cfg.BaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("invalid BaseURL: %w", err)
+	}
+
+	if parsedURL.Scheme == "" || parsedURL.Host == "" {
+		return nil, fmt.Errorf("invalid BaseURL: scheme and host are required")
+	}
+
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return nil, fmt.Errorf("invalid BaseURL: only http and https schemes are supported")
 	}
 
 	baseURL := fmt.Sprintf("%s://%s%s", parsedURL.Scheme, parsedURL.Host, parsedURL.Path)
@@ -160,8 +169,22 @@ func escapeShellArg(s string) string {
 	return strings.ReplaceAll(s, "'", "'\\''")
 }
 
+// rgJSONMatch represents the ripgrep JSON output for a match.
+type rgJSONMatch struct {
+	Type string `json:"type"`
+	Data struct {
+		Path struct {
+			Text string `json:"text"`
+		} `json:"path"`
+		Lines struct {
+			Text string `json:"text"`
+		} `json:"lines"`
+		LineNumber int `json:"line_number"`
+	} `json:"data"`
+}
+
 // GrepRaw searches for content matching the specified pattern in files.
-// Uses ripgrep (rg) for better performance.
+// Uses ripgrep (rg) with JSON output for reliable parsing.
 func (b *AIOSandboxBackend) GrepRaw(ctx context.Context, req *filesystem.GrepRequest) ([]filesystem.GrepMatch, error) {
 	if req.Pattern == "" {
 		return nil, nil
@@ -172,22 +195,19 @@ func (b *AIOSandboxBackend) GrepRaw(ctx context.Context, req *filesystem.GrepReq
 		searchPath = b.config.WorkDir
 	}
 
-	// Build rg command
-	// -n: show line numbers
+	// Build rg command with JSON output for reliable parsing
 	// -F: treat pattern as literal string
-	// --no-heading: show file path on each line
-	// --null: use \0 as separator to handle : in filenames
-	// Output format: filename\0linenum\0content
+	// --json: output in JSON format
 	pattern := escapeShellArg(req.Pattern)
 	searchPath = escapeShellArg(searchPath)
 
 	var cmd string
 	if req.Glob != "" {
 		glob := escapeShellArg(req.Glob)
-		cmd = fmt.Sprintf("rg -n -F --no-heading --null -g '%s' '%s' '%s' 2>/dev/null || true",
+		cmd = fmt.Sprintf("rg -F --json -g '%s' '%s' '%s' 2>/dev/null || true",
 			glob, pattern, searchPath)
 	} else {
-		cmd = fmt.Sprintf("rg -n -F --no-heading --null '%s' '%s' 2>/dev/null || true",
+		cmd = fmt.Sprintf("rg -F --json '%s' '%s' 2>/dev/null || true",
 			pattern, searchPath)
 	}
 
@@ -204,23 +224,24 @@ func (b *AIOSandboxBackend) GrepRaw(ctx context.Context, req *filesystem.GrepReq
 		return nil, nil
 	}
 
-	// Parse rg --null output: filename\0linenum\0content
+	// Parse rg --json output: each line is a JSON object
 	var matches []filesystem.GrepMatch
 	lines := strings.Split(*data.Output, "\n")
 	for _, line := range lines {
 		if line == "" {
 			continue
 		}
-		parts := strings.SplitN(line, "\x00", 3)
-		if len(parts) < 3 {
+		var m rgJSONMatch
+		if err := json.Unmarshal([]byte(line), &m); err != nil {
 			continue
 		}
-		lineNum := 0
-		fmt.Sscanf(parts[1], "%d", &lineNum)
+		if m.Type != "match" {
+			continue
+		}
 		matches = append(matches, filesystem.GrepMatch{
-			Path:    parts[0],
-			Line:    lineNum,
-			Content: parts[2],
+			Path:    m.Data.Path.Text,
+			Line:    m.Data.LineNumber,
+			Content: strings.TrimSuffix(m.Data.Lines.Text, "\n"),
 		})
 	}
 
@@ -319,11 +340,11 @@ func (b *AIOSandboxBackend) Edit(ctx context.Context, req *filesystem.EditReques
 	return nil
 }
 
-func (b *AIOSandboxBackend) resolvePath(path string) string {
-	if filepath.IsAbs(path) {
-		return path
+func (b *AIOSandboxBackend) resolvePath(p string) string {
+	if path.IsAbs(p) {
+		return p
 	}
-	return filepath.Join(b.config.WorkDir, path)
+	return path.Join(b.config.WorkDir, p)
 }
 
 // Execute runs a shell command in the sandbox.

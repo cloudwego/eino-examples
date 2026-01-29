@@ -5,6 +5,7 @@ go 1.24.7
 toolchain go1.24.9
 
 require (
+	github.com/agent-infra/sandbox-sdk-go v0.0.3
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.14.2
 	github.com/chromedp/chromedp v0.9.5
@@ -39,7 +40,6 @@ require (
 
 require (
 	github.com/PuerkitoBio/goquery v1.10.3 // indirect
-	github.com/agent-infra/sandbox-sdk-go v0.0.3 // indirect
 	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

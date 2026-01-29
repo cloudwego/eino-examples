@@ -93,7 +93,7 @@ agent, err := deep.New(ctx, &deep.Config{
 ## 运行示例
 
 ```bash
-cd adk/middleware/aiosandbox-filesystem
+cd adk/middleware/aiosandbox-backend
 go run .
 ```
 
@@ -128,7 +128,7 @@ type ShellBackend interface {
 - 内置大结果分流处理
 - 简洁的基于接口的设计
 
-[deep-aiosandbox](../multiagent/deep-aiosandbox) 示例使用 **工具方式** 配合 `commandline.Operator`：
+[deep-aiosandbox](../../multiagent/deep-aiosandbox) 示例使用 **工具方式** 配合 `commandline.Operator`：
 - 手动注册工具：`bash`、`read_file`、`edit_file`、`tree`
 - 对自定义工具组合更灵活
 - 需要更多配置代码
