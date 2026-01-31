@@ -8,10 +8,11 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.14.2
 	github.com/chromedp/chromedp v0.9.5
-	github.com/cloudwego/eino v0.7.22
+	github.com/cloudwego/eino v0.9.0-alpha.2
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
+	github.com/cloudwego/eino-ext/components/model/agenticark v0.1.0-alpha.1
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.45
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.6
@@ -31,7 +32,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/stretchr/testify v1.11.1
-	github.com/volcengine/volcengine-go-sdk v1.1.44
+	github.com/volcengine/volcengine-go-sdk v1.2.4
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/sync v0.17.0
