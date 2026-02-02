@@ -8,7 +8,7 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.14.2
 	github.com/chromedp/chromedp v0.9.5
-	github.com/cloudwego/eino v0.7.22
+	github.com/cloudwego/eino v0.7.29-0.20260202090314-89ba5ca5a9be
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf

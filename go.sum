@@ -135,6 +135,16 @@ github.com/cloudwego/eino v0.7.22-0.20260119120351-c3d518fff972 h1:qxtj2YY+Z0aMz
 github.com/cloudwego/eino v0.7.22-0.20260119120351-c3d518fff972/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino v0.7.22 h1:GiDt+MHoOsgjIN3rI6ECiQ+NX1UIr0NzLKMdjOltHBc=
 github.com/cloudwego/eino v0.7.22/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
+github.com/cloudwego/eino v0.7.29-0.20260130121528-3fb823425d31 h1:jUsnljGW7N8N4Ia6Gyl+y0rD1PDGe1n9iRuAWhGGt2Q=
+github.com/cloudwego/eino v0.7.29-0.20260130121528-3fb823425d31/go.mod h1:0iLy/Uz4g59+g25C6gc09GW0eIyFBeTuyiLN9QhdsHM=
+github.com/cloudwego/eino v0.7.29-0.20260202061201-1022ca7b8f1e h1:sve1onJP8W3j9SC/NTO38UwlPrCp39mx1xZAKS5loAQ=
+github.com/cloudwego/eino v0.7.29-0.20260202061201-1022ca7b8f1e/go.mod h1:0iLy/Uz4g59+g25C6gc09GW0eIyFBeTuyiLN9QhdsHM=
+github.com/cloudwego/eino v0.7.29-0.20260202071608-f887ae09c0ee h1:cJYMjh/3sz9vcNZRGGA5kWDIr7fogMDi+30bocbXnDI=
+github.com/cloudwego/eino v0.7.29-0.20260202071608-f887ae09c0ee/go.mod h1:0iLy/Uz4g59+g25C6gc09GW0eIyFBeTuyiLN9QhdsHM=
+github.com/cloudwego/eino v0.7.29-0.20260202080822-6a1f86d3b7a6 h1:hUxZpeDhKuacF7/Uwh75WM7tvISS6GxJgIsjn1pyn/0=
+github.com/cloudwego/eino v0.7.29-0.20260202080822-6a1f86d3b7a6/go.mod h1:0iLy/Uz4g59+g25C6gc09GW0eIyFBeTuyiLN9QhdsHM=
+github.com/cloudwego/eino v0.7.29-0.20260202090314-89ba5ca5a9be h1:iEV1XwZXYMrYGesCCuL92MeZxSWsidZe7voKyOjYaBw=
+github.com/cloudwego/eino v0.7.29-0.20260202090314-89ba5ca5a9be/go.mod h1:0iLy/Uz4g59+g25C6gc09GW0eIyFBeTuyiLN9QhdsHM=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6 h1:gS4nAOpQQC5WItt1k32yjZt9O2UWMpnbgF6vkMQAWhg=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.6/go.mod h1:ZniRkgN+9FUFxtN60X7yzD6UOruqrKQusjrOiGcH4I8=
 github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf h1:Uwh3VT+xPrfDjM677dj1pSidCzBFoTrYlC274kEci5w=
