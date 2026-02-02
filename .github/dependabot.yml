@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: github.com/cloudwego/kitex
+    groups:
+      eino-dependencies:
+        patterns:
+          - github.com/cloudwego/eino
+          - github.com/cloudwego/eino-ext/callbacks/cozeloop
+          - github.com/cloudwego/eino-ext/components/model/ark
+          - github.com/cloudwego/eino-ext/components/model/ollama
+          - github.com/cloudwego/eino-ext/components/model/openai
+          - github.com/cloudwego/eino-ext/devops
+    directories:
+      - /
+      - /flow/agent/deer-go
+      - /quickstart/eino_assistant
