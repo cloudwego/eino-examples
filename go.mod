@@ -49,6 +49,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20240202021202-6d0b6a386732 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
+	github.com/cloudwego/eino-ext/adk/backend/local v0.1.0 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.13 // indirect
 	github.com/cohesion-org/deepseek-go v1.3.2 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
