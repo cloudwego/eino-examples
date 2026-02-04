@@ -60,6 +60,12 @@
 | [quickstart/eino_assistant](./quickstart/eino_assistant) | Eino 助手 | 完整的 RAG 应用示例，包含知识索引、Agent 服务、Web 界面 |
 | [quickstart/todoagent](./quickstart/todoagent) | Todo Agent | 简单的 Todo 管理 Agent 示例 |
 
+### 📊 Schema (数据模式)
+
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [schema/stream](./schema/stream) | 流式编程 | 流式编程示例：Invoke、Stream、Collect、Transform、MergeStreamReaders |
+
 ### 🛠️ DevOps (开发运维)
 
 | 目录 | 名称 | 说明 |

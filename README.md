@@ -60,6 +60,12 @@ This repository contains examples and demonstrations for using the Eino framewor
 | [quickstart/eino_assistant](./quickstart/eino_assistant) | Eino Assistant | Complete RAG application with knowledge indexing, Agent service, and Web UI |
 | [quickstart/todoagent](./quickstart/todoagent) | Todo Agent | Simple Todo management Agent example |
 
+### 📊 Schema
+
+| Directory | Name | Description |
+|-----------|------|-------------|
+| [schema/stream](./schema/stream) | Streaming | Streaming programming examples: Invoke, Stream, Collect, Transform, MergeStreamReaders |
+
 ### 🛠️ DevOps
 
 | Directory | Name | Description |
