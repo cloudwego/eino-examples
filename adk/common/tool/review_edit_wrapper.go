@@ -21,7 +21,6 @@ import (
 	"fmt"
 
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )
 
@@ -29,7 +28,6 @@ import (
 type ReviewEditInfo struct {
 	ToolName        string
 	ArgumentsInJSON string
-	ToolCallID      string
 	ReviewResult    *ReviewEditResult
 }
 
@@ -69,21 +67,19 @@ func (i InvokableReviewEditTool) InvokableRun(ctx context.Context, argumentsInJS
 		return "", err
 	}
 
-	wasInterrupted, _, storedArguments := compose.GetInterruptState[string](ctx)
-	if !wasInterrupted { // Initial invocation, interrupt for review.
-		return "", compose.StatefulInterrupt(ctx, &ReviewEditInfo{
+	wasInterrupted, _, storedArguments := tool.GetInterruptState[string](ctx)
+	if !wasInterrupted {
+		return "", tool.StatefulInterrupt(ctx, &ReviewEditInfo{
 			ToolName:        toolInfo.Name,
 			ArgumentsInJSON: argumentsInJSON,
-			ToolCallID:      compose.GetToolCallID(ctx),
 		}, argumentsInJSON)
 	}
 
-	isResumeTarget, hasData, data := compose.GetResumeContext[*ReviewEditInfo](ctx)
-	if !isResumeTarget { // Not for us, re-interrupt.
-		return "", compose.StatefulInterrupt(ctx, &ReviewEditInfo{
+	isResumeTarget, hasData, data := tool.GetResumeContext[*ReviewEditInfo](ctx)
+	if !isResumeTarget {
+		return "", tool.StatefulInterrupt(ctx, &ReviewEditInfo{
 			ToolName:        toolInfo.Name,
 			ArgumentsInJSON: storedArguments,
-			ToolCallID:      compose.GetToolCallID(ctx),
 		}, storedArguments)
 	}
 	if !hasData || data.ReviewResult == nil {
