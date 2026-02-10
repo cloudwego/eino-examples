@@ -25,6 +25,11 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
+func init() {
+	// Register the FeedbackInfo type so that gob can correctly handle it during serialization.
+	schema.Register[*FeedbackInfo]()
+}
+
 type ReviewAgent struct {
 	AgentName string
 	AgentDesc string
