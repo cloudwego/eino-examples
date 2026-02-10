@@ -38,8 +38,8 @@ github.com/chenzhuoyu/base64x v0.0.0-20211019084208-fb5309c8db06/go.mod h1:DH46F
 github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311/go.mod h1:b583jCggY9gE99b6G5LEC39OIiVsWj+R97kbl5odCEk=
 github.com/cloudwego/base64x v0.1.6 h1:t11wG9AECkCDk5fMSoxmufanudBtJ+/HemLstXDLI2M=
 github.com/cloudwego/base64x v0.1.6/go.mod h1:OFcloc187FXDaYHvrNIjxSe8ncn0OOM8gEHfghB2IPU=
-github.com/cloudwego/eino v0.7.29 h1:SQy+CouMWtkdUZzzaw8VESps6n/VjpWF3yYdEtPeQf0=
-github.com/cloudwego/eino v0.7.29/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
+github.com/cloudwego/eino v0.7.32 h1:ukD3jsRpXahigqm+tMFrDrBxAuRjl9/MDyuc6cv8Rr0=
+github.com/cloudwego/eino v0.7.32/go.mod h1:nA8Vacmuqv3pqKBQbTWENBLQ8MmGmPt/WqiyLeB8ohQ=
 github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1 h1:aP9vfE61IBQXTjTiHf4gHUJ0QlgmVYlvZgmvxgVFkE8=
 github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1/go.mod h1:9WpHGYt5Ix2TeiTkY5oRzgt+d11KovNp73tufD5C9Ac=
 github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.8 h1:lqOAH/EWWRJuv9awmMxETEfcer2Gq2AVuZrrKqP+CzA=
