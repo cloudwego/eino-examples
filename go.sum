@@ -137,8 +137,8 @@ github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-202511170904
 github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf/go.mod h1:kHC3xkGM/gv3IHpOk33p75BfBaEIYATOs2XmYFKffcs=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.64 h1:ecsP4xWhOGi6NYxl2NOemEoTNpNuLT7ING8gOZ7CArI=
 github.com/cloudwego/eino-ext/components/model/ark v0.1.64/go.mod h1:aabMR15RTXBSi9Eu13CWavzE+no5BQO4FJUEEdqImbg=
-github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20251117090452-bd6375a0b3cf h1:JA2W09VU+9zG9qRXheARRbi31cH+xHVzSJ/kFMxZvlo=
-github.com/cloudwego/eino-ext/components/model/deepseek v0.0.0-20251117090452-bd6375a0b3cf/go.mod h1:3AlAYkxwlOAP0SnFj7Yu1Lsgp8XHpbSMaE3l0+vDHKQ=
+github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2 h1:PSHIDLUOv3ZCO7G6ZXnuJWb5pvRZV6xnfLLbwbfY704=
+github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2/go.mod h1:beCP+L7CsxDz4+DvBjo8iR/v/ZBPpmQfJtrqG280rjw=
 github.com/cloudwego/eino-ext/components/model/ollama v0.1.8 h1:+BStnQlkRxWMV9jsPopLmmut2ARG88e9hDSMaDNAI/w=
 github.com/cloudwego/eino-ext/components/model/ollama v0.1.8/go.mod h1:C3rf3yy2nEoXFP/CQJne4gbiu1pREKplHKmFlhuOzPE=
 github.com/cloudwego/eino-ext/components/model/openai v0.1.8 h1:uVCE8nNvbhD37xGFgdKESWjvChDSkCAMA+DodhFRBaM=
