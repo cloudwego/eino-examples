@@ -6,11 +6,11 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.15.0
 	github.com/chromedp/chromedp v0.9.5
-	github.com/cloudwego/eino v0.7.32
+	github.com/cloudwego/eino v0.7.37
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.8
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.64
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.8
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.8
