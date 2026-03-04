@@ -1,35 +1,16 @@
-# output configuration options
-output:
-  # Format: colored-line-number|line-number|json|tab|checkstyle|code-climate|junit-xml|github-actions
-  formats: 
-    - format: colored-line-number
-# All available settings of specific linters.
-# Refer to https://golangci-lint.run/usage/linters
-linters-settings:
-  gofumpt:
-    # Choose whether to use the extra rules.
-    # Default: false
-    extra-rules: true
-  govet:
-    # Disable analyzers by name.
-    # Run `go tool vet help` to see all analyzers.
-    disable:
-      - stdmethods
+version: "2"
 linters:
+  default: none
   enable:
-    - goimports
-    - gofmt
-  disable:
-    - errcheck
-    - typecheck
-    - staticcheck
-    - unused
-    - gosimple
+    - govet
     - ineffassign
+    - staticcheck
+    - unconvert
+    - unused
+formatters:
+  enable:
     - gofumpt
-issues:
-  # include `vendor` `third_party` `testdata` `examples` `Godeps` `builtin`
-  exclude-use-default: true
-  exclude-files:
-    - ".*\\.mock\\.go$"
-  exclude-dirs: []
+    - goimports
+  settings:
+    gofumpt:
+      extra-rules: true
