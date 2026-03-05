@@ -25,10 +25,17 @@ import (
 	"strings"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/store"
 )
+
+// 初始化函数：注册中断信息类型，确保检查点持久化时能够正确序列化
+func init() {
+	// 注册指针类型，因为中断上下文中保存的是 *FeedbackInfo
+	schema.RegisterName[*FeedbackInfo]("human_in_the_loop.FeedbackInfo")
+}
 
 func main() {
 	ctx := context.Background()
