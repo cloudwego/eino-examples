@@ -8,7 +8,7 @@ require (
 	github.com/chromedp/chromedp v0.9.5
 	github.com/cloudwego/eino v0.8.0
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.8
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
@@ -20,7 +20,7 @@ require (
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0
 	github.com/cloudwego/eino-ext/devops v0.1.8
-	github.com/coze-dev/cozeloop-go v0.1.17
+	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/eino-contrib/jsonschema v1.0.3
 	github.com/google/uuid v1.6.0
