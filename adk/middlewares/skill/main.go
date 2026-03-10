@@ -51,7 +51,8 @@ func main() {
 		log.Fatal(err)
 	}
 	fsm, err := filesystem.New(ctx, &filesystem.MiddlewareConfig{
-		Backend: be,
+		Backend:        be,
+		StreamingShell: be,
 	})
 	if err != nil {
 		log.Fatal(err)
