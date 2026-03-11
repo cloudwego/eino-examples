@@ -1,4 +1,4 @@
-module github.com/cloudwego/eino-examples/quickstart/chatwithdoc
+module github.com/cloudwego/eino-examples/quickstart/chatwitheino
 
 go 1.24.9
 

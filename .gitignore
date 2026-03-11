@@ -48,3 +48,6 @@ log/
 CLAUDE.md
 quickstart/chatwithdoc/data/sessions/
 quickstart/chatwithdoc/data/workspace/
+
+*.jsonl
+*.txt

@@ -32,7 +32,7 @@ import (
 
 	"github.com/cloudwego/eino-examples/adk/common/model"
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
-	"github.com/cloudwego/eino-examples/quickstart/chatwithdoc/rag"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/rag"
 )
 
 func buildAgent(ctx context.Context) (adk.Agent, error) {

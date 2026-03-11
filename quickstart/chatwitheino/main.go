@@ -29,8 +29,8 @@ import (
 	"github.com/coze-dev/cozeloop-go"
 
 	adkstore "github.com/cloudwego/eino-examples/adk/common/store"
-	"github.com/cloudwego/eino-examples/quickstart/chatwithdoc/mem"
-	"github.com/cloudwego/eino-examples/quickstart/chatwithdoc/server"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/server"
 )
 
 func main() {
