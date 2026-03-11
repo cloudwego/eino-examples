@@ -37,8 +37,8 @@ import (
 	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/adk/common/tool"
-	"github.com/cloudwego/eino-examples/quickstart/chatwithdoc/a2ui"
-	"github.com/cloudwego/eino-examples/quickstart/chatwithdoc/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
 )
 
 // Config holds all dependencies for the HTTP server.

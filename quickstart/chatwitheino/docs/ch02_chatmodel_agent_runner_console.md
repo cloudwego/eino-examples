@@ -6,7 +6,7 @@ title: "第二章：ChatModelAgent、Runner、AgentEvent（Console 多轮）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwithdoc/cmd/ch02/main.go)
+- 入口代码：[cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch02/main.go)
 
 ## 前置条件
 
@@ -14,7 +14,7 @@ title: "第二章：ChatModelAgent、Runner、AgentEvent（Console 多轮）"
 
 ## 运行
 
-在 `examples/quickstart/chatwithdoc` 目录下执行：
+在 `examples/quickstart/chatwitheino` 目录下执行：
 
 ```bash
 go run ./cmd/ch02
@@ -218,7 +218,7 @@ for {
 3. 调用 `runner.Run(ctx, history)` 得到事件流，消费得到 assistant 文本
 4. 把本轮 assistant 文本追加回 history，进入下一轮
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwithdoc/cmd/ch02/main.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch02/main.go)）：
 
 ```go
 history := make([]*schema.Message, 0, 16)
