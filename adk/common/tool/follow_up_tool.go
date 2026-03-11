@@ -37,7 +37,7 @@ func (fi *FollowUpInfo) String() string {
 	var sb strings.Builder
 	sb.WriteString("We need more information. Please answer the following questions:\n")
 	for i, q := range fi.Questions {
-		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, q))
+		_, _ = fmt.Fprintf(&sb, "%d. %s\n", i+1, q)
 	}
 	return sb.String()
 }
