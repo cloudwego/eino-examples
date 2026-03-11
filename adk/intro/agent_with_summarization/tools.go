@@ -65,7 +65,7 @@ func NewRepeatSectionsTool() tool.InvokableTool {
 			callCount++
 			adk.AddSessionValue(ctx, "_tool_call_count", callCount)
 
-			b.WriteString(fmt.Sprintf("Tool calls so far: %d", callCount))
+			_, _ = fmt.Fprintf(&b, "Tool calls so far: %d", callCount)
 			return b.String(), nil
 		},
 	)
