@@ -180,8 +180,8 @@ func processMessageFuture(msgFuture react.MessageFuture) {
 		// Accumulate streaming chunks into complete content
 		var reasoningBuilder strings.Builder
 		var contentBuilder strings.Builder
-		var toolCallsMap = make(map[int]*strings.Builder)
-		var toolCallNames = make(map[int]string)
+		toolCallsMap := make(map[int]*strings.Builder)
+		toolCallNames := make(map[int]string)
 		var toolResult *struct {
 			name    string
 			content string

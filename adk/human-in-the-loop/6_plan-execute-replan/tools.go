@@ -174,9 +174,10 @@ func NewHotelBookingTool(ctx context.Context) (tool.BaseTool, error) {
 			amenitiesIdx := consistentHashing(hashInput+"amenities", 0, len(amenitiesList)-1)
 
 			pricePerNight := consistentHashing(hashInput+"price", 100, 400)
-			if req.RoomType == "deluxe" {
+			switch req.RoomType {
+			case "deluxe":
 				pricePerNight = int(float64(pricePerNight) * 1.5)
-			} else if req.RoomType == "suite" {
+			case "suite":
 				pricePerNight = pricePerNight * 2
 			}
 

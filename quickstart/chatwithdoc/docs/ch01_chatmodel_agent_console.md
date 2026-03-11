@@ -1,10 +1,8 @@
 ---
-title: "第一章：用 ChatModel 跑通第一个 ChatModelAgent（Console）"
+title: "第一章：ChatModel 与 Message（Console）"
 ---
 
-本章目标：从 0 跑通一个最小可用的 Agent，理解 ADK 的基本执行模型：`ChatModel` → `ChatModelAgent` → `Runner` → `AgentEvent`（流式输出）。
-
-本章是 self-contained 的：你只需要一个可用的模型配置，就能直接运行并看到 agent 的流式回复。
+本章目标：用最小代码调用一次 ChatModel（支持流式输出），并掌握 `schema.Message` 的基本用法。
 
 ## 代码位置
 
@@ -56,13 +54,18 @@ export ARK_API_KEY="..."
 export ARK_MODEL="..."
 ```
 
+## 关键概念（只讲本章用到的）
+
+- `schema.Message`：对话消息。常见角色为 `system/user/assistant/tool`。本章使用 `system + user` 作为输入。
+- `ChatModel`：模型组件，负责基于一组 messages 生成回复。示例中用 `model.NewChatModel()` 创建。
+
 ## 运行
 
 在本章里我们用 Console 直接运行，不启动 Web 服务。
 
 ```bash
 cd /Users/bytedance/github/eino/examples/quickstart/chatwithdoc
-go run ./cmd/ch01 -- "用一句话解释 Eino ADK 是什么？"
+go run ./cmd/ch01 -- "用一句话解释 Eino 的 Component 设计解决了什么问题？"
 ```
 
 你会看到类似输出（流式逐步打印）：
@@ -71,14 +74,10 @@ go run ./cmd/ch01 -- "用一句话解释 Eino ADK 是什么？"
 [assistant] ...
 ```
 
-## 本章学到什么
+## 入口代码做了什么
 
-- ChatModel 是什么：负责“把一串 messages 变成一条 assistant reply”，并可选择支持 tool calling / streaming。
-- ChatModelAgent 是什么：一个围绕 ChatModel 的“对话循环器”，负责组织 prompt（instruction + history），并把模型输出封装成 `AgentEvent`。
-- Runner 是什么：执行 Agent 的统一入口，提供 streaming / checkpoint（本章不启用 checkpoint）。
-- AgentEvent 是什么：Runner 的输出流。你可以把它当作“把 agent 执行过程翻译成事件”，用于 Console/Web UI/日志等。
+按执行顺序：
 
-## 本章刻意不做的事（下一章再引入）
-
-- 不做多轮对话记忆（memory）：本章只跑通单轮，先建立最小闭环。
-- 不引入 tools：工具会改变 agent 的控制流（tool call / tool result），更适合在跑通闭环之后再加。
+1. `NewChatModel()` 创建 ChatModel（从环境变量选择 OpenAI/Ark）
+2. 构造输入 messages：`SystemMessage(instruction)` + `UserMessage(query)`
+3. 优先尝试 `ChatModel.Stream(...)` 并打印流式输出；若不支持则回退到 `ChatModel.Generate(...)`

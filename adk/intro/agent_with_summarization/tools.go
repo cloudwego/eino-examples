@@ -57,11 +57,10 @@ func NewRepeatSectionsTool() tool.InvokableTool {
 				}
 			}
 			callCount := 0
-			times, ok := adk.GetSessionValue(ctx, "_tool_call_count")
-			if !ok {
-				times = 0
-			} else {
-				callCount = times.(int)
+			if v, ok := adk.GetSessionValue(ctx, "_tool_call_count"); ok {
+				if n, ok := v.(int); ok {
+					callCount = n
+				}
 			}
 			callCount++
 			adk.AddSessionValue(ctx, "_tool_call_count", callCount)

@@ -75,7 +75,8 @@ func init() {
 }
 
 func (g *InvokableGraphTool[I, O]) InvokableRun(ctx context.Context, input string,
-	opts ...tool.Option) (output string, err error) {
+	opts ...tool.Option,
+) (output string, err error) {
 	var (
 		checkpointStore *graphToolStore
 		inputParams     I
@@ -170,7 +171,8 @@ func (g *StreamableGraphTool[I, O]) Info(_ context.Context) (*schema.ToolInfo, e
 }
 
 func (g *StreamableGraphTool[I, O]) StreamableRun(ctx context.Context, input string,
-	opts ...tool.Option) (*schema.StreamReader[string], error) {
+	opts ...tool.Option,
+) (*schema.StreamReader[string], error) {
 	var (
 		checkpointStore *graphToolStore
 		inputParams     I

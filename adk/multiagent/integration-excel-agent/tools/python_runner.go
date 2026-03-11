@@ -33,25 +33,23 @@ import (
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 )
 
-var (
-	toolPythonRunnerInfo = &schema.ToolInfo{
-		Name: "python_runner",
-		Desc: `Write Python code to a file and execute it, and return the execution result. 
+var toolPythonRunnerInfo = &schema.ToolInfo{
+	Name: "python_runner",
+	Desc: `Write Python code to a file and execute it, and return the execution result. 
 Code would be overwritten to the same file when this tool is called multiple times.`,
-		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
-			"code": {
-				Type: "string",
-				Desc: "Python code to be executed. " +
-					"The code MUST be enclosed in a Markdown code block starting with ```python and ending with ```. " +
-					"CRITICAL: The code within the block must be a raw, multi-line string with real newlines. " +
-					"It MUST NOT be a JSON-escaped string containing literal '\\n' or '\\\"' sequences. " +
-					"The code must be ready for direct execution without any unescaping. " +
-					"Do not generate code comments.",
-				Required: true,
-			},
-		}),
-	}
-)
+	ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"code": {
+			Type: "string",
+			Desc: "Python code to be executed. " +
+				"The code MUST be enclosed in a Markdown code block starting with ```python and ending with ```. " +
+				"CRITICAL: The code within the block must be a raw, multi-line string with real newlines. " +
+				"It MUST NOT be a JSON-escaped string containing literal '\\n' or '\\\"' sequences. " +
+				"The code must be ready for direct execution without any unescaping. " +
+				"Do not generate code comments.",
+			Required: true,
+		},
+	}),
+}
 
 func NewPythonRunnerTool(op commandline.Operator) tool.InvokableTool {
 	return &pythonRunnerTool{op: op}

@@ -29,7 +29,6 @@ import (
 )
 
 func main() {
-
 	vikingDBHost := os.Getenv("VIKING_DB_HOST")
 	vikingDBRegion := os.Getenv("VIKING_DB_REGION")
 	vikingDBAK := os.Getenv("VIKING_DB_AK")
@@ -79,7 +78,6 @@ func main() {
 }
 
 func newVikingDBRetriever(ctx context.Context, host, region, ak, sk string) (retriever.Retriever, error) {
-
 	baseTopK := 5
 	return volc_vikingdb.NewRetriever(ctx, &volc_vikingdb.RetrieverConfig{
 		Host:   host,

@@ -78,36 +78,38 @@ func (m *MermaidGenerator) OnFinish(_ context.Context, info *compose.GraphInfo) 
 // generate orchestrates diagram construction by delegating to renderGraph.
 // The top-level direction is TD (top-down) for readability and consistency.
 func (m *MermaidGenerator) generate(info *compose.GraphInfo) {
-	var isWorkflow bool
-	if len(info.Edges) > len(info.DataEdges) {
-		isWorkflow = true
-	}
-
+	isWorkflow := m.workflowStyle
 	if !isWorkflow {
-		for from, edges := range info.Edges {
-			dataEdges, ok := info.DataEdges[from]
-			if !ok {
-				isWorkflow = true
-				break
-			}
+		if len(info.Edges) > len(info.DataEdges) {
+			isWorkflow = true
+		}
 
-			if len(edges) != len(dataEdges) {
-				isWorkflow = true
-				break
-			}
-
-			for i := range edges {
-				edge := edges[i]
-				found := false
-				for _, dEdge := range dataEdges {
-					if dEdge == edge {
-						found = true
-						break
-					}
-				}
-				if !found {
+		if !isWorkflow {
+			for from, edges := range info.Edges {
+				dataEdges, ok := info.DataEdges[from]
+				if !ok {
 					isWorkflow = true
 					break
+				}
+
+				if len(edges) != len(dataEdges) {
+					isWorkflow = true
+					break
+				}
+
+				for i := range edges {
+					edge := edges[i]
+					found := false
+					for _, dEdge := range dataEdges {
+						if dEdge == edge {
+							found = true
+							break
+						}
+					}
+					if !found {
+						isWorkflow = true
+						break
+					}
 				}
 			}
 		}
@@ -139,10 +141,10 @@ func (m *MermaidGenerator) generate(info *compose.GraphInfo) {
 	}
 	mdPath := filepath.Join(dir, name+".md")
 	content := sb.String()
-	_ = os.WriteFile(mdPath, []byte("```mermaid\n"+content+"\n```"), 0644)
+	_ = os.WriteFile(mdPath, []byte("```mermaid\n"+content+"\n```"), 0o644)
 	if m.makeImages {
 		mmdPath := filepath.Join(dir, name+".mmd")
-		_ = os.WriteFile(mmdPath, []byte(content), 0644)
+		_ = os.WriteFile(mmdPath, []byte(content), 0o644)
 		m.renderImage(mmdPath, filepath.Join(dir, name+".png"))
 		_ = os.Remove(mmdPath)
 	}
@@ -193,23 +195,25 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 			if nodeInfo.GraphInfo != nil {
 				// Subgraph
 				subgraphLabel := nodeKey
-				if nodeInfo.Component == compose.ComponentOfChain {
+				switch nodeInfo.Component {
+				case compose.ComponentOfChain:
 					subgraphLabel = fmt.Sprintf("%s (Chain)", nodeKey)
-				} else if nodeInfo.Component == compose.ComponentOfWorkflow {
+				case compose.ComponentOfWorkflow:
 					subgraphLabel = fmt.Sprintf("%s (Workflow)", nodeKey)
-				} else if nodeInfo.Component == compose.ComponentOfGraph {
+				case compose.ComponentOfGraph:
 					subgraphLabel = fmt.Sprintf("%s (Graph)", nodeKey)
 				}
-				sb.WriteString(fmt.Sprintf("%ssubgraph %s [\"%s\"]\n", indent, nodeID, subgraphLabel))
+				_, _ = fmt.Fprintf(sb, "%ssubgraph %s [\"%s\"]\n", indent, nodeID, subgraphLabel)
 				childStyle := style
-				if nodeInfo.Component == compose.ComponentOfWorkflow {
+				switch nodeInfo.Component {
+				case compose.ComponentOfWorkflow:
 					childStyle = true
-				} else if nodeInfo.Component == compose.ComponentOfGraph || nodeInfo.Component == compose.ComponentOfChain {
+				case compose.ComponentOfGraph, compose.ComponentOfChain:
 					// for explicit Graph/Chain sub-graphs, do not apply workflow styling
 					childStyle = false
 				}
 				m.renderGraph(sb, nodeInfo.GraphInfo, nodeID+"_", indentLevel+1, childStyle)
-				sb.WriteString(fmt.Sprintf("%send\n", indent))
+				_, _ = fmt.Fprintf(sb, "%send\n", indent)
 			} else {
 				// Regular Node
 				shapeStart, shapeEnd := "[", "]"
@@ -218,17 +222,17 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 				}
 
 				label := fmt.Sprintf("%s<br/>(%s)", nodeKey, nodeInfo.Component)
-				sb.WriteString(fmt.Sprintf("%s%s%s\"%s\"%s\n", indent, nodeID, shapeStart, label, shapeEnd))
+				_, _ = fmt.Fprintf(sb, "%s%s%s\"%s\"%s\n", indent, nodeID, shapeStart, label, shapeEnd)
 			}
 		} else if nodeKey == compose.START || nodeKey == compose.END {
 			// Special nodes: avoid reserved keyword conflict with 'end'
-			safeID := nodeID
+			var safeID string
 			if nodeKey == compose.START {
 				safeID = m.nodeID(prefix, "start_node")
 			} else {
 				safeID = m.nodeID(prefix, "end_node")
 			}
-			sb.WriteString(fmt.Sprintf("%s%s([%s])\n", indent, safeID, nodeKey))
+			_, _ = fmt.Fprintf(sb, "%s%s([%s])\n", indent, safeID, nodeKey)
 		}
 	}
 
@@ -263,12 +267,12 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 			}
 			if style {
 				if hasData {
-					sb.WriteString(fmt.Sprintf("%s%s -- control+data --> %s\n", indent, startID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s -- control+data --> %s\n", indent, startID, endID)
 				} else {
-					sb.WriteString(fmt.Sprintf("%s%s == control-only ==> %s\n", indent, startID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s == control-only ==> %s\n", indent, startID, endID)
 				}
 			} else {
-				sb.WriteString(fmt.Sprintf("%s%s --> %s\n", indent, startID, endID))
+				_, _ = fmt.Fprintf(sb, "%s%s --> %s\n", indent, startID, endID)
 			}
 		}
 	}
@@ -302,9 +306,9 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 					endID = m.nodeID(prefix, "end_node")
 				}
 				if style {
-					sb.WriteString(fmt.Sprintf("%s%s -. data-only .-> %s\n", indent, startID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s -. data-only .-> %s\n", indent, startID, endID)
 				} else {
-					sb.WriteString(fmt.Sprintf("%s%s -.-> %s\n", indent, startID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s -.-> %s\n", indent, startID, endID)
 				}
 			}
 		}
@@ -335,15 +339,15 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 			// Decision node visualization: startNode -> decision{branch} -> endNodes
 
 			decisionID := fmt.Sprintf("%s_branch_%d", m.nodeID(prefix, start), i)
-			sb.WriteString(fmt.Sprintf("%s%s{\"%s\"}\n", indent, decisionID, "branch"))
+			_, _ = fmt.Fprintf(sb, "%s%s{\"%s\"}\n", indent, decisionID, "branch")
 			startID := m.nodeID(prefix, start)
 			if start == compose.START {
 				startID = m.nodeID(prefix, "start_node")
 			}
 			if style {
-				sb.WriteString(fmt.Sprintf("%s%s ==> %s\n", indent, startID, decisionID))
+				_, _ = fmt.Fprintf(sb, "%s%s ==> %s\n", indent, startID, decisionID)
 			} else {
-				sb.WriteString(fmt.Sprintf("%s%s --> %s\n", indent, startID, decisionID))
+				_, _ = fmt.Fprintf(sb, "%s%s --> %s\n", indent, startID, decisionID)
 			}
 
 			// Sort end nodes
@@ -360,9 +364,9 @@ func (m *MermaidGenerator) renderGraph(sb *strings.Builder, info *compose.GraphI
 					endID = m.nodeID(prefix, "end_node")
 				}
 				if style {
-					sb.WriteString(fmt.Sprintf("%s%s ==> %s\n", indent, decisionID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s ==> %s\n", indent, decisionID, endID)
 				} else {
-					sb.WriteString(fmt.Sprintf("%s%s --> %s\n", indent, decisionID, endID))
+					_, _ = fmt.Fprintf(sb, "%s%s --> %s\n", indent, decisionID, endID)
 				}
 			}
 		}
@@ -416,7 +420,7 @@ func renderWithChromedp(mermaidCode, output string) error {
 			chromedp.Screenshot(`#container svg`, &buf, chromedp.NodeVisible, chromedp.ByQuery),
 		)
 		if err == nil {
-			err = os.WriteFile(output, buf, 0644)
+			err = os.WriteFile(output, buf, 0o644)
 		}
 	case ".svg":
 		var svg string
@@ -426,7 +430,7 @@ func renderWithChromedp(mermaidCode, output string) error {
 			chromedp.OuterHTML(`#container svg`, &svg, chromedp.ByQuery),
 		)
 		if err == nil {
-			err = os.WriteFile(output, []byte(svg), 0644)
+			err = os.WriteFile(output, []byte(svg), 0o644)
 		}
 	default:
 		// unsupported extension

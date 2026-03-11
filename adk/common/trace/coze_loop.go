@@ -28,8 +28,10 @@ import (
 
 type CloseFn func(ctx context.Context)
 
-type EndSpanFn func(ctx context.Context, output any)
-type StartSpanFn func(ctx context.Context, name string, input any) (nCtx context.Context, endFn EndSpanFn)
+type (
+	EndSpanFn   func(ctx context.Context, output any)
+	StartSpanFn func(ctx context.Context, name string, input any) (nCtx context.Context, endFn EndSpanFn)
+)
 
 func AppendCozeLoopCallbackIfConfigured(_ context.Context) (closeFn CloseFn, startSpanFn StartSpanFn) {
 	// setup cozeloop
@@ -39,9 +41,7 @@ func AppendCozeLoopCallbackIfConfigured(_ context.Context) (closeFn CloseFn, sta
 	wsID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
 	apiKey := os.Getenv("COZELOOP_API_TOKEN")
 	if wsID == "" || apiKey == "" {
-		return func(ctx context.Context) {
-			return
-		}, buildStartSpanFn(nil)
+		return func(ctx context.Context) {}, buildStartSpanFn(nil)
 	}
 	client, err := cozeloop.NewClient(
 		cozeloop.WithWorkspaceID(wsID),
@@ -61,9 +61,7 @@ func AppendCozeLoopCallbackIfConfigured(_ context.Context) (closeFn CloseFn, sta
 func buildStartSpanFn(client cozeloop.Client) StartSpanFn {
 	return func(ctx context.Context, name string, input any) (nCtx context.Context, endFn EndSpanFn) {
 		if client == nil {
-			return ctx, func(ctx context.Context, output any) {
-				return
-			}
+			return ctx, func(ctx context.Context, output any) {}
 		}
 
 		nCtx, span := client.StartSpan(ctx, name, "custom")

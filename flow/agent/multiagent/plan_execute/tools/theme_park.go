@@ -98,26 +98,34 @@ type ListAttractionQueueTimeResponse struct {
 	QueueTime []AttractionQueueTime `json:"queue_time" jsonschema_description:"符合查询条件的所有游乐项目的排队时间"`
 }
 
-type ListAdjacentLocationRequest struct{}
-type ListAdjacentLocationResponse struct {
-	AdjacencyList []LocationAdjacency `json:"adjacency_list" jsonschema_description:"所有区域的邻接区域"`
-}
+type (
+	ListAdjacentLocationRequest  struct{}
+	ListAdjacentLocationResponse struct {
+		AdjacencyList []LocationAdjacency `json:"adjacency_list" jsonschema_description:"所有区域的邻接区域"`
+	}
+)
 
-type GetParkHourRequest struct{}
-type GetParkHourResponse struct {
-	OpenHour  string `json:"open_hour"`
-	CloseHour string `json:"close_hour"`
-}
+type (
+	GetParkHourRequest  struct{}
+	GetParkHourResponse struct {
+		OpenHour  string `json:"open_hour"`
+		CloseHour string `json:"close_hour"`
+	}
+)
 
-type GetParkTicketPriceRequest struct{}
-type GetParkTicketPriceResponse struct {
-	Price string `json:"price" jsonschema_description:"乐园门票价格信息"`
-}
+type (
+	GetParkTicketPriceRequest  struct{}
+	GetParkTicketPriceResponse struct {
+		Price string `json:"price" jsonschema_description:"乐园门票价格信息"`
+	}
+)
 
-type ListLocationsRequest struct{}
-type ListLocationsResponse struct {
-	Locations []string `json:"locations"`
-}
+type (
+	ListLocationsRequest  struct{}
+	ListLocationsResponse struct {
+		Locations []string `json:"locations"`
+	}
+)
 
 func ListLocations(_ context.Context, _ *ListLocationsRequest) (out *ListLocationsResponse, err error) {
 	return &ListLocationsResponse{
@@ -134,10 +142,12 @@ func ListLocations(_ context.Context, _ *ListLocationsRequest) (out *ListLocatio
 	}, nil
 }
 
-type QueryEntranceRequest struct{}
-type QueryEntranceResponse struct {
-	EntranceLocation string `json:"entrance_location" jsonschema_description:"园区入口区域名称"`
-}
+type (
+	QueryEntranceRequest  struct{}
+	QueryEntranceResponse struct {
+		EntranceLocation string `json:"entrance_location" jsonschema_description:"园区入口区域名称"`
+	}
+)
 
 func QueryEntrance(_ context.Context, _ *QueryEntranceRequest) (out *QueryEntranceResponse, err error) {
 	return &QueryEntranceResponse{EntranceLocation: "入口大街"}, nil

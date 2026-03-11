@@ -42,15 +42,13 @@ const (
 	PlanStatusSkipped PlanStatus = "skipped"
 )
 
-var (
-	PlanStatusMapping = map[PlanStatus]string{
-		PlanStatusTodo:    "待执行",
-		PlanStatusDoing:   "执行中",
-		PlanStatusDone:    "已完成",
-		PlanStatusFailed:  "执行失败",
-		PlanStatusSkipped: "已跳过",
-	}
-)
+var PlanStatusMapping = map[PlanStatus]string{
+	PlanStatusTodo:    "待执行",
+	PlanStatusDoing:   "执行中",
+	PlanStatusDone:    "已完成",
+	PlanStatusFailed:  "执行失败",
+	PlanStatusSkipped: "已跳过",
+}
 
 func (p *FullPlan) String() string {
 	status, ok := PlanStatusMapping[p.Status]
@@ -72,7 +70,7 @@ func (p *FullPlan) PlanString(n int) string {
 }
 
 func FullPlan2String(plan []*FullPlan) string {
-	var planStr = "### 任务计划\n"
+	planStr := "### 任务计划\n"
 	for i, p := range plan {
 		planStr += p.PlanString(i+1) + "\n"
 	}

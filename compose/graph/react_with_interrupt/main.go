@@ -117,7 +117,7 @@ func newChatTemplate(_ context.Context) prompt.ChatTemplate {
 	)
 }
 
-func newChatModel(ctx context.Context) model.ChatModel {
+func newChatModel(ctx context.Context) model.ToolCallingChatModel {
 	cm, err := openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		APIKey:  os.Getenv("OPENAI_API_KEY"),
 		Model:   os.Getenv("OPENAI_MODEL_NAME"),
@@ -137,11 +137,11 @@ func newChatModel(ctx context.Context) model.ChatModel {
 		toolsInfo = append(toolsInfo, info)
 	}
 
-	err = cm.BindTools(toolsInfo)
+	cmWithTools, err := cm.WithTools(toolsInfo)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return cm
+	return cmWithTools
 }
 
 type bookInput struct {
@@ -168,7 +168,7 @@ type myState struct {
 	history []*schema.Message
 }
 
-func composeGraph[I, O any](ctx context.Context, tpl prompt.ChatTemplate, cm model.ChatModel, tn *compose.ToolsNode, store compose.CheckPointStore) (compose.Runnable[I, O], error) {
+func composeGraph[I, O any](ctx context.Context, tpl prompt.ChatTemplate, cm model.ToolCallingChatModel, tn *compose.ToolsNode, store compose.CheckPointStore) (compose.Runnable[I, O], error) {
 	g := compose.NewGraph[I, O](compose.WithGenLocalState(func(ctx context.Context) *myState {
 		return &myState{}
 	}))

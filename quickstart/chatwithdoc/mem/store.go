@@ -88,7 +88,7 @@ func (s *Session) Append(msg *schema.Message) error {
 		return err
 	}
 
-	f, err := os.OpenFile(s.filePath, os.O_APPEND|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(s.filePath, os.O_APPEND|os.O_WRONLY, 0o644)
 	if err != nil {
 		return err
 	}
@@ -139,7 +139,7 @@ type Store struct {
 
 // NewStore creates a new Store backed by the given directory (created if absent).
 func NewStore(dir string) (*Store, error) {
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create session dir: %w", err)
 	}
 	return &Store{
@@ -237,7 +237,7 @@ func createSession(id, filePath string) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := os.WriteFile(filePath, append(data, '\n'), 0644); err != nil {
+	if err := os.WriteFile(filePath, append(data, '\n'), 0o644); err != nil {
 		return nil, err
 	}
 	return &Session{

@@ -25,7 +25,6 @@ import (
 )
 
 func RegisterSimpleChain(ctx context.Context) {
-
 	chain := compose.NewChain[string, string]()
 
 	c1 := compose.InvokableLambda(func(ctx context.Context, input string) (output string, err error) {

@@ -58,7 +58,6 @@ func main() {
 		FallbackParser: textParser,
 	})
 	if err != nil {
-
 		return
 	}
 

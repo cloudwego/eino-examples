@@ -46,9 +46,7 @@ type DeerConfig struct {
 	} `yaml:"setting"`
 }
 
-var (
-	Config *DeerConfig = &DeerConfig{}
-)
+var Config *DeerConfig = &DeerConfig{}
 
 func LoadDeerConfig(ctx context.Context) {
 	dir, err := os.Getwd()

@@ -33,8 +33,7 @@ type OpenFileToolImpl struct {
 	config *OpenFileToolConfig
 }
 
-type OpenFileToolConfig struct {
-}
+type OpenFileToolConfig struct{}
 
 func defaultOpenFileToolConfig(ctx context.Context) (*OpenFileToolConfig, error) {
 	config := &OpenFileToolConfig{}

@@ -300,7 +300,7 @@ func (s *Server) handleUpload(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	if err := os.MkdirAll(absWorkDir, 0755); err != nil {
+	if err := os.MkdirAll(absWorkDir, 0o755); err != nil {
 		c.JSON(consts.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
