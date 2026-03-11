@@ -25,9 +25,10 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cloudwego/eino-ext/components/model/ark"
+	"github.com/cloudwego/eino-ext/components/model/openai"
+	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
-
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
 )
 
 func main() {
@@ -42,49 +43,53 @@ func main() {
 	}
 
 	ctx := context.Background()
-	cm := examplemodel.NewChatModel()
-
-	msgs := make([]*schema.Message, 0, 2)
-	if strings.TrimSpace(instruction) != "" {
-		msgs = append(msgs, schema.SystemMessage(instruction))
-	}
-	msgs = append(msgs, schema.UserMessage(query))
-
-	_, _ = fmt.Fprint(os.Stdout, "[assistant] ")
-	stream, err := cm.Stream(ctx, msgs)
-	if err == nil {
-		stream.SetAutomaticClose()
-		if err := printChatModelStream(stream); err != nil {
-			_, _ = fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		_, _ = fmt.Fprintln(os.Stdout)
-		return
-	}
-
-	out, err := cm.Generate(ctx, msgs)
+	cm, err := newChatModel(ctx)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	if out != nil {
-		_, _ = fmt.Fprintln(os.Stdout, out.Content)
-	} else {
-		_, _ = fmt.Fprintln(os.Stdout)
-	}
-}
 
-func printChatModelStream(stream *schema.StreamReader[*schema.Message]) error {
+	messages := []*schema.Message{
+		schema.SystemMessage(instruction),
+		schema.UserMessage(query),
+	}
+
+	_, _ = fmt.Fprint(os.Stdout, "[assistant] ")
+	stream, err := cm.Stream(ctx, messages)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+	defer stream.Close()
+
 	for {
 		frame, err := stream.Recv()
 		if errors.Is(err, io.EOF) {
-			return nil
+			break
 		}
 		if err != nil {
-			return err
+			_, _ = fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
 		}
 		if frame != nil {
 			_, _ = fmt.Fprint(os.Stdout, frame.Content)
 		}
 	}
+	_, _ = fmt.Fprintln(os.Stdout)
+}
+
+func newChatModel(ctx context.Context) (model.ToolCallingChatModel, error) {
+	if os.Getenv("MODEL_TYPE") == "ark" {
+		return ark.NewChatModel(ctx, &ark.ChatModelConfig{
+			APIKey:  os.Getenv("ARK_API_KEY"),
+			Model:   os.Getenv("ARK_MODEL"),
+			BaseURL: os.Getenv("ARK_BASE_URL"),
+		})
+	}
+	return openai.NewChatModel(ctx, &openai.ChatModelConfig{
+		APIKey:  os.Getenv("OPENAI_API_KEY"),
+		Model:   os.Getenv("OPENAI_MODEL"),
+		BaseURL: os.Getenv("OPENAI_BASE_URL"),
+		ByAzure: os.Getenv("OPENAI_BY_AZURE") == "true",
+	})
 }
