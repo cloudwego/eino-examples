@@ -32,7 +32,6 @@ import (
 )
 
 func NewPlanner(ctx context.Context) (adk.Agent, error) {
-
 	return planexecute.NewPlanner(ctx, &planexecute.PlannerConfig{
 		ToolCallingChatModel: model.NewChatModel(),
 	})

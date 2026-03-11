@@ -132,7 +132,7 @@ func NewCurlRT(base http.RoundTripper, opts ...CurlOption) *CurlRT {
 		rt.logger = log.Default()
 	}
 	if rt.maskFn == nil {
-		rt.maskFn = func(_ string, _ string) string { return "<redacted>" }
+		rt.maskFn = func(_, _ string) string { return "<redacted>" }
 	}
 	if rt.streamCTFilter == nil {
 		rt.streamCTFilter = func(ct string) bool {

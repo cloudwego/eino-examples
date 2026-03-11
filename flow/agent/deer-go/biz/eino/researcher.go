@@ -80,7 +80,7 @@ func loadResearcherMsg(ctx context.Context, name string, opts ...any) (output []
 }
 
 func routerResearcher(ctx context.Context, input *schema.Message, opts ...any) (output string, err error) {
-	//ilog.EventInfo(ctx, "routerResearcher", "input", input)
+	// ilog.EventInfo(ctx, "routerResearcher", "input", input)
 	last := input
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {

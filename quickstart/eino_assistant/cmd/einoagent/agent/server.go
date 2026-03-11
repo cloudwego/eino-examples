@@ -168,7 +168,6 @@ func HandleHistory(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, map[string]interface{}{
 		"conversation": conversation,
 	})
-
 }
 
 func HandleDeleteHistory(ctx context.Context, c *app.RequestContext) {

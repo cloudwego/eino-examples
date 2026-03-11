@@ -31,24 +31,22 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-var (
-	toolImageReaderInfo = &schema.ToolInfo{
-		Name: "image_reader",
-		Desc: "Tool for describing image content",
-		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
-			"query": {
-				Type:     "string",
-				Desc:     "Questions posed about the image",
-				Required: true,
-			},
-			"image_path": {
-				Type:     "string",
-				Desc:     "The path of the image file",
-				Required: true,
-			},
-		}),
-	}
-)
+var toolImageReaderInfo = &schema.ToolInfo{
+	Name: "image_reader",
+	Desc: "Tool for describing image content",
+	ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"query": {
+			Type:     "string",
+			Desc:     "Questions posed about the image",
+			Required: true,
+		},
+		"image_path": {
+			Type:     "string",
+			Desc:     "The path of the image file",
+			Required: true,
+		},
+	}),
+}
 
 func NewToolImageReader(visionModel model.BaseChatModel) tool.InvokableTool {
 	return &localToolImageReader{visionModel: visionModel}

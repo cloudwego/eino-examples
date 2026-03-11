@@ -78,7 +78,6 @@ func main() {
 }
 
 func NewAgent(ctx context.Context) (*react.Agent, error) {
-
 	// 初始化模型
 	model, err := PrepareModel(ctx)
 	if err != nil {
@@ -105,7 +104,6 @@ func NewAgent(ctx context.Context) (*react.Agent, error) {
 }
 
 func PrepareModel(ctx context.Context) (model.ChatModel, error) {
-
 	// eg. 使用 ark 豆包大模型, or openai: openai.NewChatModel at github.com/cloudwego/eino-ext/components/model/openai
 	arkModel, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		Model:  *modelName, // replace with your model

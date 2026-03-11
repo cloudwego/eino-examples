@@ -86,7 +86,7 @@ func main() {
 		workdir = filepath.Join(wd, "adk/multiagent/deep/playground", id)
 	}
 
-	if err = os.Mkdir(workdir, 0755); err != nil {
+	if err = os.Mkdir(workdir, 0o755); err != nil {
 		log.Fatal(err)
 	}
 

@@ -16,9 +16,10 @@
 
 package summarization
 
-const DefaultMaxTokensBeforeSummary = 128 * 1024
-const DefaultMaxTokensForRecentMessages = 25 * 1024 // 20% of DefaultMaxTokensBeforeSummary
-const PromptOfSummary = `<role>
+const (
+	DefaultMaxTokensBeforeSummary     = 128 * 1024
+	DefaultMaxTokensForRecentMessages = 25 * 1024 // 20% of DefaultMaxTokensBeforeSummary
+	PromptOfSummary                   = `<role>
 Conversation Summarization Assistant for Multi-turn LLM Agent
 </role>
 
@@ -75,3 +76,4 @@ allowing the agent to continue reasoning seamlessly without re-accessing the raw
 {recent_messages}
 </recent_messages>
 </messages>`
+)

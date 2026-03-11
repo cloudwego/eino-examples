@@ -67,7 +67,6 @@ func main() {
 		return
 	}
 	_ = result
-
 }
 
 type detailContent struct {

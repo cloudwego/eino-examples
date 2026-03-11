@@ -54,7 +54,7 @@ func InitDefaultStorage(dataDir string) error {
 }
 
 func NewStorage(dataDir string) (*Storage, error) {
-	if err := os.MkdirAll(dataDir, 0755); err != nil {
+	if err := os.MkdirAll(dataDir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create data directory: %v", err)
 	}
 	s := &Storage{
@@ -70,7 +70,7 @@ func NewStorage(dataDir string) (*Storage, error) {
 }
 
 func (s *Storage) loadFromDisk() error {
-	file, err := os.OpenFile(s.filePath, os.O_CREATE|os.O_RDONLY, 0644)
+	file, err := os.OpenFile(s.filePath, os.O_CREATE|os.O_RDONLY, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
 	}
@@ -97,7 +97,7 @@ func (s *Storage) Add(task *Task) error {
 	s.cache[task.ID] = task
 
 	// 直接追加到文件末尾
-	file, err := os.OpenFile(s.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(s.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return fmt.Errorf("failed to open file: %v", err)
 	}

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 )
 
 func main() {
@@ -32,7 +33,9 @@ func main() {
 	// 创建llm
 	log.Printf("===create llm===\n")
 	cm := createOpenAIChatModel(ctx)
-	// cm := createOllamaChatModel(ctx)
+	if os.Getenv("EINO_CHAT_PROVIDER") == "ollama" {
+		cm = createOllamaChatModel(ctx)
+	}
 	log.Printf("create llm success\n\n")
 
 	log.Printf("===llm generate===\n")

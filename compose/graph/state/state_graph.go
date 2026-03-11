@@ -109,13 +109,12 @@ func main() {
 	_ = sg.AddLambdaNode(nodeOfL2, l2, compose.WithStatePostHandler(l2StateToOutput))
 
 	l3 := compose.TransformableLambda(func(ctx context.Context, input *schema.StreamReader[string]) (
-		output *schema.StreamReader[string], err error) {
-
+		output *schema.StreamReader[string], err error,
+	) {
 		prefix := "TransformableLambda: "
 		sr, sw := schema.Pipe[string](20)
 
 		go func() {
-
 			defer func() {
 				if err := recover(); err != nil {
 					logs.Errorf("panic occurs: %v\nStack Trace:\n%s", err, string(debug.Stack()))

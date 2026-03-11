@@ -60,8 +60,8 @@ func (i InvokableReviewEditTool) Info(ctx context.Context) (*schema.ToolInfo, er
 }
 
 func (i InvokableReviewEditTool) InvokableRun(ctx context.Context, argumentsInJSON string,
-	opts ...tool.Option) (string, error) {
-
+	opts ...tool.Option,
+) (string, error) {
 	toolInfo, err := i.Info(ctx)
 	if err != nil {
 		return "", err

@@ -254,6 +254,9 @@ func buildMathAgent(ctx context.Context) (adk.Agent, error) {
 			},
 		},
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return supervisor.New(ctx, &supervisor.Config{
 		Supervisor: mathA,
