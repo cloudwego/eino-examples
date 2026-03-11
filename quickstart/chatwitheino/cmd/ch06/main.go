@@ -33,8 +33,8 @@ import (
 
 	"github.com/google/uuid"
 
-	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/callbacks"
