@@ -6,8 +6,8 @@ title: "第八章：Graph Tool（复杂工作流）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch08/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch08/main.go)
-- RAG 实现：[rag/rag.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/rag/rag.go)
+- 入口代码：[cmd/ch08/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch08/main.go)
+- RAG 实现：[rag/rag.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/rag/rag.go)
 
 ## 前置条件
 
@@ -223,7 +223,7 @@ func BuildTool(ctx context.Context, cm model.BaseChatModel) (tool.BaseTool, erro
 }
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [rag/rag.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/rag/rag.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [rag/rag.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/rag/rag.go)）：
 
 ```go
 // 构建工作流

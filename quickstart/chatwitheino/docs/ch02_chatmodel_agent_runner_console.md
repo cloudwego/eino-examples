@@ -6,7 +6,7 @@ title: "第二章：ChatModelAgent、Runner、AgentEvent（Console 多轮）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch02/main.go)
+- 入口代码：[cmd/ch02/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch02/main.go)
 
 ## 前置条件
 
@@ -176,7 +176,7 @@ events := runner.Query(ctx, "你好")
 type AgentEvent struct {
     AgentName string
     RunPath   []RunStep
-    
+
     Output *AgentOutput  // 输出内容
     Action *AgentAction  // 控制动作
     Err    error         // 执行错误
@@ -188,13 +188,24 @@ type AgentEvent struct {
 - `event.Output.MessageOutput`：message 或 message stream（流式）
 - `event.Action`：中断/转移/退出等控制动作（后续章节用到）
 
+### AsyncIterator：事件流的消费方式
+
+`Runner.Run()` 返回的是 `*AsyncIterator[*AgentEvent]`，这是一个非阻塞的流式迭代器。
+
+**为什么用 AsyncIterator 而不是直接返回结果？**
+
+因为 Agent 的执行是**流式**的：模型逐 token 生成回复，Tool 调用穿插其中。如果等全部完成再返回，用户需要等待更长时间。`AsyncIterator` 让你可以实时消费每一个事件。
+
 **消费方式：**
 
 ```go
+// events 是 *AsyncIterator[*AgentEvent]，由 runner.Run() 返回
+events := runner.Run(ctx, history)
+
 for {
-    event, ok := events.Next()
+    event, ok := events.Next()  // 获取下一个事件，阻塞直到有事件或结束
     if !ok {
-        break
+        break  // 迭代器关闭，全部事件已消费
     }
     if event.Err != nil {
         // 处理错误
@@ -204,6 +215,8 @@ for {
     }
 }
 ```
+
+**注意：**每次 `runner.Run()` 创建新的迭代器，消费一次后不可重复使用。
 
 ## 多轮对话的实现
 
@@ -218,7 +231,7 @@ for {
 3. 调用 `runner.Run(ctx, history)` 得到事件流，消费得到 assistant 文本
 4. 把本轮 assistant 文本追加回 history，进入下一轮
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch02/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch02/main.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch02/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch02/main.go)）：
 
 ```go
 history := make([]*schema.Message, 0, 16)

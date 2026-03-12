@@ -6,11 +6,15 @@ title: "第六章：Callback 与 Trace（可观测性）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch06/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch06/main.go)
+- 入口代码：[cmd/ch06/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch06/main.go)
 
 ## 前置条件
 
-与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。
+与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。同时，需要与第四章一样设置 `PROJECT_ROOT`：
+
+```bash
+export PROJECT_ROOT=/path/to/eino  # Eino 核心库根目录（不设置则默认使用当前目录）
+```
 
 可选：配置 CozeLoop 实现链路追踪：
 
@@ -141,15 +145,15 @@ callbacks.AppendGlobalHandlers(clc.NewLoopHandler(client))
 
 ### Callback 的触发时机
 
-Callback 在组件生命周期的 5 个关键时机触发：
+Callback 在组件生命周期的 5 个关键时机触发。下表中 `Timing*` 是 Eino 内部常量名（用于 `TimingChecker` 接口），对应的 Handler 接口方法是右侧所示：
 
-| 时机 | 触发点 | 输入/输出 |
-|------|--------|-----------|
-| `TimingOnStart` | 组件开始处理前 | CallbackInput |
-| `TimingOnEnd` | 组件成功返回后 | CallbackOutput |
-| `TimingOnError` | 组件返回错误时 | error |
-| `TimingOnStartWithStreamInput` | 组件接收流式输入时 | StreamReader[CallbackInput] |
-| `TimingOnEndWithStreamOutput` | 组件返回流式输出时 | StreamReader[CallbackOutput] |
+| 时机常量 | 对应 Handler 方法 | 触发点 | 输入/输出 |
+|------|--------|--------|-----------|
+| `TimingOnStart` | `OnStart` | 组件开始处理前 | CallbackInput |
+| `TimingOnEnd` | `OnEnd` | 组件成功返回后 | CallbackOutput |
+| `TimingOnError` | `OnError` | 组件返回错误时 | error |
+| `TimingOnStartWithStreamInput` | `OnStartWithStreamInput` | 组件接收流式输入时 | StreamReader[CallbackInput] |
+| `TimingOnEndWithStreamOutput` | `OnEndWithStreamOutput` | 组件返回流式输出时 | StreamReader[CallbackOutput] |
 
 **示例：ChatModel 调用流程**
 
@@ -202,31 +206,34 @@ Callback 在组件生命周期的 5 个关键时机触发：
 
 ## Callback 的实现
 
-### 1. 创建简单的日志 Callback
+### 1. 实现自定义 Callback Handler
+
+完整实现 `Handler` 接口需要实现所有 5 个方法，较为繁琐。Eino 提供了 `callbacks.HandlerHelper` 帮助类来简化实现：
 
 ```go
-type loggingCallback struct{}
+import "github.com/cloudwego/eino/callbacks"
 
-func (c *loggingCallback) OnGenerateStart(ctx context.Context, info *callbacks.CallbackInput) context.Context {
-    log.Printf("[trace] generate start: messages=%d", len(info.Messages))
-    return ctx
-}
+// 使用 NewHandlerHelper 注册感兴趣的回调
+handler := callbacks.NewHandlerHelper().
+    OnStart(func(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
+        log.Printf("[trace] %s/%s start", info.Component, info.Name)
+        return ctx
+    }).
+    OnEnd(func(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
+        log.Printf("[trace] %s/%s end", info.Component, info.Name)
+        return ctx
+    }).
+    OnError(func(ctx context.Context, info *callbacks.RunInfo, err error) context.Context {
+        log.Printf("[trace] %s/%s error: %v", info.Component, info.Name, err)
+        return ctx
+    }).
+    Handler()
 
-func (c *loggingCallback) OnGenerateEnd(ctx context.Context, info *callbacks.CallbackOutput) context.Context {
-    log.Printf("[trace] generate end: tokens=%d", info.Usage.TotalTokens)
-    return ctx
-}
-
-func (c *loggingCallback) OnToolCallStart(ctx context.Context, info *callbacks.ToolCallInput) context.Context {
-    log.Printf("[trace] tool call start: name=%s", info.Name)
-    return ctx
-}
-
-func (c *loggingCallback) OnToolCallEnd(ctx context.Context, info *callbacks.ToolCallOutput) context.Context {
-    log.Printf("[trace] tool call end: output_len=%d", len(info.Output))
-    return ctx
-}
+// 注册为全局 Callback
+callbacks.AppendGlobalHandlers(handler)
 ```
+
+**注意**：`RunInfo` 可能为 `nil`（如顶层调用没有 RunInfo），使用前请检查。
 
 ### 2. 集成 CozeLoop
 
@@ -276,7 +283,7 @@ func main() {
 }
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch06/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch06/main.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch06/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch06/main.go)）：
 
 ```go
 // 设置 CozeLoop 追踪

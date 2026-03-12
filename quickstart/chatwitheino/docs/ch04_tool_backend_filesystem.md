@@ -113,6 +113,25 @@ backend, err := localbk.NewBackend(ctx, &localbk.Config{})
 
 本章使用 DeepAgent 预构建 Agent,它提供了 Backend 和 StreamingShell 的一级配置,可以方便地注册文件系统相关的工具。
 
+### 从 ChatModelAgent 到 DeepAgent：何时需要切换？
+
+前面章节一直使用 `ChatModelAgent`,它已经能处理多轮对话。但要访问文件系统，我们需要切换到 `DeepAgent`。
+
+**ChatModelAgent vs DeepAgent 对比：**
+
+| 能力 | ChatModelAgent | DeepAgent |
+|------|----------------|-----------|
+| 多轮对话 | ✅ | ✅ |
+| 添加自定义 Tool | ✅ 手动注册每个 Tool | ✅ 手动注册或自动注册 |
+| 文件系统访问（Backend） | ❌ 需手动创建并注册所有文件工具 | ✅ 一级配置，自动注册 |
+| 命令执行（StreamingShell） | ❌ 需手动创建 | ✅ 一级配置，自动注册 |
+| 内置任务管理 | ❌ | ✅ `write_todos` 工具 |
+| 支持子 Agent | ❌ | ✅ |
+
+**选择建议：**
+- 纯对话场景（无外部访问）→ 用 `ChatModelAgent`
+- 需要访问文件系统或执行命令 → 用 `DeepAgent`
+
 ### 为什么使用 DeepAgent?
 
 相比直接使用 ChatModelAgent,DeepAgent 的优势:
@@ -159,71 +178,55 @@ agent, err := deep.New(ctx, &deep.Config{
 
 ## 代码位置
 
-- 入口代码:[cmd/ch04/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch04/main.go)
+- 入口代码：[cmd/ch04/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch04/main.go)
 
 ## 前置条件
 
-与第一章一致:需要配置一个可用的 ChatModel(OpenAI 或 Ark)
+与第一章一致:需要配置一个可用的 ChatModel(OpenAI 或 Ark)。
+
+本章还需要设置 `PROJECT_ROOT`（可选，见下方运行说明）。
 
 ## 运行
 
 在 `examples/quickstart/chatwitheino` 目录下执行:
 
 ```bash
-# 设置 Eino 核心库的根目录路径
-# 这是 Agent 能够访问的代码库范围,Agent 将检索和读取该目录下的代码和文档
+# 可选：设置 Eino 核心库的根目录路径
+# 未设置时，Agent 默认使用当前工作目录（即 chatwitheino 目录）作为根目录
+# 若要让 Agent 能检索完整的 Eino 代码库，建议指向 eino 核心库根目录
 export PROJECT_ROOT=/path/to/eino
+
+# 验证路径是否正确（应该能看到 adk、components、compose 等目录）
+ls $PROJECT_ROOT
 
 go run ./cmd/ch04
 ```
 
-**重要说明:**
+**`PROJECT_ROOT` 说明：**
 
-`PROJECT_ROOT` 环境变量指定了 Eino 核心库在文件系统中的路径。因为本示例是 ChatWithDoc(与文档对话),Agent 需要知道 Eino 项目的代码在哪里,才能检索和读取代码及文档。
+- **不设置时**：`PROJECT_ROOT` 默认为当前工作目录（`chatwitheino` 所在目录），Agent 只能访问本示例项目的文件。这对于快速试验已足够。
+- **设置后**：指向 Eino 核心库根目录，Agent 可以检索 Eino 框架的完整代码库（核心库、扩展库、示例库）。这是 ChatWithEino 的完整使用场景。
 
-**三个仓库的相对路径关系:**
+**推荐的三仓库目录结构（如要完整体验）：**
 
 ```
-PROJECT_ROOT/                    # Eino 核心库根目录 (由 PROJECT_ROOT 指定)
-├── adk/                         # Agent Development Kit
-├── components/                  # 核心组件
-├── compose/                     # 编排组件
-├── examples/                    # 示例代码
-│   └── quickstart/              # 快速开始示例
-│       └── chatwitheino/         # 本示例所在位置
+eino/                    # PROJECT_ROOT（Eino 核心库）
+├── adk/
+├── components/
+├── compose/
+├── ext/                 # eino-ext（扩展组件，如 OpenAI、Ark 等实现）
+├── examples/            # eino-examples（本仓库，本示例所在位置）
+│   └── quickstart/
+│       └── chatwitheino/
 └── ...
 ```
 
-**依赖关系:**
-
-- **eino**: 核心库,由 `PROJECT_ROOT` 指定路径
-- **eino-ext**: 扩展库,需要在 `PROJECT_ROOT/ext` 目录下(扩展组件实现,如 OpenAI、Ark 等)
-- **eino-examples**: 示例代码库,需要在 `PROJECT_ROOT/examples` 目录下
-
-**重要**: 上述相对路径关系需要用户手动保证,不是自动配置的。可以使用 `dev_setup.sh` 脚本来快速设置:
+可以使用 `dev_setup.sh` 脚本自动设置上述目录结构：
 
 ```bash
-# 在 eino 根目录运行脚本,自动克隆扩展库和示例库到正确位置
+# 在 eino 根目录运行，自动克隆扩展库和示例库到正确位置
 bash scripts/dev_setup.sh
 ```
-
-脚本会创建以下目录结构:
-```
-eino/                    # PROJECT_ROOT (核心库)
-├── ext/                 # eino-ext (扩展组件)
-├── examples/            # eino-examples (示例代码)
-└── ... core framework
-```
-
-**为什么需要设置 PROJECT_ROOT?**
-
-`PROJECT_ROOT` 是 Eino 核心库的文件系统路径,通过这一个配置就能实现 Eino 框架全量的代码检索:
-
-1. **核心库检索**: `PROJECT_ROOT` 指向 Eino 核心库,Agent 可以直接读取核心代码
-2. **扩展库检索**: 根据 `PROJECT_ROOT` 可以定位到 `eino-ext` 仓库(扩展组件实现)
-3. **示例库检索**: 根据 `PROJECT_ROOT` 可以定位到 `eino-examples` 仓库(示例代码)
-
-**一个配置,全量检索** - 通过设置 `PROJECT_ROOT`,Agent 能够访问 Eino 框架的完整代码库,包括核心库、扩展库和示例库,为用户提供全面的技术支持。
 
 输出示例:
 

@@ -15,8 +15,8 @@ title: "第三章：Memory 与 Session（持久化对话）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch03/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch03/main.go)
-- Memory 实现：[mem/store.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/mem/store.go)
+- 入口代码：[cmd/ch03/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch03/main.go)
+- Memory 实现：[mem/store.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/mem/store.go)
 
 ## 前置条件
 
@@ -174,7 +174,7 @@ if err := session.Append(assistantMsg); err != nil {
 }
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch03/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch03/main.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch03/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch03/main.go)）：
 
 ```go
 // 创建或恢复 Session
