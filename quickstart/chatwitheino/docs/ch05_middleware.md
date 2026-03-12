@@ -56,11 +56,15 @@ Error: rate limit exceeded (429)
 
 ## 代码位置
 
-- 入口代码：[cmd/ch05/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch05/main.go)
+- 入口代码：[cmd/ch05/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch05/main.go)
 
 ## 前置条件
 
-与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。
+与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。同时，需要与第四章一样设置 `PROJECT_ROOT`：
+
+```bash
+export PROJECT_ROOT=/path/to/eino  # Eino 核心库根目录
+```
 
 ## 运行
 
@@ -134,6 +138,26 @@ type ChatModelAgentMiddleware interface {
 - **洋葱模型**：请求从外向内穿过 Middleware，响应从内向外返回
 - **可组合**：多个 Middleware 按顺序执行
 
+### Middleware 执行顺序
+
+`Handlers`（即 Middlewares）按**数组正序**包装，形成洋葱模型：
+
+```go
+Handlers: []adk.ChatModelAgentMiddleware{
+    &middlewareA{},  // 最外层：最先 Wrap，最先拦截请求，但 WrapModel 最后生效
+    &middlewareB{},  // 中间层
+    &middlewareC{},  // 最内层：最后 Wrap
+}
+```
+
+**对于 Tool 调用的执行顺序：**
+
+```
+请求 → A.Wrap → B.Wrap → C.Wrap → 实际 Tool 执行 → C返回 → B返回 → A返回 → 响应
+```
+
+**实用建议：** 将 `safeToolMiddleware`（错误捕获）放在最内层（数组末尾），确保其他 Middleware 抛出的中断错误能正确向外传播。
+
 ### SafeToolMiddleware
 
 `SafeToolMiddleware` 将 Tool 错误转换为字符串，让模型能够理解并处理：
@@ -179,10 +203,10 @@ type ModelRetryConfig struct {
 }
 ```
 
-**使用方式：**
+**使用方式（以 DeepAgent 为例）：**
 
 ```go
-agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+agent, err := deep.New(ctx, &deep.Config{
     // ...
     ModelRetryConfig: &adk.ModelRetryConfig{
         MaxRetries: 5,
@@ -255,15 +279,19 @@ func (m *safeToolMiddleware) WrapStreamableToolCall(
 
 ### 3. 配置 Agent 使用 Middleware
 
+本章继续使用第四章引入的 `DeepAgent`，在其 `Handlers` 字段中注册 Middleware：
+
 ```go
-agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-    Name:        "Ch05MiddlewareAgent",
-    Description: "ChatModelAgent with safe tool middleware and retry.",
-    Instruction: instruction,
-    Model:       cm,
-    Backend:     backend,
+agent, err := deep.New(ctx, &deep.Config{
+    Name:           "Ch05MiddlewareAgent",
+    Description:    "ChatWithDoc agent with safe tool middleware and retry.",
+    ChatModel:      cm,
+    Instruction:    agentInstruction,
+    Backend:        backend,
+    StreamingShell: backend,
+    MaxIteration:   50,
     Handlers: []adk.ChatModelAgentMiddleware{
-        &safeToolMiddleware{},
+        &safeToolMiddleware{},  // 将 Tool 错误转换为字符串
     },
     ModelRetryConfig: &adk.ModelRetryConfig{
         MaxRetries: 5,
@@ -272,15 +300,13 @@ agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
                 strings.Contains(err.Error(), "Too Many Requests")
         },
     },
-    ToolsConfig: adk.ToolsConfig{
-        ToolsNodeConfig: compose.ToolsNodeConfig{
-            Tools: []tool.BaseTool{listFilesTool, readFileTool},
-        },
-    },
 })
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch05/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch05/main.go)）：
+**注意**：`Handlers` 字段（在配置中）和 "Middleware"（在文档中讨论的概念）是同一回事——`Handlers` 是配置字段名，而 `ChatModelAgentMiddleware` 是接口名。
+```
+
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch05/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch05/main.go)）：
 
 ```go
 // SafeToolMiddleware 捕获 Tool 错误并转换为字符串
@@ -305,10 +331,12 @@ func (m *safeToolMiddleware) WrapInvokableToolCall(
     }, nil
 }
 
-// 配置 Agent
-agent, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-    Model:   cm,
-    Backend: backend,
+// 配置 DeepAgent（与第四章一样，新增 Handlers 和 ModelRetryConfig）
+agent, _ := deep.New(ctx, &deep.Config{
+    ChatModel:      cm,
+    Backend:        backend,
+    StreamingShell: backend,
+    MaxIteration:   50,
     Handlers: []adk.ChatModelAgentMiddleware{
         &safeToolMiddleware{},
     },
@@ -401,9 +429,9 @@ summarizationMW, _ := summarization.New(ctx, &summarization.Config{
     },
 })
 
-// 组合多个 middleware
+// 组合多个 middleware（概念示例，使用 DeepAgent 时将 adk.NewChatModelAgent 替换为 deep.New）
 agent, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-    Middlewares: []adk.ChatModelAgentMiddleware{
+    Handlers: []adk.ChatModelAgentMiddleware{  // 注意：配置字段名为 Handlers，概念上与 Middlewares 等价
         summarizationMW,   // 最外层：对话历史摘要
         reductionMW,       // 中间层：工具输出缩减
     },

@@ -6,11 +6,15 @@ title: "第七章：Interrupt/Resume（中断与恢复）"
 
 ## 代码位置
 
-- 入口代码：[cmd/ch07/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch07/main.go)
+- 入口代码：[cmd/ch07/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch07/main.go)
 
 ## 前置条件
 
-与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。
+与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）。同时，需要与第四章一样设置 `PROJECT_ROOT`：
+
+```bash
+export PROJECT_ROOT=/path/to/eino  # Eino 核心库根目录（不设置则默认使用当前目录）
+```
 
 ## 运行
 
@@ -61,37 +65,61 @@ hello
 
 ### Interrupt 机制
 
-`Interrupt` 是 Eino 中实现人机协作的核心机制：
+`Interrupt` 是 Eino 中实现人机协作的核心机制。
+
+**核心思想：在执行关键操作前暂停，等待用户确认后继续。**
+
+一个需要审批的 Tool 的执行被分成**两个阶段**：
+
+1. **第一次调用（触发中断）**：Tool 保存当前参数，然后返回一个中断信号。Runner 暂停执行，向调用侧返回 Interrupt 事件。
+2. **用户审批后恢复（Resume）**：Runner 重新调用 Tool，此时 Tool 检测到"已中断过"，直接读取用户的审批结果并执行（或拒绝）。
+
+**简化版伪代码：**
+
+```
+func myTool(ctx, args):
+    if 第一次调用:
+        保存 args
+        return 中断信号  // Runner 暂停，展示审批提示
+    else:  // Resume 后的第二次调用
+        if 用户批准:
+            return 执行操作(保存的 args)
+        else:
+            return "操作被用户拒绝"
+```
+
+**完整代码及关键字段说明：**
 
 ```go
 // 在 Tool 中触发中断
 func myTool(ctx context.Context, args string) (string, error) {
-    // 检查是否已经中断过
+    // wasInterrupted: 是否是 Resume 后的第二次调用（第一次为 false，Resume 后为 true）
+    // storedArgs: 第一次调用时通过 StatefulInterrupt 保存的参数，Resume 后可取回
     wasInterrupted, _, storedArgs := tool.GetInterruptState[string](ctx)
-    
+
     if !wasInterrupted {
-        // 第一次调用：触发中断，等待审批
+        // 第一次调用：触发中断，同时保存 args 供 Resume 后使用
         return "", tool.StatefulInterrupt(ctx, &ApprovalInfo{
-            ToolName: "my_tool",
+            ToolName:        "my_tool",
             ArgumentsInJSON: args,
-        }, args)
+        }, args)  // 第三个参数是要保存的状态（Resume 后通过 storedArgs 取回）
     }
-    
-    // 恢复后：检查审批结果
+
+    // Resume 后的第二次调用：读取用户审批结果
+    // isTarget: 本次 Resume 是否针对当前 Tool（一次 Resume 只针对一个 Tool）
+    // hasData:  Resume 时是否携带了审批结果数据
+    // data:     用户传入的审批结果
     isTarget, hasData, data := tool.GetResumeContext[*ApprovalResult](ctx)
     if isTarget && hasData {
         if data.Approved {
-            // 用户批准：执行操作
-            return doSomething(storedArgs)
-        } else {
-            // 用户拒绝：返回拒绝原因
-            return "Operation rejected by user", nil
+            return doSomething(storedArgs)  // 使用保存的参数执行实际操作
         }
+        return "Operation rejected by user", nil
     }
-    
-    // 其他情况：重新中断
+
+    // 其他情况（isTarget=false 意味着本次 Resume 目标不是当前 Tool）：重新中断
     return "", tool.StatefulInterrupt(ctx, &ApprovalInfo{
-        ToolName: "my_tool",
+        ToolName:        "my_tool",
         ArgumentsInJSON: storedArgs,
     }, storedArgs)
 }

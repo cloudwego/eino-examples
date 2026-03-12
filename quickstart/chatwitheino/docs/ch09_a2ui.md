@@ -18,8 +18,8 @@ Eino 更关注“可组合的智能执行与编排能力”，至于“如何呈
 
 ## 代码位置
 
-- 入口代码：[main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/main.go)
-- A2UI 实现：[a2ui/streamer.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/a2ui/streamer.go)
+- 入口代码：[main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/main.go)
+- A2UI 实装：[a2ui/streamer.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/a2ui/streamer.go)
 
 ## 前置条件
 
@@ -158,7 +158,7 @@ for {
 }
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch09/main.go](https://github.com/cloudwego/eino/blob/main/examples/quickstart/chatwitheino/cmd/ch09/main.go)）：
+**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch09/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)）：
 
 ```go
 // 创建 A2UI Streamer
