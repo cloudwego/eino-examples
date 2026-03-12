@@ -178,6 +178,21 @@
 
 ---
 
+## 📊 Schema (数据模式)
+
+### Stream (流式编程)
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [schema/stream/1_invoke](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/1_invoke) | Invoke 模式 | InvokableLambda 示例，Ping-Pong 模式，文本摘要器 |
+| [schema/stream/2_stream](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/2_stream) | Stream 模式 | StreamableLambda 示例，Server-Streaming 模式，逐词生成器 |
+| [schema/stream/3_collect](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/3_collect) | Collect 模式 | CollectableLambda 示例，Client-Streaming 模式，日志聚合器 |
+| [schema/stream/4_transform](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/4_transform) | Transform 模式 | TransformableLambda 示例，Bidirectional-Streaming 模式，实时文本处理器 |
+| [schema/stream/5_auto_streaming](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/5_auto_streaming) | 自动流化/合包 | 展示 Eino 自动处理节点间流类型不匹配的类型转换 |
+| [schema/stream/6_stream_reader_utils](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/6_stream_reader_utils) | StreamReader 工具 | Pipe、StreamReaderFromArray、StreamReaderWithConvert、ErrNoValue |
+| [schema/stream/7_merge_stream_readers](https://github.com/cloudwego/eino-examples/tree/main/schema/stream/7_merge_stream_readers) | 流合并 | MergeStreamReaders 示例，多源数据聚合 |
+
+---
+
 ## 📚 相关资源
 
 - **Eino 框架**: https://github.com/cloudwego/eino
