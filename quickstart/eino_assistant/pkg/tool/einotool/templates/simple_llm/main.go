@@ -117,7 +117,7 @@ base info: time: {date}.`
 	return template, nil
 }
 
-func PrepareModel(ctx context.Context, modelName string, apiKey string) (model.ChatModel, error) {
+func PrepareModel(ctx context.Context, modelName, apiKey string) (model.ChatModel, error) {
 	// 使用 ark 豆包大模型, or openai: openai.NewChatModel at github.com/cloudwego/eino-ext/components/model/openai
 	model, err := ark.NewChatModel(ctx, &ark.ChatModelConfig{
 		Model:  modelName,

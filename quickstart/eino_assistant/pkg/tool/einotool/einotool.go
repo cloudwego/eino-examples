@@ -109,21 +109,21 @@ func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest
 		exampleURL := EinoExample[req.ExampleType]
 		if len(exampleURL) == 0 {
 			res.Error = "invalid example type, can be one of: agent, components, graph, quickstart. example repo is " + EinoRepo["eino-examples"]
-			return
+			return res, err
 		}
 		res.Message = exampleURL[0]
 	case EinoToolActionGetGithubRepo:
 		repoURL := EinoRepo[req.RepoType]
 		if repoURL == "" {
 			res.Error = "invalid repo type, can be one of: eino, eino-ext, eino-examples. eino repo url is " + EinoRepo["eino"]
-			return
+			return res, err
 		}
 		res.Message = repoURL
 	case EinoToolActionGetDocURL:
 		docURL := EinoDoc[req.DocType]
 		if docURL == "" {
 			res.Error = "invalid doc type, can be one of: eino_index, quickstart, graph, agent, components, integrate. eino doc url is " + EinoDoc["eino_index"]
-			return
+			return res, err
 		}
 		res.Message = docURL
 	case EinoToolActionInitTemplate:
@@ -144,13 +144,13 @@ func (e *EinoAssistantToolImpl) Invoke(ctx context.Context, req *EinoToolRequest
 
 			// Create target directory
 			targetPath := filepath.Join(baseDir, file)
-			if err := os.MkdirAll(filepath.Dir(targetPath), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(targetPath), 0o755); err != nil {
 				res.Error = "failed to create directory: " + err.Error()
 				return res, nil
 			}
 
 			// Write file
-			if err := os.WriteFile(targetPath, content, 0644); err != nil {
+			if err := os.WriteFile(targetPath, content, 0o644); err != nil {
 				res.Error = "failed to write file: " + err.Error()
 				return res, nil
 			}

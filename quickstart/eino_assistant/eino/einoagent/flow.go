@@ -28,7 +28,8 @@ func newLambda1(ctx context.Context) (lba *compose.Lambda, err error) {
 	// TODO Modify component configuration here.
 	config := &react.AgentConfig{
 		MaxStep:            25,
-		ToolReturnDirectly: map[string]struct{}{}}
+		ToolReturnDirectly: map[string]struct{}{},
+	}
 	chatModelIns11, err := newChatModel(ctx)
 	if err != nil {
 		return nil, err

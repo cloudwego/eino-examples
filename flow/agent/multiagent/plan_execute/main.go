@@ -110,9 +110,9 @@ func main() {
 	_, err = planExecuteAgent.Stream(ctx, []*schema.Message{schema.UserMessage("我们一家三口去乐园玩，孩子身高 120 cm，预算 2000 元，希望能尽可能多的看表演，游乐设施则比较偏爱刺激项目，希望能在一天内尽可能多体验不同的活动，请帮忙规划一个可操作的一日行程。我们会在乐园开门的时候入场，玩到晚上闭园的时候。")},
 		agent.WithComposeOptions(compose.WithCallbacks(handler)), // 将中间结果打印的 callback handler 注入进来
 		// 给 planner 指定 mock 输出
-		//agent.WithComposeOptions(compose.WithChatModelOption(debug.WithDebugOutput(schema.AssistantMessage(debug.PlannerOutput, nil))).DesignateNode(nodeKeyPlanner)),
+		// agent.WithComposeOptions(compose.WithChatModelOption(debug.WithDebugOutput(schema.AssistantMessage(debug.PlannerOutput, nil))).DesignateNode(nodeKeyPlanner)),
 		// 给 reviser 指定 mock 输出
-		//agent.WithComposeOptions(compose.WithChatModelOption(debug.WithDebugOutput(schema.AssistantMessage("最终答案", nil))).DesignateNode(nodeKeyReviser)),
+		// agent.WithComposeOptions(compose.WithChatModelOption(debug.WithDebugOutput(schema.AssistantMessage("最终答案", nil))).DesignateNode(nodeKeyReviser)),
 	)
 	if err != nil {
 		log.Fatalf("stream error: %v", err)

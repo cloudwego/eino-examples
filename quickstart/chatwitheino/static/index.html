@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chat with Doc</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; background: #f5f5f5; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; background: #fff; border-bottom: 1px solid #e0e0e0;
+  }
+  header h1 { font-size: 1.1rem; font-weight: 600; }
+  header button { padding: 6px 14px; background: #2563eb; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+  header button:hover { background: #1d4ed8; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 220px; background: #fff; border-right: 1px solid #e0e0e0;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .sidebar-title { padding: 10px 14px; font-size: 0.75rem; color: #888; text-transform: uppercase; letter-spacing: .05em; }
+  .session-list { flex: 1; overflow-y: auto; }
+  .session-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 14px; cursor: pointer; font-size: 0.85rem; color: #333;
+    border-left: 3px solid transparent; transition: background .1s;
+  }
+  .session-item:hover { background: #f0f4ff; }
+  .session-item.active { background: #eff6ff; border-left-color: #2563eb; font-weight: 500; color: #1d40af; }
+  .session-item .del-btn { opacity: 0; font-size: 0.7rem; color: #999; background: none; border: none; cursor: pointer; padding: 2px 4px; }
+  .session-item:hover .del-btn { opacity: 1; }
+  .session-item .del-btn:hover { color: #dc2626; }
+
+  /* Chat area */
+  .chat-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  #chat-container {
+    flex: 1; overflow-y: auto; padding: 20px;
+  }
+  #chat-container .column { display: flex; flex-direction: column; gap: 14px; }
+  #chat-container .card {
+    background: #fff; border-radius: 10px; padding: 14px 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08); max-width: 820px;
+  }
+  #chat-container .card .column { gap: 6px; }
+  #chat-container .caption {
+    font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .06em; color: #6b7280;
+  }
+  #chat-container .body { font-size: 0.9rem; line-height: 1.65; color: #1f2937; }
+  #chat-container .body p { margin-bottom: 0.5em; }
+  #chat-container .body pre { background: #f3f4f6; border-radius: 6px; padding: 10px 12px; overflow-x: auto; font-size: 0.82rem; margin: 8px 0; }
+  #chat-container .body code { background: #f3f4f6; border-radius: 3px; padding: 1px 4px; font-size: 0.82rem; }
+  #chat-container .body pre code { background: none; padding: 0; }
+
+  /* Align user cards to the right */
+  #chat-container .card[data-role="You"] { margin-left: auto; background: #eff6ff; }
+  #chat-container .card[data-role="You"] .caption { color: #2563eb; }
+
+  /* Tool call / tool result chips — compact, muted appearance */
+  #chat-container .card[data-role="tool call"],
+  #chat-container .card[data-role="tool result"] {
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    padding: 8px 12px; box-shadow: none; max-width: 640px;
+  }
+  #chat-container .card[data-role="tool call"] .caption { color: #7c3aed; }
+  #chat-container .card[data-role="tool result"] .caption { color: #065f46; }
+  #chat-container .card[data-role="tool call"] .body,
+  #chat-container .card[data-role="tool result"] .body {
+    font-size: 0.8rem; color: #374151; font-family: monospace; line-height: 1.4;
+    white-space: pre-wrap; word-break: break-all;
+  }
+  #chat-container .card[data-role="error"] {
+    background: #fef2f2; border: 1px solid #fca5a5; padding: 8px 12px; box-shadow: none;
+  }
+  #chat-container .card[data-role="error"] .caption { color: #dc2626; }
+
+  /* Approval needed card */
+  #chat-container .card[data-role="approval needed"] {
+    background: #fffbeb; border: 1px solid #fcd34d; padding: 12px 16px; box-shadow: none; max-width: 820px;
+  }
+  #chat-container .card[data-role="approval needed"] .caption { color: #d97706; }
+  #chat-container .card[data-role="approval needed"] .body {
+    font-size: 0.82rem; color: #374151; font-family: monospace; line-height: 1.55;
+    white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;
+    max-height: 320px; overflow-y: auto; margin-top: 4px;
+  }
+
+  /* Approval button row */
+  .approval-buttons { display: flex; gap: 8px; margin-top: 8px; }
+  .approval-btn-approve {
+    padding: 6px 14px; background: #059669; color: #fff; border: none;
+    border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+  }
+  .approval-btn-approve:hover { background: #047857; }
+  .approval-btn-reject {
+    padding: 6px 14px; background: #dc2626; color: #fff; border: none;
+    border-radius: 6px; cursor: pointer; font-size: 0.8rem;
+  }
+  .approval-btn-reject:hover { background: #b91c1c; }
+  .approval-btn-approve:disabled, .approval-btn-reject:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+
+  /* Bottom bar */
+  .bottom-bar {
+    padding: 14px 20px; background: #fff; border-top: 1px solid #e0e0e0;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .upload-row { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: #555; }
+  .upload-row label { cursor: pointer; color: #2563eb; text-decoration: underline; }
+  #upload-info { color: #059669; font-size: 0.8rem; }
+  .input-row { display: flex; gap: 10px; }
+  #msg-input {
+    flex: 1; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 8px;
+    font-size: 0.9rem; resize: none; height: 42px; font-family: inherit;
+  }
+  #msg-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px rgba(37,99,235,.15); }
+  #send-btn {
+    padding: 9px 18px; background: #2563eb; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 0.9rem; white-space: nowrap;
+  }
+  #send-btn:hover { background: #1d4ed8; }
+  #send-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+
+  .empty-state { text-align: center; color: #9ca3af; margin-top: 80px; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Chat with Doc</h1>
+  <button id="new-session-btn">+ New Session</button>
+</header>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="sidebar-title">Sessions</div>
+    <div class="session-list" id="session-list"></div>
+  </aside>
+
+  <div class="chat-area">
+    <div id="chat-container">
+      <div class="empty-state">Select or create a session to start chatting.</div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="upload-row">
+        <span>📎</span>
+        <label for="file-input">Upload document</label>
+        <input type="file" id="file-input" style="display:none"/>
+        <span id="upload-info"></span>
+      </div>
+      <div class="input-row">
+        <textarea id="msg-input" placeholder="Ask about your document…" rows="1"></textarea>
+        <button id="send-btn">Send</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentSessionId = null;
+let pendingInterruptId = null; // set when the agent is awaiting approval
+
+// A2UI renderer state
+let components = {};   // id → ComponentValue
+let dataModel = {};    // dataKey → string
+let surfaceId = null;
+let rootId = null;
+
+// ─── A2UI Renderer ───────────────────────────────────────────────────────────
+function resetRenderer() {
+  components = {};
+  dataModel = {};
+  surfaceId = null;
+  rootId = null;
+}
+
+function processA2UIMessage(msg) {
+  if (msg.beginRendering) {
+    surfaceId = msg.beginRendering.surfaceId;
+    rootId = msg.beginRendering.root;
+    components = {};
+    dataModel = {};
+    render();
+    return;
+  }
+  if (msg.surfaceUpdate) {
+    for (const c of (msg.surfaceUpdate.components || [])) {
+      components[c.id] = c.component;
+    }
+    render();
+    return;
+  }
+  if (msg.dataModelUpdate) {
+    for (const dc of (msg.dataModelUpdate.contents || [])) {
+      dataModel[dc.key] = dc.valueString || '';
+    }
+    renderDataBindings();
+    return;
+  }
+  if (msg.interruptRequest) {
+    pendingInterruptId = msg.interruptRequest.interruptId;
+    renderApprovalButtons(msg.interruptRequest.description);
+    return;
+  }
+}
+
+function render() {
+  const container = document.getElementById('chat-container');
+  if (!rootId) {
+    container.innerHTML = '<div class="empty-state">Select or create a session to start chatting.</div>';
+    return;
+  }
+  container.innerHTML = renderComponent(rootId);
+  container.scrollTop = container.scrollHeight;
+}
+
+function renderComponent(id) {
+  const comp = components[id];
+  if (!comp) return '';
+
+  if (comp.Column) {
+    const inner = (comp.Column.children || []).map(renderComponent).join('');
+    return `<div class="column" data-id="${esc(id)}">${inner}</div>`;
+  }
+  if (comp.Card) {
+    // Derive role from the first Text child (role label) for styling
+    const colId = comp.Card.children && comp.Card.children[0];
+    const col = colId && components[colId];
+    let role = '';
+    if (col && col.Column && col.Column.children && col.Column.children[0]) {
+      const roleComp = components[col.Column.children[0]];
+      if (roleComp && roleComp.Text) role = roleComp.Text.value || '';
+    }
+    const inner = (comp.Card.children || []).map(renderComponent).join('');
+    return `<div class="card" data-id="${esc(id)}" data-role="${esc(role)}">${inner}</div>`;
+  }
+  if (comp.Row) {
+    const inner = (comp.Row.children || []).map(renderComponent).join('');
+    return `<div class="row" data-id="${esc(id)}">${inner}</div>`;
+  }
+  if (comp.Text) {
+    let value = comp.Text.value || '';
+    if (comp.Text.dataKey) {
+      value = dataModel[comp.Text.dataKey] || '';
+    }
+    const hint = comp.Text.usageHint || 'body';
+    if (hint === 'caption') {
+      return `<div class="caption" data-id="${esc(id)}" data-datakey="${esc(comp.Text.dataKey||'')}">${esc(value)}</div>`;
+    }
+    const html = typeof marked !== 'undefined' ? marked.parse(value || '') : esc(value);
+    return `<div class="body" data-id="${esc(id)}" data-datakey="${esc(comp.Text.dataKey||'')}">${html}</div>`;
+  }
+  return '';
+}
+
+// Efficient update: only re-render Text nodes whose data binding changed
+function renderDataBindings() {
+  const container = document.getElementById('chat-container');
+  const bound = container.querySelectorAll('[data-datakey]');
+  bound.forEach(el => {
+    const key = el.getAttribute('data-datakey');
+    if (!key) return;
+    const value = dataModel[key] || '';
+    if (el.classList.contains('caption')) {
+      if (el.textContent !== value) el.textContent = value;
+    } else {
+      const html = typeof marked !== 'undefined' ? marked.parse(value) : esc(value);
+      if (el.innerHTML !== html) {
+        el.innerHTML = html;
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+  });
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Approval UI ─────────────────────────────────────────────────────────────
+
+// Appends approve/reject buttons below the last card in the chat container.
+function renderApprovalButtons(description) {
+  const container = document.getElementById('chat-container');
+  const div = document.createElement('div');
+  div.id = 'approval-bar';
+  div.style.padding = '10px 20px';
+  div.innerHTML = `
+    <div class="approval-buttons">
+      <button class="approval-btn-approve" id="btn-approve">✓ Approve</button>
+      <button class="approval-btn-reject" id="btn-reject">✗ Reject</button>
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+
+  document.getElementById('btn-approve').addEventListener('click', () => sendApproval(true));
+  document.getElementById('btn-reject').addEventListener('click', () => sendApproval(false));
+}
+
+function removeApprovalButtons() {
+  const bar = document.getElementById('approval-bar');
+  if (bar) bar.remove();
+}
+
+async function sendApproval(approved) {
+  if (!pendingInterruptId || !currentSessionId) return;
+  removeApprovalButtons();
+  const sendBtn = document.getElementById('send-btn');
+  sendBtn.disabled = true;
+
+  let reason = '';
+  if (!approved) {
+    reason = window.prompt('Reason for rejection (optional):') || '';
+  }
+
+  let buffer = '';
+  try {
+    const res = await fetch(`/sessions/${currentSessionId}/approve`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({approved, reason}),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({error: res.statusText}));
+      alert('Approve error: ' + (err.error || res.statusText));
+      return;
+    }
+
+    pendingInterruptId = null;
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          const jsonStr = trimmed.slice(5).trimStart();
+          try { processA2UIMessage(JSON.parse(jsonStr)); } catch (_) {}
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Approval error:', err);
+  } finally {
+    sendBtn.disabled = false;
+    await loadSessions();
+  }
+}
+
+// ─── Session Management ───────────────────────────────────────────────────────
+async function loadSessions(autoSelectFirst) {
+  const res = await fetch('/sessions');
+  const sessions = await res.json();
+  const list = document.getElementById('session-list');
+  list.innerHTML = '';
+  for (const sess of (sessions || [])) {
+    const item = document.createElement('div');
+    item.className = 'session-item' + (sess.id === currentSessionId ? ' active' : '');
+    item.dataset.id = sess.id;
+    item.innerHTML = `<span class="title">${esc(sess.title || sess.id.slice(0,8))}</span><button class="del-btn" title="Delete">✕</button>`;
+    item.querySelector('.title').addEventListener('click', () => selectSession(sess.id));
+    item.querySelector('.del-btn').addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Delete this session?')) return;
+      await fetch(`/sessions/${sess.id}`, {method:'DELETE'});
+      if (currentSessionId === sess.id) {
+        currentSessionId = null;
+        resetRenderer();
+        document.getElementById('chat-container').innerHTML = '<div class="empty-state">Select or create a session to start chatting.</div>';
+        document.getElementById('upload-info').textContent = '';
+      }
+      loadSessions();
+    });
+    list.appendChild(item);
+  }
+  // On initial load: auto-select the first session so the user can type right away
+  if (autoSelectFirst && !currentSessionId && sessions && sessions.length > 0) {
+    selectSession(sessions[0].id);
+  }
+}
+
+function selectSession(id) {
+  currentSessionId = id;
+  pendingInterruptId = null;
+  resetRenderer();
+  document.getElementById('chat-container').innerHTML = '<div class="empty-state">Loading…</div>';
+  document.getElementById('upload-info').textContent = '';
+  loadSessions();
+  // Fetch and render the session's existing history immediately.
+  fetch(`/sessions/${id}/render`)
+    .then(res => res.text())
+    .then(text => {
+      for (const line of text.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try { processA2UIMessage(JSON.parse(trimmed)); } catch (_) {}
+      }
+    })
+    .catch(() => render());
+}
+
+document.getElementById('new-session-btn').addEventListener('click', async () => {
+  const res = await fetch('/sessions', {method:'POST'});
+  const {id} = await res.json();
+  currentSessionId = id;
+  resetRenderer();
+  document.getElementById('chat-container').innerHTML = '';
+  document.getElementById('upload-info').textContent = '';
+  await loadSessions();
+});
+
+// ─── File Upload ──────────────────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file || !currentSessionId) return;
+  const info = document.getElementById('upload-info');
+  info.textContent = 'Uploading…';
+  const fd = new FormData();
+  fd.append('file', file);
+  try {
+    const res = await fetch(`/sessions/${currentSessionId}/docs`, {method:'POST', body:fd});
+    const data = await res.json();
+    if (data.path) {
+      info.textContent = `✓ ${data.name} → ${data.path}`;
+    } else {
+      info.textContent = data.error || 'Upload failed';
+    }
+  } catch (err) {
+    info.textContent = `Upload error: ${err}`;
+  }
+  e.target.value = '';
+});
+
+// ─── Chat ─────────────────────────────────────────────────────────────────────
+async function sendMessage() {
+  const input = document.getElementById('msg-input');
+  const sendBtn = document.getElementById('send-btn');
+  const message = input.value.trim();
+  if (!message) return;
+
+  // Auto-create a session if none is active
+  if (!currentSessionId) {
+    const res = await fetch('/sessions', {method:'POST'});
+    const {id} = await res.json();
+    currentSessionId = id;
+    resetRenderer();
+    await loadSessions();
+  }
+
+  input.value = '';
+  sendBtn.disabled = true;
+  pendingInterruptId = null;
+  removeApprovalButtons();
+
+  let buffer = '';
+
+  try {
+    const res = await fetch(`/sessions/${currentSessionId}/chat`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({message}),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({error: res.statusText}));
+      alert('Error: ' + (err.error || res.statusText));
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // last incomplete line stays in buffer
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // SSE format: "data:{...}" or "data: {...}" — no guaranteed space
+        if (trimmed.startsWith('data:')) {
+          const jsonStr = trimmed.slice(5).trimStart();
+          try {
+            const msg = JSON.parse(jsonStr);
+            processA2UIMessage(msg);
+          } catch (_) { /* skip malformed */ }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Chat error:', err);
+  } finally {
+    sendBtn.disabled = false;
+    await loadSessions(); // refresh title in sidebar
+  }
+}
+
+document.getElementById('send-btn').addEventListener('click', sendMessage);
+document.getElementById('msg-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadSessions(true); // auto-select first session if one exists
+</script>
+</body>
+</html>

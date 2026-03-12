@@ -60,7 +60,8 @@ func main() {
 	// wordCounter is a transformable lambda function that
 	// count occurrences of SubStr within FullStr, for each trunk.
 	wordCounter := func(ctx context.Context, c *schema.StreamReader[counter]) (
-		*schema.StreamReader[int], error) {
+		*schema.StreamReader[int], error,
+	) {
 		var subStr, cachedStr string
 		return schema.StreamReaderWithConvert(c, func(co counter) (int, error) {
 			if len(co.SubStr) > 0 {

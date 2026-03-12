@@ -30,7 +30,8 @@ func newDocumentTransformer(ctx context.Context) (tfr document.Transformer, err 
 		Headers: map[string]string{
 			"#": "title",
 		},
-		TrimHeaders: false}
+		TrimHeaders: false,
+	}
 	tfr, err = markdown.NewHeaderSplitter(ctx, config)
 	if err != nil {
 		return nil, err

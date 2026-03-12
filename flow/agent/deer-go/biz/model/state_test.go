@@ -37,14 +37,14 @@ func TestState(t *testing.T) {
 			},
 		},
 		Locale: "",
-		//Server:                         nil,
+		// Server:                         nil,
 		InterruptFeedback:              "",
 		AutoAcceptedPlan:               false,
 		EnableBackgroundInvestigation:  false,
 		BackgroundInvestigationResults: "",
 	}
 	bt, err := state.MarshalJSON()
-	//bt, err := json.Marshal(state)
+	// bt, err := json.Marshal(state)
 	if err != nil {
 		fmt.Println("编码失败,错误原因: ", err)
 		return
