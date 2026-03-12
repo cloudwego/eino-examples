@@ -86,11 +86,11 @@ func (of *OpenFileToolImpl) Invoke(ctx context.Context, req OpenReq) (res OpenRe
 }
 
 type OpenReq struct {
-	URI string `json:"uri" jsonschema:"description=The uri of the file/dir/web url to open"`
+	URI string `json:"uri" jsonschema_description:"The uri of the file/dir/web url to open"`
 }
 
 type OpenRes struct {
-	Message string `json:"message" jsonschema:"description=The message of the operation"`
+	Message string `json:"message" jsonschema_description:"The message of the operation"`
 }
 
 func openURI(uri string) error {

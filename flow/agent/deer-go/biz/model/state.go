@@ -19,7 +19,7 @@ package model
 import (
 	"context"
 	"encoding/json"
-	
+
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )

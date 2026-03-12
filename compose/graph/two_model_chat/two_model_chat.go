@@ -22,13 +22,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	callbacks2 "github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/cloudwego/eino/utils/callbacks"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/internal/gptr"
 	"github.com/cloudwego/eino-examples/internal/logs"
@@ -39,7 +42,23 @@ func main() {
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	modelName := os.Getenv("OPENAI_MODEL_NAME")
 
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
 	ctx := context.Background()
+	var handlers []callbacks2.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks2.AppendGlobalHandlers(handlers...)
 
 	type state struct {
 		currentRound int
@@ -120,6 +139,8 @@ func main() {
 			break
 		}
 	}
+
+	time.Sleep(5 * time.Second)
 }
 
 type streamResponse struct {

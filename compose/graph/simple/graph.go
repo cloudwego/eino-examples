@@ -20,11 +20,17 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
+	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/prompt"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
+
+	"github.com/cloudwego/eino-examples/devops/visualize"
 )
 
 const (
@@ -33,7 +39,24 @@ const (
 )
 
 func main() {
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
 	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
+
 	g := compose.NewGraph[map[string]any, *schema.Message]()
 
 	pt := prompt.FromMessages(
@@ -47,10 +70,17 @@ func main() {
 	_ = g.AddEdge(nodeOfPrompt, nodeOfModel)
 	_ = g.AddEdge(nodeOfModel, compose.END)
 
-	r, err := g.Compile(ctx, compose.WithMaxRunSteps(10))
+	gen := visualize.NewMermaidGenerator("compose/graph/simple")
+	r, err := g.Compile(ctx,
+		compose.WithMaxRunSteps(10),
+		compose.WithGraphCompileCallbacks(gen),
+		compose.WithGraphName("SimpleGraph"),
+	)
 	if err != nil {
 		panic(err)
 	}
+
+	// Mermaid markdown and images are auto-generated in compose/graph/simple
 
 	in := map[string]any{"location": "beijing"}
 	ret, err := r.Invoke(ctx, in)

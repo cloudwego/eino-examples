@@ -23,8 +23,10 @@ import (
 
 	"github.com/RanFeng/ilog"
 	"github.com/cloudwego/eino-ext/callbacks/apmplus"
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino/callbacks"
 	hertzconfig "github.com/cloudwego/hertz/pkg/common/config"
+	"github.com/coze-dev/cozeloop-go"
 	"github.com/hertz-contrib/obs-opentelemetry/provider"
 	hertztracing "github.com/hertz-contrib/obs-opentelemetry/tracing"
 )
@@ -94,4 +96,22 @@ func initHertzTracing(ctx context.Context, appKey, region string) (hertzconfig.O
 	tracer, cfg := hertztracing.NewServerTracer()
 	return tracer, cfg
 
+}
+
+func InitCozeLoopTracing() {
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
+	if cozeloopApiToken == "" || cozeloopWorkspaceID == "" {
+		return
+	}
+	client, err := cozeloop.NewClient(
+		cozeloop.WithAPIToken(cozeloopApiToken),
+		cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+	)
+	if err != nil {
+		panic(err)
+	}
+	cozeloop.SetDefaultClient(client)
+	callbacks.AppendGlobalHandlers(clc.NewLoopHandler(client))
 }

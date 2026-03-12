@@ -29,7 +29,6 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/flow/agent/multiagent/host"
 	"github.com/cloudwego/eino/schema"
-	"github.com/ollama/ollama/api"
 )
 
 // search journal: user ask a question, this specialist load today's journal and ground its answer onto it.
@@ -58,7 +57,7 @@ func newAnswerWithJournalSpecialist(ctx context.Context, baseURL, model string) 
 		BaseURL: baseURL,
 		Model:   model,
 
-		Options: &api.Options{
+		Options: &ollama.Options{
 			Temperature: 0.000001,
 		},
 	})

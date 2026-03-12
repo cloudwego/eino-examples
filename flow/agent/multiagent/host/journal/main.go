@@ -22,8 +22,11 @@ import (
 	"io"
 	"os"
 
+	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/flow/agent/multiagent/host"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/devops/visualize"
 )
 
 func main() {
@@ -66,6 +69,17 @@ func main() {
 	})
 	if err != nil {
 		panic(err)
+	}
+
+	// export the graph via API and render mermaid (non-critical path)
+	{
+		anyG, opts := hostMA.ExportGraph()
+		gen := visualize.NewMermaidGenerator("flow/agent/multiagent/host/journal")
+		g := compose.NewGraph[[]*schema.Message, *schema.Message]()
+		_ = g.AddGraphNode("host_multiagent", anyG, opts...)
+		_ = g.AddEdge(compose.START, "host_multiagent")
+		_ = g.AddEdge("host_multiagent", compose.END)
+		_, _ = g.Compile(context.Background(), compose.WithGraphCompileCallbacks(gen))
 	}
 
 	cb := &logCallback{}

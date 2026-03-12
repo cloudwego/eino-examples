@@ -25,6 +25,7 @@ import (
 	"strings"
 	"time"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/callbacks/langfuse"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino-ext/components/tool/browseruse"
@@ -36,6 +37,7 @@ import (
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 	"github.com/google/uuid"
 )
 
@@ -48,6 +50,9 @@ var (
 	openaiModel   string
 	openaiBaseURL string
 
+	cozeloopApiToken    string
+	cozeloopWorkspaceID string
+
 	input string
 )
 
@@ -57,8 +62,11 @@ func init() {
 	langfuseSecretKey = os.Getenv("LANGFUSE_SECRET_KEY")
 
 	openaiAPIKey = os.Getenv("OPENAI_API_KEY")
-	openaiModel = os.Getenv("OPENAI_MODEL")
+	openaiModel = os.Getenv("OPENAI_MODEL_NAME")
 	openaiBaseURL = os.Getenv("OPENAI_BASE_URL")
+
+	cozeloopApiToken = os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID = os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
 
 	input = "what is eino?"
 }
@@ -83,6 +91,17 @@ func main() {
 		langfuseHandler, flusher := newLangfuseHandler()
 		handlers = append(handlers, langfuseHandler)
 		defer flusher()
+	}
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
 	}
 	handlers = append(handlers, newLogHandler())
 	callbacks.AppendGlobalHandlers(handlers...)

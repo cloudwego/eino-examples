@@ -1,0 +1,22 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    schedule:
+      interval: weekly
+    allow:
+      - dependency-name: github.com/cloudwego/eino
+      - dependency-name: github.com/cloudwego/eino-ext/callbacks/cozeloop
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/ark
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/deepseek
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/ollama
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/openai
+      - dependency-name: github.com/cloudwego/eino-ext/devops
+    groups:
+      eino-dependencies:
+        patterns:
+          - github.com/cloudwego/eino
+          - github.com/cloudwego/eino-ext/*
+    directories:
+      - /
+      - /flow/agent/deer-go
+      - /quickstart/eino_assistant

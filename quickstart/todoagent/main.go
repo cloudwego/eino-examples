@@ -20,12 +20,15 @@ import (
 	"context"
 	"os"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
+	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/internal/gptr"
 	"github.com/cloudwego/eino-examples/internal/logs"
@@ -36,7 +39,23 @@ func main() {
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
 	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+
 	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
+	}
+	callbacks.AppendGlobalHandlers(handlers...)
 
 	updateTool, err := utils.InferTool("update_todo", "Update a todo item, eg: content,deadline...", UpdateTodoFunc)
 	if err != nil {
@@ -177,11 +196,11 @@ func (lt *ListTodoTool) Info(_ context.Context) (*schema.ToolInfo, error) {
 }
 
 type TodoUpdateParams struct {
-	ID        string  `json:"id" jsonschema:"description=id of the todo"`
-	Content   *string `json:"content,omitempty" jsonschema:"description=content of the todo"`
-	StartedAt *int64  `json:"started_at,omitempty" jsonschema:"description=start time in unix timestamp"`
-	Deadline  *int64  `json:"deadline,omitempty" jsonschema:"description=deadline of the todo in unix timestamp"`
-	Done      *bool   `json:"done,omitempty" jsonschema:"description=done status"`
+	ID        string  `json:"id" jsonschema_description:"id of the todo"`
+	Content   *string `json:"content,omitempty" jsonschema_description:"content of the todo"`
+	StartedAt *int64  `json:"started_at,omitempty" jsonschema_description:"start time in unix timestamp"`
+	Deadline  *int64  `json:"deadline,omitempty" jsonschema_description:"deadline of the todo in unix timestamp"`
+	Done      *bool   `json:"done,omitempty" jsonschema_description:"done status"`
 }
 
 type TodoAddParams struct {

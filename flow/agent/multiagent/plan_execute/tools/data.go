@@ -16,7 +16,7 @@
 
 package tools
 
-var locationAdjacencyMap = map[string]map[string]int{
+var locationAdjacencyMap = map[string]map[string]float64{
 	"奇幻园林": {
 		"幻想世界": 10,
 		"未来世界": 7,

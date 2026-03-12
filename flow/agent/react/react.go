@@ -23,7 +23,9 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/components/model/ark"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/tool"
@@ -31,22 +33,43 @@ import (
 	"github.com/cloudwego/eino/flow/agent"
 	"github.com/cloudwego/eino/flow/agent/react"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 
+	"github.com/cloudwego/eino-examples/devops/visualize"
 	"github.com/cloudwego/eino-examples/flow/agent/react/tools"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func main() {
-	ctx := context.Background()
+	arkApiKey := os.Getenv("ARK_API_KEY")
+	arkModelName := os.Getenv("ARK_MODEL_NAME")
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
 
-	config := &ark.ChatModelConfig{
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Model:  os.Getenv("ARK_MODEL_NAME"),
+	ctx := context.Background()
+	var handlers []callbacks.Handler
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		handlers = append(handlers, clc.NewLoopHandler(client))
 	}
+	callbacks.AppendGlobalHandlers(handlers...)
+
+	// minimal: we will export graph via API when available and compile a mermaid diagram
 
 	// Create a new cached ark chat model.
 	//arkModel, err = NewCachedARKChatModel(ctx, config)
 
+	config := &ark.ChatModelConfig{
+		APIKey: arkApiKey,
+		Model:  arkModelName,
+	}
 	arkModel, err := ark.NewChatModel(ctx, config)
 	if err != nil {
 		logs.Errorf("failed to create chat model: %v", err)
@@ -54,8 +77,8 @@ func main() {
 	}
 
 	// prepare tools
-	restaurantTool := tools.GetRestaurantTool() // 查询餐厅信息的工具
-	dishTool := tools.GetDishTool()             // 查询餐厅菜品信息的工具
+	restaurantTool := tools.GetRestaurantTool()
+	dishTool := tools.GetDishTool()
 
 	// prepare persona (system prompt) (optional)
 	persona := `# Character:
@@ -85,7 +108,7 @@ func main() {
 		return false, nil
 	}*/
 
-	ragent, err := react.NewAgent(ctx, &react.AgentConfig{
+	rAgent, err := react.NewAgent(ctx, &react.AgentConfig{
 		ToolCallingModel: arkModel,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{restaurantTool, dishTool},
@@ -110,22 +133,32 @@ func main() {
 	// }
 	// fmt.Println(msg.String())
 
-	// If you want to use cached ark chat model, define a cache option and pass it to the agent.
-	// cacheOption := &ark.CacheOption{
-	//		APIType: ark.ResponsesAPI,
-	//		SessionCache: &ark.SessionCacheConfig{
-	//			EnableCache: true,
-	//			TTL:         3600,
-	//		},
-	//	}
-	// ctx = WithCacheCtx(ctx, cacheOption)
+	// If you want to use ark caching in react, call ark.WithCache()
+	//cacheOption := &ark.CacheOption{
+	//	APIType: ark.ResponsesAPI,
+	//	SessionCache: &ark.SessionCacheConfig{
+	//		EnableCache: true,
+	//		TTL:         3600,
+	//	},
+	//}
 
 	opt := []agent.AgentOption{
 		agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
 		//react.WithChatModelOptions(ark.WithCache(cacheOption)),
 	}
 
-	sr, err := ragent.Stream(ctx, []*schema.Message{
+	// Export graph and compile with mermaid (non-critical path)
+	{
+		anyG, opts := rAgent.ExportGraph()
+		gen := visualize.NewMermaidGenerator("flow/agent/react")
+		g := compose.NewGraph[[]*schema.Message, *schema.Message]()
+		_ = g.AddGraphNode("react_agent", anyG, opts...)
+		_ = g.AddEdge(compose.START, "react_agent")
+		_ = g.AddEdge("react_agent", compose.END)
+		_, _ = g.Compile(context.Background(), compose.WithGraphCompileCallbacks(gen))
+	}
+
+	sr, err := rAgent.Stream(ctx, []*schema.Message{
 		{
 			Role:    schema.System,
 			Content: persona,
@@ -161,6 +194,7 @@ func main() {
 	}
 
 	logs.Infof("\n\n===== finished =====\n")
+	time.Sleep(2 * time.Second)
 }
 
 type LoggerCallback struct {

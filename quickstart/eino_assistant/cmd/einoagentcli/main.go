@@ -31,11 +31,13 @@ import (
 	"strings"
 
 	"github.com/cloudwego/eino-ext/callbacks/apmplus"
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino-ext/callbacks/langfuse"
 	"github.com/cloudwego/eino-ext/devops"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
+	"github.com/coze-dev/cozeloop-go"
 
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/eino/einoagent"
 	"github.com/cloudwego/eino-examples/quickstart/eino_assistant/pkg/env"
@@ -114,6 +116,7 @@ func Init() error {
 	// check some essential envs
 	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
 
+	ctx := context.Background()
 	os.MkdirAll("log", 0755)
 	var f *os.File
 	f, err := os.OpenFile("log/eino.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
@@ -165,6 +168,21 @@ func Init() error {
 		})
 		callbackHandlers = append(callbackHandlers, cbh)
 	}
+
+	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
+	if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
+		client, err := cozeloop.NewClient(
+			cozeloop.WithAPIToken(cozeloopApiToken),
+			cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
+		)
+		if err != nil {
+			panic(err)
+		}
+		defer client.Close(ctx)
+		callbackHandlers = append(callbackHandlers, clc.NewLoopHandler(client))
+	}
+
 	if len(callbackHandlers) > 0 {
 		callbacks.InitCallbackHandlers(callbackHandlers)
 	}
