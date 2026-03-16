@@ -21,10 +21,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/skill"
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -48,6 +51,25 @@ func buildAgent(ctx context.Context) (adk.Agent, error) {
 		return nil, fmt.Errorf("build rag tool: %w", err)
 	}
 
+	var handlers []adk.ChatModelAgentMiddleware
+	if skillsDir, ok := resolveSkillsDir(); ok {
+		skillBackend, sbErr := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
+			Backend: backend,
+			BaseDir: skillsDir,
+		})
+		if sbErr != nil {
+			return nil, sbErr
+		}
+		skillMiddleware, smErr := skill.NewMiddleware(ctx, &skill.Config{
+			Backend: skillBackend,
+		})
+		if smErr != nil {
+			return nil, smErr
+		}
+		handlers = append(handlers, skillMiddleware)
+	}
+	handlers = append(handlers, &approvalMiddleware{}, &safeToolMiddleware{})
+
 	return deep.New(ctx, &deep.Config{
 		Name:           "ChatWithDocAgent",
 		Description:    "An agent that reads and answers questions about documents.",
@@ -55,10 +77,7 @@ func buildAgent(ctx context.Context) (adk.Agent, error) {
 		Backend:        backend,
 		StreamingShell: backend,
 		MaxIteration:   50,
-		Handlers: []adk.ChatModelAgentMiddleware{
-			&approvalMiddleware{},
-			&safeToolMiddleware{},
-		},
+		Handlers:       handlers,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{ragTool},
@@ -73,6 +92,21 @@ func buildAgent(ctx context.Context) (adk.Agent, error) {
 			},
 		},
 	})
+}
+
+func resolveSkillsDir() (string, bool) {
+	skillsDir := strings.TrimSpace(os.Getenv("EINO_EXT_SKILLS_DIR"))
+	if skillsDir == "" {
+		return "", false
+	}
+	if absSkillsDir, absErr := filepath.Abs(skillsDir); absErr == nil {
+		skillsDir = absSkillsDir
+	}
+	fi, err := os.Stat(skillsDir)
+	if err != nil || !fi.IsDir() {
+		return "", false
+	}
+	return skillsDir, true
 }
 
 // safeToolMiddleware converts streaming tool errors into error-message strings
