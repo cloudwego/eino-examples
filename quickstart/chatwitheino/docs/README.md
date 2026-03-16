@@ -1,5 +1,5 @@
 ---
-title: "ChatWithEino Quickstart 总览（Console → Web/A2UI）"
+title: "Eino: 快速开始"
 ---
 
 本篇文档用于作为 ChatWithEino Quickstart 的统一入口：用一条清晰的路径带你跑起来，并解释这个系列最终要交付什么（一个可扩展的端到端 Agent 应用骨架）。
