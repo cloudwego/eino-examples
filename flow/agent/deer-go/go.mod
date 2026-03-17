@@ -6,12 +6,12 @@ toolchain go1.23.7
 
 require (
 	github.com/RanFeng/ilog v1.1.0
-	github.com/cloudwego/eino v0.8.0
+	github.com/cloudwego/eino v0.8.3
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
-	github.com/cloudwego/eino-ext/components/model/openai v0.1.8
+	github.com/cloudwego/eino-ext/components/model/openai v0.1.10
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250514085234-473e80da5261
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.13
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.14
 	github.com/cloudwego/hertz v0.10.0
 	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/getkin/kin-openapi v0.118.0
