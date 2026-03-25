@@ -15,6 +15,7 @@ This directory provides examples for Eino ADK:
     - `supervisor`: basic example of supervisor agent.
     - `layered-supervisor`: another example of supervisor agent, which set a supervisor agent as sub-agent of another supervisor agent.
     - `integration-project-manager`: another example of using supervisor agent.
+    - `openclaw-like-agent`: an OpenClaw-style local agent CLI example with workspace awareness, session memory, and skill loading.
   - `common`: utils. 
 
 
