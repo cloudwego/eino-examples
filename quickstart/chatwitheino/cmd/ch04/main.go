@@ -198,7 +198,9 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 
 			if mv.IsStreaming {
 				mv.MessageStream.SetAutomaticClose()
-				var accumulatedToolCalls []schema.ToolCall
+
+				// 按 index 合并流式 ToolCall 分片
+				mergedToolCalls := make(map[int]*schema.ToolCall)
 				for {
 					frame, err := mv.MessageStream.Recv()
 					if errors.Is(err, io.EOF) {
@@ -212,17 +214,34 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 							sb.WriteString(frame.Content)
 							_, _ = fmt.Fprint(os.Stdout, frame.Content)
 						}
-						// 累积 ToolCalls
-						if len(frame.ToolCalls) > 0 {
-							accumulatedToolCalls = append(accumulatedToolCalls, frame.ToolCalls...)
+						// 按 index 合并 ToolCall 分片
+						for _, tc := range frame.ToolCalls {
+							idx := 0
+							if tc.Index != nil {
+								idx = *tc.Index
+							}
+							existing, ok := mergedToolCalls[idx]
+							if !ok {
+								copied := tc
+								mergedToolCalls[idx] = &copied
+							} else {
+								if tc.ID != "" {
+									existing.ID = tc.ID
+								}
+								if tc.Function.Name != "" {
+									existing.Function.Name += tc.Function.Name
+								}
+								if tc.Function.Arguments != "" {
+									existing.Function.Arguments += tc.Function.Arguments
+								}
+							}
 						}
 					}
 				}
+
 				// 流结束后打印完整的 ToolCalls
-				for _, tc := range accumulatedToolCalls {
-					if tc.Function.Name != "" && tc.Function.Arguments != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
-					}
+				for _, tc := range mergedToolCalls {
+					fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
 				}
 				_, _ = fmt.Fprintln(os.Stdout)
 				continue
