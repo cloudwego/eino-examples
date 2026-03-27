@@ -58,7 +58,6 @@ docker run -p 8080:8080 -e ARK_API_KEY=xxx -e ARK_CHAT_MODEL=xxx -e ARK_EMBEDDIN
 ### 命令行运行 index (可选)
 
 ```bash
-# 因示例的Markdown文件存放在 cmd/knowledgeindexing/eino-docs 目录，代码中指定了相对路径 ./eino-docs，所以需在 cmd/knowledgeindexing 运行指令
-cd cmd/knowledgeindexing
-go run main.go
+# 在 eino_assistant 目录下执行指令
+go run cmd/knowledgeindexing/main.go 
 ```

@@ -18,6 +18,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io/fs"
 	"os"
@@ -42,6 +43,19 @@ func init() {
 }
 
 func main() {
+	repoDir := flag.String("dir", "./eino-docs", "the directory of markdown files")
+	flag.Parse()
+
+	finalPath := *repoDir
+	// 核心逻辑：如果当前目录找不到，尝试去示例目录下找
+	if _, err := os.Stat(finalPath); os.IsNotExist(err) {
+		// 自动指向正确的位置，不再需要用户手动输入长路径
+		fixedPath := filepath.Join("cmd/knowledgeindexing", *repoDir)
+		if _, err := os.Stat(fixedPath); err == nil {
+			finalPath = fixedPath
+		}
+	}
+
 	cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
 	cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID") // use cozeloop trace, from https://loop.coze.cn/open/docs/cozeloop/go-sdk#4a8c980e
 
@@ -60,7 +74,7 @@ func main() {
 	}
 	callbacks.AppendGlobalHandlers(handlers...)
 
-	err := indexMarkdownFiles(ctx, "./eino-docs")
+	err := indexMarkdownFiles(ctx, finalPath)
 	if err != nil {
 		panic(err)
 	}

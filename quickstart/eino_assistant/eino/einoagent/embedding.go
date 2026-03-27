@@ -26,10 +26,13 @@ import (
 
 func newEmbedding(ctx context.Context) (eb embedding.Embedder, err error) {
 	// TODO Modify component configuration here.
-	config := &ark.EmbeddingConfig{
-		Model:  os.Getenv("ARK_EMBEDDING_MODEL"),
-		APIKey: os.Getenv("ARK_API_KEY"),
-	}
+	apiType := ark.APITypeMultiModal 
+    config := &ark.EmbeddingConfig{
+        Model:   os.Getenv("ARK_EMBEDDING_MODEL"),
+        APIKey:  os.Getenv("ARK_API_KEY"),
+        APIType: &apiType, 
+    }
+
 	eb, err = ark.NewEmbedder(ctx, config)
 	if err != nil {
 		return nil, err
