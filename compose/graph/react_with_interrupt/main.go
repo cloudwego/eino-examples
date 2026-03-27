@@ -147,7 +147,7 @@ func newChatModel(ctx context.Context) model.ToolCallingChatModel {
 type bookInput struct {
 	Location             string `json:"location"`
 	PassengerName        string `json:"passenger_name"`
-	PassengerPhoneNumber string `json:"passenger_phone_number"`
+	PassengerPhoneNumber string `json:"passenger_phone_number,omitempty"`
 }
 
 func newToolsNode(ctx context.Context) *compose.ToolsNode {
