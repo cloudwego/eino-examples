@@ -72,7 +72,6 @@ func ListDir(dir string) ([]*SubmitResultFile, error) {
 		})
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

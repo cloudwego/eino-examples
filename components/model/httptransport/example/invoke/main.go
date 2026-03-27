@@ -29,6 +29,10 @@ import (
 	"github.com/cloudwego/eino-examples/components/model/httptransport"
 )
 
+type ctxKey string
+
+const logIDKey ctxKey = "log_id"
+
 func main() {
 	ctx := context.Background()
 
@@ -55,7 +59,7 @@ func main() {
 		schema.SystemMessage("You are a helpful assistant."),
 		schema.UserMessage("Say hello in one sentence."),
 	}
-	ctx = context.WithValue(ctx, "log_id", "invoke-req-001")
+	ctx = context.WithValue(ctx, logIDKey, "invoke-req-001")
 	msg, err := chatModel.Generate(ctx, input)
 	if err != nil {
 		log.Fatal(err)

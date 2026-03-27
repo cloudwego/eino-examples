@@ -80,7 +80,6 @@ func Streamable(next compose.StreamableToolEndpoint) compose.StreamableToolEndpo
 		}
 		// If there was no error, return the original stream output.
 		return streamOutput, nil
-
 	}
 }
 

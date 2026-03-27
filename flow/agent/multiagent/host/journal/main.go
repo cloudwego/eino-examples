@@ -30,7 +30,6 @@ import (
 )
 
 func main() {
-
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")

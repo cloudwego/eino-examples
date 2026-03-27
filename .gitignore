@@ -42,3 +42,13 @@ adk/multiagent/integration-excel-agent/playground/*
 
 # Trae files
 .trae
+*.log
+*.log.*
+log/
+CLAUDE.md
+quickstart/chatwithdoc/data/sessions/
+quickstart/chatwithdoc/data/workspace/
+quickstart/chatwitheino/skills/
+
+*.jsonl
+*.txt

@@ -35,9 +35,7 @@ const (
 	transportSSE   = "sse"
 )
 
-var (
-	MCPServer map[string]client.MCPClient
-)
+var MCPServer map[string]client.MCPClient
 
 func InitMCP() {
 	var err error
@@ -104,6 +102,7 @@ func (w *ServerConfigWrapper) UnmarshalJSON(data []byte) error {
 
 	return nil
 }
+
 func (w ServerConfigWrapper) MarshalJSON() ([]byte, error) {
 	return json.Marshal(w.Config)
 }

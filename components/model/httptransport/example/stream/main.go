@@ -31,6 +31,10 @@ import (
 	"github.com/cloudwego/eino-examples/components/model/httptransport"
 )
 
+type ctxKey string
+
+const logIDKey ctxKey = "log_id"
+
 func main() {
 	ctx := context.Background()
 
@@ -59,7 +63,7 @@ func main() {
 		schema.SystemMessage("You are a helpful assistant."),
 		schema.UserMessage("Stream a single-sentence greeting."),
 	}
-	ctx = context.WithValue(ctx, "log_id", "stream-req-001")
+	ctx = context.WithValue(ctx, logIDKey, "stream-req-001")
 	sr, err := chatModel.Stream(ctx, input)
 	if err != nil {
 		log.Fatal(err)

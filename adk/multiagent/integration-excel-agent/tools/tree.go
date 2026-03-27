@@ -27,19 +27,17 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-var (
-	treeToolInfo = &schema.ToolInfo{
-		Name: "tree",
-		Desc: "This tool is used to view the directory tree structure; the parameter is the path to be viewed, and it returns the complete directory tree structure under that path.",
-		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
-			"path": {
-				Type:     schema.String,
-				Desc:     "absolute path",
-				Required: true,
-			},
-		}),
-	}
-)
+var treeToolInfo = &schema.ToolInfo{
+	Name: "tree",
+	Desc: "This tool is used to view the directory tree structure; the parameter is the path to be viewed, and it returns the complete directory tree structure under that path.",
+	ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"path": {
+			Type:     schema.String,
+			Desc:     "absolute path",
+			Required: true,
+		},
+	}),
+}
 
 func NewTreeTool(op commandline.Operator) tool.InvokableTool {
 	return &tree{op: op}
