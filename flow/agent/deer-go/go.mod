@@ -6,7 +6,7 @@ toolchain go1.23.7
 
 require (
 	github.com/RanFeng/ilog v1.1.0
-	github.com/cloudwego/eino v0.8.4
+	github.com/cloudwego/eino v0.8.5
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.10
