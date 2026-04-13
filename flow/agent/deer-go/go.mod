@@ -6,12 +6,12 @@ toolchain go1.23.7
 
 require (
 	github.com/RanFeng/ilog v1.1.0
-	github.com/cloudwego/eino v0.8.5
+	github.com/cloudwego/eino v0.8.8
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
-	github.com/cloudwego/eino-ext/components/model/openai v0.1.10
+	github.com/cloudwego/eino-ext/components/model/openai v0.1.12
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250514085234-473e80da5261
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.14
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.16
 	github.com/cloudwego/hertz v0.10.0
 	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/getkin/kin-openapi v0.118.0
@@ -54,7 +54,7 @@ require (
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/meguminnnnnnnnn/go-openai v0.1.1 // indirect
+	github.com/meguminnnnnnnnn/go-openai v0.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
