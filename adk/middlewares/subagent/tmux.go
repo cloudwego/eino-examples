@@ -228,7 +228,7 @@ func (tm *tmuxManager) SessionName() string {
 	return tm.sessionName
 }
 
-// Cleanup removes all log files and the temp directory.
+// Cleanup closes all writers, kills tmux windows/session, and removes temp files.
 func (tm *tmuxManager) Cleanup() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
@@ -239,6 +239,15 @@ func (tm *tmuxManager) Cleanup() {
 			w.writer.Close()
 		}
 		w.writerMu.Unlock()
+
+		// Kill the tmux window (sends SIGHUP to less, which exits cleanly)
+		_ = exec.Command("tmux", "kill-window", "-t",
+			fmt.Sprintf("%s:%s", tm.sessionName, w.windowName)).Run()
+	}
+
+	// In external mode, kill the entire session we created
+	if tm.mode == tmuxModeExternal && tm.sessionName != "" {
+		_ = exec.Command("tmux", "kill-session", "-t", tm.sessionName).Run()
 	}
 
 	if tm.tmpDir != "" {
