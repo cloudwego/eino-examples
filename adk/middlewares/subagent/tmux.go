@@ -125,11 +125,10 @@ func (tm *tmuxManager) CreateWindow(taskID, description string) (string, error) 
 	fmt.Fprintf(f, "=== SubAgent Task [%s]: %s ===\n", taskID, description)
 	fmt.Fprintf(f, "=== Started: %s ===\n\n", time.Now().Format("15:04:05"))
 
-	// tmux window: disable echo so arrow keys don't produce garbage, then tail -f
-	shellCmd := fmt.Sprintf(
-		"stty -echo 2>/dev/null; tail -n +1 -f '%s'",
-		logPath,
-	)
+	// tmux window: less -R +F gives follow mode (like tail -f) with full keyboard
+	// navigation. User presses Ctrl+C to stop following, arrows/PgUp/PgDn to scroll,
+	// Shift+F to resume following, q to quit.
+	shellCmd := fmt.Sprintf("less -R +F '%s'", logPath)
 
 	target := tm.sessionName + ":"
 	cmd := exec.Command("tmux", "new-window", "-d", "-t", target, "-n", windowName, "bash", "-c", shellCmd)

@@ -515,7 +515,7 @@ func (m tuiModel) renderMainLines(width int) []string {
 	return rendered
 }
 
-// renderFooter returns compact footer lines showing subagent task statuses and tmux links.
+// renderFooter returns compact footer lines showing subagent task statuses.
 // Returns empty slice when there are no tasks.
 func (m tuiModel) renderFooter(width int) []string {
 	if len(m.subAgentOrder) == 0 {
@@ -528,16 +528,15 @@ func (m tuiModel) renderFooter(width int) []string {
 		if !ok {
 			continue
 		}
-		line := fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), truncateStr(t.Description, 40))
-		if t.TmuxWindow != "" {
-			line += "  " + infoStyle.Render("-> tmux select-window -t :"+t.TmuxWindow)
-		}
-		lines = append(lines, line)
+		lines = append(lines, fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), truncateStr(t.Description, 50)))
 	}
 
 	if m.tmuxMode == tmuxModeExternal && m.tmuxSession != "" {
 		lines = append(lines, infoStyle.Render(
-			fmt.Sprintf("  Attach: tmux attach -t %s", m.tmuxSession)))
+			fmt.Sprintf("  View details: tmux attach -t %s  (Ctrl+C to stop follow, arrows to scroll, q to quit)", m.tmuxSession)))
+	} else if m.tmuxMode == tmuxModeInside {
+		lines = append(lines, infoStyle.Render(
+			"  View details: Ctrl+B N/P to switch window  (Ctrl+C to stop follow, arrows to scroll, q to quit)"))
 	}
 
 	return lines
