@@ -267,6 +267,7 @@ type tuiModel struct {
 
 func newTUIModel() tuiModel {
 	ti := textinput.New()
+	ti.Prompt = inputPromptStyle.Render(">> ")
 	ti.Placeholder = "Enter your query..."
 	ti.Focus()
 	ti.CharLimit = 2048
@@ -323,7 +324,7 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		m.textInput.Width = msg.Width - 6
+		m.textInput.Width = msg.Width - 4 // subtract prompt ">> " width + margin
 
 	case userQueryMsg:
 		return m, nil
@@ -482,7 +483,7 @@ func (m tuiModel) View() string {
 	// Input bar
 	var inputBar string
 	if m.inputMode {
-		inputBar = inputPromptStyle.Render(">> ") + m.textInput.View()
+		inputBar = m.textInput.View()
 	} else if m.querying {
 		inputBar = infoStyle.Render("  Agent is working...")
 	}
