@@ -46,6 +46,9 @@ adk/multiagent/integration-excel-agent/playground/*
 *.log.*
 log/
 CLAUDE.md
+.claude
+.claude-trace
+
 quickstart/chatwithdoc/data/sessions/
 quickstart/chatwithdoc/data/workspace/
 quickstart/chatwitheino/skills/
