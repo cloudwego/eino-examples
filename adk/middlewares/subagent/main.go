@@ -135,16 +135,34 @@ Use the task_output tool to check on completed background tasks and incorporate 
 	p := tea.NewProgram(app, tea.WithAltScreen())
 	app.setProgram(p)
 
-	// Subscribe to TaskMgr notifications for subagent panel
+	// Subscribe to TaskMgr notifications for subagent panel + tmux windows
 	notifyCh := taskMgr.Subscribe()
 	go func() {
 		for notification := range notifyCh {
 			task := notification.Task
 			p.Send(subAgentNotificationMsg{task: task})
 
-			// If the task is running and has events, drain them in a goroutine
 			if task.Status == subagent.StatusRunning && notification.Events != nil {
-				go drainSubAgentEvents(task.ID, notification.Events, p)
+				// Create tmux window for this task
+				windowName, err := app.tmuxMgr.CreateWindow(task.ID, task.Description)
+				if err != nil {
+					log.Printf("Warning: failed to create tmux window for task %s: %v", task.ID, err)
+				}
+				if windowName != "" {
+					p.Send(tmuxWindowCreatedMsg{taskID: task.ID, windowName: windowName})
+				}
+
+				// Drain events to tmux window (or TUI fallback)
+				go drainSubAgentEvents(task.ID, notification.Events, p, app.tmuxMgr)
+			}
+
+			// If task reached terminal state, mark tmux window complete
+			if task.Status == subagent.StatusCompleted || task.Status == subagent.StatusFailed || task.Status == subagent.StatusCanceled {
+				result := task.Result
+				if task.Error != "" {
+					result = task.Error
+				}
+				app.tmuxMgr.MarkComplete(task.ID, string(task.Status), result)
 			}
 		}
 	}()
@@ -155,6 +173,7 @@ Use the task_output tool to check on completed background tasks and incorporate 
 	}
 
 	// Cleanup
+	app.tmuxMgr.Cleanup()
 	_ = taskMgr.Close(ctx)
 
 	time.Sleep(20 * time.Second)
@@ -166,12 +185,10 @@ type appModel struct {
 	runner  *adk.Runner
 	ctx     context.Context
 	taskMgr *subagent.TaskMgr
+	tmuxMgr *tmuxManager
 	cpSeq   int
 
 	// messageHistory accumulates the full conversation across turns.
-	// Each turn appends assistant messages/tool calls/tool results from agent events.
-	// When subagents complete, their results are appended as a user message to trigger
-	// the next turn.
 	messageHistory []*schema.Message
 
 	mu      sync.Mutex
@@ -179,11 +196,18 @@ type appModel struct {
 }
 
 func newAppModel(ctx context.Context, runner *adk.Runner, taskMgr *subagent.TaskMgr) *appModel {
+	tmuxMgr := newTmuxManager()
+
+	tui := newTUIModel()
+	tui.tmuxMode = tmuxMgr.Mode()
+	tui.tmuxSession = tmuxMgr.SessionName()
+
 	return &appModel{
-		tui:     newTUIModel(),
+		tui:     tui,
 		runner:  runner,
 		ctx:     ctx,
 		taskMgr: taskMgr,
+		tmuxMgr: tmuxMgr,
 	}
 }
 
@@ -316,21 +340,25 @@ func (a *appModel) collectSubAgentResults() string {
 }
 
 // drainSubAgentEvents reads all events from a subagent's event iterator
-// and sends them to the TUI as subAgentEventMsg.
-func drainSubAgentEvents(taskID string, events *adk.AsyncIterator[*adk.AgentEvent], p *tea.Program) {
+// and routes them to the tmux window (when available) or TUI panel (fallback).
+func drainSubAgentEvents(taskID string, events *adk.AsyncIterator[*adk.AgentEvent], p *tea.Program, tmuxMgr *tmuxManager) {
 	for {
 		event, ok := events.Next()
 		if !ok {
 			break
 		}
 		if event.Err != nil {
-			p.Send(subAgentEventMsg{taskID: taskID, entry: logEntry{
+			entry := logEntry{
 				Type:      "error",
 				Content:   event.Err.Error(),
 				Timestamp: time.Now(),
-			}})
+			}
+			tmuxMgr.WriteEvent(taskID, entry)
+			if tmuxMgr.Mode() == tmuxModeNone {
+				p.Send(subAgentEventMsg{taskID: taskID, entry: entry})
+			}
 			continue
 		}
-		processSubAgentEvent(event, taskID, p)
+		processSubAgentEvent(event, taskID, p, tmuxMgr)
 	}
 }

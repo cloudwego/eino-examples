@@ -143,6 +143,12 @@ type subAgentsDoneMsg struct {
 // turnCompleteMsg signals that no more subagent results are pending and the user can input again.
 type turnCompleteMsg struct{}
 
+// tmuxWindowCreatedMsg signals that a tmux window was created for a task.
+type tmuxWindowCreatedMsg struct {
+	taskID     string
+	windowName string
+}
+
 type errMsg struct {
 	err error
 }
@@ -214,6 +220,7 @@ type taskInfo struct {
 	Description string
 	Status      subagent.Status
 	Result      string
+	TmuxWindow  string // tmux window name, empty if tmux not available
 }
 
 func (t taskInfo) StatusStyle() string {
@@ -238,8 +245,13 @@ type tuiModel struct {
 	mainLogs   []logEntry
 	mainScroll int // offset from bottom (0 = auto-scroll to bottom)
 
-	// SubAgent panel
-	subAgentTasks  map[string]*taskInfo
+	// SubAgent task status bar
+	subAgentTasks map[string]*taskInfo
+	subAgentOrder []string // insertion-ordered task IDs
+	tmuxMode      tmuxMode // current tmux integration level
+	tmuxSession   string   // tmux session name for hints
+
+	// SubAgent event log (only used when tmuxMode == tmuxModeNone)
 	subAgentLogs   []logEntry
 	subAgentScroll int // offset from bottom
 
@@ -330,14 +342,29 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case subAgentNotificationMsg:
 		t := msg.task
-		m.subAgentTasks[t.ID] = &taskInfo{
-			ID:          t.ID,
-			Description: t.Description,
-			Status:      t.Status,
-			Result:      t.Result,
+		existing, exists := m.subAgentTasks[t.ID]
+		if !exists {
+			m.subAgentOrder = append(m.subAgentOrder, t.ID)
+			m.subAgentTasks[t.ID] = &taskInfo{
+				ID:          t.ID,
+				Description: t.Description,
+				Status:      t.Status,
+				Result:      t.Result,
+			}
+			if t.Error != "" {
+				m.subAgentTasks[t.ID].Result = "ERROR: " + t.Error
+			}
+		} else {
+			existing.Status = t.Status
+			existing.Result = t.Result
+			if t.Error != "" {
+				existing.Result = "ERROR: " + t.Error
+			}
 		}
-		if t.Error != "" {
-			m.subAgentTasks[t.ID].Result = "ERROR: " + t.Error
+
+	case tmuxWindowCreatedMsg:
+		if t, ok := m.subAgentTasks[msg.taskID]; ok {
+			t.TmuxWindow = msg.windowName
 		}
 
 	case subAgentEventMsg:
@@ -415,9 +442,31 @@ func (m tuiModel) View() string {
 	if availHeight < 6 {
 		availHeight = 6
 	}
-	// SubAgent panel (top) gets 40%, Main panel (bottom) gets 60%
-	subPanelH := availHeight * 40 / 100
-	mainPanelH := availHeight - subPanelH
+
+	var subPanelH, mainPanelH int
+	if m.tmuxMode != tmuxModeNone {
+		// Compact: header(2) + one line per task + border(2)
+		taskLines := len(m.subAgentOrder)
+		if taskLines == 0 {
+			taskLines = 1
+		}
+		subPanelH = taskLines + 4
+		if m.tmuxMode == tmuxModeExternal {
+			subPanelH += 2 // attach hint
+		}
+		maxSubH := availHeight / 3
+		if subPanelH > maxSubH {
+			subPanelH = maxSubH
+		}
+		if subPanelH < 3 {
+			subPanelH = 3
+		}
+		mainPanelH = availHeight - subPanelH
+	} else {
+		// No tmux: keep 40/60 split for scrollable event log
+		subPanelH = availHeight * 40 / 100
+		mainPanelH = availHeight - subPanelH
+	}
 	if mainPanelH < 4 {
 		mainPanelH = 4
 	}
@@ -432,8 +481,13 @@ func (m tuiModel) View() string {
 	}
 
 	// Title
-	title := titleStyle.Render(" SubAgent Example - Eino ADK ") +
-		"  " + labelStyle.Render("[shift+up/down] scroll subagent  [up/down] scroll main  [tab] reset  [ctrl+c] quit")
+	var hints string
+	if m.tmuxMode != tmuxModeNone {
+		hints = "[Ctrl+B N/P] switch tmux window  [up/down] scroll main  [tab] reset  [ctrl+c] quit"
+	} else {
+		hints = "[shift+up/down] scroll subagent  [up/down] scroll main  [tab] reset  [ctrl+c] quit"
+	}
+	title := titleStyle.Render(" SubAgent Example - Eino ADK ") + "  " + labelStyle.Render(hints)
 
 	// SubAgent panel (top)
 	subRendered := m.renderSubAgentLines(panelContentW)
@@ -511,36 +565,46 @@ func (m tuiModel) buildSubAgentHeader(width int) string {
 }
 
 // renderSubAgentLines returns all rendered content lines for the subagent panel (no header).
+// When tmux is available, renders a compact task status bar with tmux jump hints.
+// When tmux is not available, falls back to full event log display.
 func (m tuiModel) renderSubAgentLines(width int) []string {
 	var rendered []string
 
-	// Task status section
-	if len(m.subAgentTasks) > 0 {
-		for _, t := range m.subAgentTasks {
-			taskLine := fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), t.Description)
-			rendered = append(rendered, taskLine)
-			if t.Status == subagent.StatusCompleted && t.Result != "" {
-				for _, rl := range softWrap(t.Result, width-4) {
-					rendered = append(rendered, "    "+infoStyle.Render(rl))
-				}
-			}
-			if t.Status == subagent.StatusFailed && t.Result != "" {
-				for _, rl := range softWrap(t.Result, width-4) {
-					rendered = append(rendered, "    "+errorStyle.Render(rl))
-				}
-			}
-		}
-		rendered = append(rendered, labelStyle.Render(strings.Repeat("─", width)))
+	if len(m.subAgentOrder) == 0 {
+		rendered = append(rendered, infoStyle.Render("No background tasks yet. SubAgents will appear here when spawned."))
+		return rendered
 	}
 
-	// Event log
-	if len(m.subAgentLogs) > 0 {
-		rendered = append(rendered, panelHeaderStyle.Render("Event Log:"))
-		for _, entry := range m.subAgentLogs {
-			rendered = append(rendered, entry.renderFull(width)...)
+	// Task status lines (always shown)
+	for _, id := range m.subAgentOrder {
+		t, ok := m.subAgentTasks[id]
+		if !ok {
+			continue
 		}
-	} else if len(m.subAgentTasks) == 0 {
-		rendered = append(rendered, infoStyle.Render("No background tasks yet. SubAgents will appear here when spawned."))
+
+		taskLine := fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), truncateStr(t.Description, 40))
+		if t.TmuxWindow != "" {
+			taskLine += "  " + infoStyle.Render("-> tmux select-window -t :"+t.TmuxWindow)
+		}
+		rendered = append(rendered, taskLine)
+	}
+
+	// External mode: show attach hint
+	if m.tmuxMode == tmuxModeExternal && m.tmuxSession != "" {
+		rendered = append(rendered, "")
+		rendered = append(rendered, infoStyle.Render(
+			fmt.Sprintf("Attach to subagent session: tmux attach -t %s", m.tmuxSession)))
+	}
+
+	// Fallback: if no tmux, also show event log
+	if m.tmuxMode == tmuxModeNone {
+		if len(m.subAgentLogs) > 0 {
+			rendered = append(rendered, labelStyle.Render(strings.Repeat("─", width)))
+			rendered = append(rendered, panelHeaderStyle.Render("Event Log:"))
+			for _, entry := range m.subAgentLogs {
+				rendered = append(rendered, entry.renderFull(width)...)
+			}
+		}
 	}
 
 	return rendered
@@ -673,6 +737,25 @@ func softWrap(text string, width int) []string {
 
 // --- Event processing ---
 
+// truncateStr shortens a string to maxLen display columns, appending "..." if truncated.
+func truncateStr(s string, maxLen int) string {
+	if runewidth.StringWidth(s) <= maxLen {
+		return s
+	}
+	var w int
+	var cut int
+	for i, r := range s {
+		rw := runewidth.RuneWidth(r)
+		if w+rw > maxLen-3 {
+			cut = i
+			break
+		}
+		w += rw
+		cut = i + utf8.RuneLen(r)
+	}
+	return s[:cut] + "..."
+}
+
 // processAgentEvent converts an AgentEvent into TUI messages for the main panel.
 // Returns the resolved message (if any) for history accumulation.
 func processAgentEvent(event *adk.AgentEvent, p *tea.Program) *schema.Message {
@@ -733,19 +816,19 @@ func processAgentEvent(event *adk.AgentEvent, p *tea.Program) *schema.Message {
 	return nil
 }
 
-// processSubAgentEvent converts a subagent's AgentEvent into TUI messages for the subagent panel.
-func processSubAgentEvent(event *adk.AgentEvent, taskID string, p *tea.Program) {
+// processSubAgentEvent converts a subagent's AgentEvent into TUI messages and/or tmux output.
+// When tmux is available, events go to the tmux window. Otherwise, they go to the TUI panel.
+func processSubAgentEvent(event *adk.AgentEvent, taskID string, p *tea.Program, tmuxMgr *tmuxManager) {
 	agentName := event.AgentName
 
 	if event.Output != nil && event.Output.MessageOutput != nil {
 		m, err := event.Output.MessageOutput.GetMessage()
 		if err != nil {
-			p.Send(subAgentEventMsg{taskID: taskID, entry: logEntry{
-				Type:      "error",
-				Agent:     agentName,
-				Content:   err.Error(),
-				Timestamp: time.Now(),
-			}})
+			entry := logEntry{Type: "error", Agent: agentName, Content: err.Error(), Timestamp: time.Now()}
+			tmuxMgr.WriteEvent(taskID, entry)
+			if tmuxMgr.Mode() == tmuxModeNone {
+				p.Send(subAgentEventMsg{taskID: taskID, entry: entry})
+			}
 			return
 		}
 		if m == nil {
@@ -756,21 +839,24 @@ func processSubAgentEvent(event *adk.AgentEvent, taskID string, p *tea.Program) 
 			if m.Role == schema.Tool {
 				entryType = "toolresult"
 			}
-			p.Send(subAgentEventMsg{taskID: taskID, entry: logEntry{
-				Type:      entryType,
-				Agent:     agentName,
-				Content:   m.Content,
-				Timestamp: time.Now(),
-			}})
+			entry := logEntry{Type: entryType, Agent: agentName, Content: m.Content, Timestamp: time.Now()}
+			tmuxMgr.WriteEvent(taskID, entry)
+			if tmuxMgr.Mode() == tmuxModeNone {
+				p.Send(subAgentEventMsg{taskID: taskID, entry: entry})
+			}
 		}
 		if len(m.ToolCalls) > 0 {
 			for _, tc := range m.ToolCalls {
-				p.Send(subAgentEventMsg{taskID: taskID, entry: logEntry{
+				entry := logEntry{
 					Type:      "toolcall",
 					Agent:     agentName,
 					Content:   fmt.Sprintf("%s(%s)", tc.Function.Name, tc.Function.Arguments),
 					Timestamp: time.Now(),
-				}})
+				}
+				tmuxMgr.WriteEvent(taskID, entry)
+				if tmuxMgr.Mode() == tmuxModeNone {
+					p.Send(subAgentEventMsg{taskID: taskID, entry: entry})
+				}
 			}
 		}
 	}
