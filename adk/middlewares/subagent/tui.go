@@ -316,16 +316,8 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.mainScroll > 0 {
 				m.mainScroll--
 			}
-		case "shift+up":
-			m.subAgentScroll++
-		case "shift+down":
-			if m.subAgentScroll > 0 {
-				m.subAgentScroll--
-			}
 		case "tab":
-			// Reset scroll to bottom for both panels
 			m.mainScroll = 0
-			m.subAgentScroll = 0
 		}
 
 	case tea.WindowSizeMsg:
@@ -436,42 +428,18 @@ func (m tuiModel) View() string {
 	}
 
 	w := m.width
-	// Layout: title(1) + subagent panel (top) + main panel (bottom) + input(1)
-	// Each panel has 2 lines border overhead
-	availHeight := m.height - 3 // title + input + gap
-	if availHeight < 6 {
-		availHeight = 6
+
+	// Build footer lines first so we know how much height they consume
+	footerLines := m.renderFooter(w)
+	footerH := len(footerLines)
+	if footerH > 0 {
+		footerH++ // +1 for separator line above footer
 	}
 
-	var subPanelH, mainPanelH int
-	if m.tmuxMode != tmuxModeNone {
-		// Compact: header(2) + one line per task + border(2)
-		taskLines := len(m.subAgentOrder)
-		if taskLines == 0 {
-			taskLines = 1
-		}
-		subPanelH = taskLines + 4
-		if m.tmuxMode == tmuxModeExternal {
-			subPanelH += 2 // attach hint
-		}
-		maxSubH := availHeight / 3
-		if subPanelH > maxSubH {
-			subPanelH = maxSubH
-		}
-		if subPanelH < 3 {
-			subPanelH = 3
-		}
-		mainPanelH = availHeight - subPanelH
-	} else {
-		// No tmux: keep 40/60 split for scrollable event log
-		subPanelH = availHeight * 40 / 100
-		mainPanelH = availHeight - subPanelH
-	}
-	if mainPanelH < 4 {
-		mainPanelH = 4
-	}
-	if subPanelH < 3 {
-		subPanelH = 3
+	// Layout: title(1) + main panel (fills remaining) + footer + input(1)
+	availHeight := m.height - 2 - footerH // title + input + footer
+	if availHeight < 6 {
+		availHeight = 6
 	}
 
 	// Reserve columns for border(2) + scrollbar(1)
@@ -483,27 +451,14 @@ func (m tuiModel) View() string {
 	// Title
 	var hints string
 	if m.tmuxMode != tmuxModeNone {
-		hints = "[Ctrl+B N/P] switch tmux window  [up/down] scroll main  [tab] reset  [ctrl+c] quit"
+		hints = "[Ctrl+B N/P] switch tmux window  [up/down] scroll  [tab] reset  [ctrl+c] quit"
 	} else {
-		hints = "[shift+up/down] scroll subagent  [up/down] scroll main  [tab] reset  [ctrl+c] quit"
+		hints = "[up/down] scroll  [tab] reset  [ctrl+c] quit"
 	}
 	title := titleStyle.Render(" SubAgent Example - Eino ADK ") + "  " + labelStyle.Render(hints)
 
-	// SubAgent panel (top)
-	subRendered := m.renderSubAgentLines(panelContentW)
-	subViewH := subPanelH - 4 // border + header + sep
-	if subViewH < 1 {
-		subViewH = 1
-	}
-	subVisible := scrollView(subRendered, subViewH, m.subAgentScroll)
-	subScrollbar := renderScrollbar(len(subRendered), subViewH, m.subAgentScroll)
-	subContent := m.buildSubAgentHeader(panelContentW) + "\n" + joinWithScrollbar(subVisible, subScrollbar, subViewH)
-	subPanel := panelBorderStyle.
-		Width(panelContentW + 1). // +1 for scrollbar column
-		Height(subPanelH).
-		Render(subContent)
-
-	// Main agent panel (bottom)
+	// Main agent panel (fills the window)
+	mainPanelH := availHeight
 	mainRendered := m.renderMainLines(panelContentW)
 	mainViewH := mainPanelH - 4 // border + header + sep
 	if mainViewH < 1 {
@@ -517,6 +472,13 @@ func (m tuiModel) View() string {
 		Height(mainPanelH).
 		Render(mainContent)
 
+	// Footer: compact subagent status
+	var footer string
+	if footerH > 0 {
+		sep := labelStyle.Render(strings.Repeat("─", w))
+		footer = sep + "\n" + strings.Join(footerLines, "\n")
+	}
+
 	// Input bar
 	var inputBar string
 	if m.inputMode {
@@ -525,7 +487,12 @@ func (m tuiModel) View() string {
 		inputBar = infoStyle.Render("  Agent is working...")
 	}
 
-	return lipgloss.JoinVertical(lipgloss.Left, title, subPanel, mainPanel, inputBar)
+	parts := []string{title, mainPanel}
+	if footer != "" {
+		parts = append(parts, footer)
+	}
+	parts = append(parts, inputBar)
+	return lipgloss.JoinVertical(lipgloss.Left, parts...)
 }
 
 // buildMainHeader returns the header + separator for the main panel.
@@ -547,67 +514,32 @@ func (m tuiModel) renderMainLines(width int) []string {
 	return rendered
 }
 
-// buildSubAgentHeader returns the header + separator for the subagent panel.
-func (m tuiModel) buildSubAgentHeader(width int) string {
-	header := panelHeaderStyle.Render("Background SubAgents")
-	taskCount := len(m.subAgentTasks)
-	runningCount := 0
-	for _, t := range m.subAgentTasks {
-		if t.Status == subagent.StatusRunning {
-			runningCount++
-		}
-	}
-	if taskCount > 0 {
-		header += "  " + labelStyle.Render(fmt.Sprintf("(%d tasks, %d running)", taskCount, runningCount))
-	}
-	sep := labelStyle.Render(strings.Repeat("─", width))
-	return header + "\n" + sep
-}
-
-// renderSubAgentLines returns all rendered content lines for the subagent panel (no header).
-// When tmux is available, renders a compact task status bar with tmux jump hints.
-// When tmux is not available, falls back to full event log display.
-func (m tuiModel) renderSubAgentLines(width int) []string {
-	var rendered []string
-
+// renderFooter returns compact footer lines showing subagent task statuses and tmux links.
+// Returns empty slice when there are no tasks.
+func (m tuiModel) renderFooter(width int) []string {
 	if len(m.subAgentOrder) == 0 {
-		rendered = append(rendered, infoStyle.Render("No background tasks yet. SubAgents will appear here when spawned."))
-		return rendered
+		return nil
 	}
 
-	// Task status lines (always shown)
+	var lines []string
 	for _, id := range m.subAgentOrder {
 		t, ok := m.subAgentTasks[id]
 		if !ok {
 			continue
 		}
-
-		taskLine := fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), truncateStr(t.Description, 40))
+		line := fmt.Sprintf("[%s] %s  %s", t.ID, t.StatusStyle(), truncateStr(t.Description, 40))
 		if t.TmuxWindow != "" {
-			taskLine += "  " + infoStyle.Render("-> tmux select-window -t :"+t.TmuxWindow)
+			line += "  " + infoStyle.Render("-> tmux select-window -t :"+t.TmuxWindow)
 		}
-		rendered = append(rendered, taskLine)
+		lines = append(lines, line)
 	}
 
-	// External mode: show attach hint
 	if m.tmuxMode == tmuxModeExternal && m.tmuxSession != "" {
-		rendered = append(rendered, "")
-		rendered = append(rendered, infoStyle.Render(
-			fmt.Sprintf("Attach to subagent session: tmux attach -t %s", m.tmuxSession)))
+		lines = append(lines, infoStyle.Render(
+			fmt.Sprintf("  Attach: tmux attach -t %s", m.tmuxSession)))
 	}
 
-	// Fallback: if no tmux, also show event log
-	if m.tmuxMode == tmuxModeNone {
-		if len(m.subAgentLogs) > 0 {
-			rendered = append(rendered, labelStyle.Render(strings.Repeat("─", width)))
-			rendered = append(rendered, panelHeaderStyle.Render("Event Log:"))
-			for _, entry := range m.subAgentLogs {
-				rendered = append(rendered, entry.renderFull(width)...)
-			}
-		}
-	}
-
-	return rendered
+	return lines
 }
 
 // renderScrollbar generates a column of scrollbar characters for the given panel.

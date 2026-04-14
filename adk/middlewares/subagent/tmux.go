@@ -24,7 +24,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 )
 
@@ -41,7 +40,7 @@ const (
 type tmuxManager struct {
 	mode        tmuxMode
 	sessionName string // current tmux session name
-	tmpDir      string // temp directory for FIFOs
+	tmpDir      string // temp directory for log files
 
 	mu      sync.Mutex
 	windows map[string]*tmuxWindow
@@ -51,10 +50,9 @@ type tmuxManager struct {
 type tmuxWindow struct {
 	taskID     string
 	windowName string
-	fifoPath   string
-	writer     *os.File // write end of the FIFO
+	logPath    string   // temp file path for event output
+	writer     *os.File // append-mode file handle
 	writerMu   sync.Mutex
-	ready      chan struct{} // closed when writer is ready
 	closed     bool
 }
 
@@ -81,10 +79,9 @@ func newTmuxManager() *tmuxManager {
 		return tm
 	}
 
-	// Create temp dir for FIFOs
 	tmpDir, err := os.MkdirTemp("", "eino-tmux-*")
 	if err != nil {
-		log.Printf("Warning: failed to create temp dir for tmux FIFOs: %v", err)
+		log.Printf("Warning: failed to create temp dir: %v", err)
 		tm.mode = tmuxModeNone
 		return tm
 	}
@@ -99,7 +96,6 @@ func newTmuxManager() *tmuxManager {
 		}
 		tm.sessionName = strings.TrimSpace(string(out))
 	} else {
-		// External mode: create a detached session
 		tm.sessionName = "eino-subagents"
 		_ = exec.Command("tmux", "new-session", "-d", "-s", tm.sessionName).Run()
 	}
@@ -108,7 +104,8 @@ func newTmuxManager() *tmuxManager {
 }
 
 // CreateWindow creates a new tmux window for the given task.
-// Returns the window name for display in the TUI status bar.
+// Uses a regular temp file + "tail -f" with "stty -echo" to prevent
+// arrow key escape sequences from being echoed.
 func (tm *tmuxManager) CreateWindow(taskID, description string) (string, error) {
 	if tm.mode == tmuxModeNone {
 		return "", nil
@@ -118,52 +115,43 @@ func (tm *tmuxManager) CreateWindow(taskID, description string) (string, error) 
 	defer tm.mu.Unlock()
 
 	windowName := taskID
-	fifoPath := filepath.Join(tm.tmpDir, windowName+".fifo")
+	logPath := filepath.Join(tm.tmpDir, windowName+".log")
 
-	if err := syscall.Mkfifo(fifoPath, 0600); err != nil {
-		return "", fmt.Errorf("mkfifo: %w", err)
+	// Create the log file with a header
+	f, err := os.Create(logPath)
+	if err != nil {
+		return "", fmt.Errorf("create log file: %w", err)
 	}
+	fmt.Fprintf(f, "=== SubAgent Task [%s]: %s ===\n", taskID, description)
+	fmt.Fprintf(f, "=== Started: %s ===\n\n", time.Now().Format("15:04:05"))
 
-	// Create tmux window: cat reads from FIFO, then shows completion message
+	// tmux window: disable echo so arrow keys don't produce garbage, then tail -f
 	shellCmd := fmt.Sprintf(
-		"echo '=== SubAgent Task [%s]: %s ===' && echo '=== Started: %s ===' && echo '' && cat '%s'; echo '' && echo '--- Stream ended. Scroll up to review. Press Enter to close. ---' && read",
-		taskID, description, time.Now().Format("15:04:05"), fifoPath,
+		"stty -echo 2>/dev/null; tail -n +1 -f '%s'",
+		logPath,
 	)
 
 	target := tm.sessionName + ":"
 	cmd := exec.Command("tmux", "new-window", "-d", "-t", target, "-n", windowName, "bash", "-c", shellCmd)
 	if err := cmd.Run(); err != nil {
-		os.Remove(fifoPath)
+		f.Close()
+		os.Remove(logPath)
 		return "", fmt.Errorf("tmux new-window: %w", err)
 	}
 
 	w := &tmuxWindow{
 		taskID:     taskID,
 		windowName: windowName,
-		fifoPath:   fifoPath,
-		ready:      make(chan struct{}),
+		logPath:    logPath,
+		writer:     f,
 	}
 	tm.windows[taskID] = w
-
-	// Open FIFO for writing in a goroutine (blocks until cat opens the read end)
-	go func() {
-		f, err := os.OpenFile(fifoPath, os.O_WRONLY, 0)
-		if err != nil {
-			log.Printf("Warning: failed to open FIFO for writing (task %s): %v", taskID, err)
-			close(w.ready)
-			return
-		}
-		w.writerMu.Lock()
-		w.writer = f
-		w.writerMu.Unlock()
-		close(w.ready)
-	}()
 
 	return windowName, nil
 }
 
-// WriteEvent writes a formatted event line to the task's tmux window.
-// Safe to call from any goroutine. No-op if tmux is not available.
+// WriteEvent writes a formatted event line to the task's log file.
+// The tmux window's "tail -f" picks it up automatically.
 func (tm *tmuxManager) WriteEvent(taskID string, entry logEntry) {
 	if tm.mode == tmuxModeNone {
 		return
@@ -174,13 +162,6 @@ func (tm *tmuxManager) WriteEvent(taskID string, entry logEntry) {
 	tm.mu.Unlock()
 
 	if !ok {
-		return
-	}
-
-	// Wait for FIFO writer to be ready (with timeout)
-	select {
-	case <-w.ready:
-	case <-time.After(5 * time.Second):
 		return
 	}
 
@@ -195,9 +176,10 @@ func (tm *tmuxManager) WriteEvent(taskID string, entry logEntry) {
 	for _, line := range lines {
 		fmt.Fprintln(w.writer, line)
 	}
+	w.writer.Sync()
 }
 
-// MarkComplete writes a completion banner and closes the FIFO writer.
+// MarkComplete writes a completion banner and closes the log file.
 func (tm *tmuxManager) MarkComplete(taskID string, status string, result string) {
 	if tm.mode == tmuxModeNone {
 		return
@@ -208,13 +190,6 @@ func (tm *tmuxManager) MarkComplete(taskID string, status string, result string)
 	tm.mu.Unlock()
 
 	if !ok {
-		return
-	}
-
-	// Wait for writer to be ready
-	select {
-	case <-w.ready:
-	case <-time.After(5 * time.Second):
 		return
 	}
 
@@ -233,6 +208,7 @@ func (tm *tmuxManager) MarkComplete(taskID string, status string, result string)
 			fmt.Fprintf(w.writer, "\nResult:\n%s\n", result)
 		}
 		fmt.Fprintf(w.writer, "%s\n", strings.Repeat("=", 60))
+		w.writer.Sync()
 		w.writer.Close()
 	}
 
@@ -253,7 +229,7 @@ func (tm *tmuxManager) SessionName() string {
 	return tm.sessionName
 }
 
-// Cleanup removes all FIFOs and the temp directory.
+// Cleanup removes all log files and the temp directory.
 func (tm *tmuxManager) Cleanup() {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
