@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/cloudwego/eino v0.8.5
+	github.com/cloudwego/eino v0.8.8
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
