@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Chat with Doc</title>
+<title>Chat With Eino</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -128,6 +128,19 @@
   }
   #send-btn:hover { background: #1d4ed8; }
   #send-btn:disabled { background: #93c5fd; cursor: not-allowed; }
+  #abort-btn {
+    display: none; padding: 9px 14px; background: #dc2626; color: #fff; border: none;
+    border-radius: 8px; cursor: pointer; font-size: 0.9rem; white-space: nowrap;
+  }
+  #abort-btn:hover { background: #b91c1c; }
+
+  /* Queued preempt indicator */
+  .preempt-chip {
+    font-size: 0.75rem; color: #d97706; padding: 4px 10px; margin-top: 4px;
+    background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px;
+    display: inline-block; animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 
   .empty-state { text-align: center; color: #9ca3af; margin-top: 80px; font-size: 0.9rem; }
 </style>
@@ -135,7 +148,7 @@
 <body>
 
 <header>
-  <h1>Chat with Doc</h1>
+  <h1>Chat With Eino</h1>
   <button id="new-session-btn">+ New Session</button>
 </header>
 
@@ -160,6 +173,7 @@
       <div class="input-row">
         <textarea id="msg-input" placeholder="Ask about your document…" rows="1"></textarea>
         <button id="send-btn">Send</button>
+        <button id="abort-btn">Abort</button>
       </div>
     </div>
   </div>
@@ -169,6 +183,8 @@
 // ─── State ───────────────────────────────────────────────────────────────────
 let currentSessionId = null;
 let pendingInterruptId = null; // set when the agent is awaiting approval
+let isStreaming = false;       // true while an SSE stream is active
+let currentAbortController = null; // AbortController for the active fetch
 
 // A2UI renderer state
 let components = {};   // id → ComponentValue
@@ -214,14 +230,25 @@ function processA2UIMessage(msg) {
   }
 }
 
+// Auto-scroll only when user is already near the bottom (within 150px).
+function isNearBottom() {
+  const c = document.getElementById('chat-container');
+  return c.scrollHeight - c.scrollTop - c.clientHeight < 150;
+}
+function scrollToBottom(force) {
+  const c = document.getElementById('chat-container');
+  if (force || isNearBottom()) c.scrollTop = c.scrollHeight;
+}
+
 function render() {
   const container = document.getElementById('chat-container');
   if (!rootId) {
     container.innerHTML = '<div class="empty-state">Select or create a session to start chatting.</div>';
     return;
   }
+  const near = isNearBottom();
   container.innerHTML = renderComponent(rootId);
-  container.scrollTop = container.scrollHeight;
+  scrollToBottom(near);
 }
 
 function renderComponent(id) {
@@ -277,7 +304,7 @@ function renderDataBindings() {
       const html = typeof marked !== 'undefined' ? marked.parse(value) : esc(value);
       if (el.innerHTML !== html) {
         el.innerHTML = html;
-        container.scrollTop = container.scrollHeight;
+        scrollToBottom(false);
       }
     }
   });
@@ -302,7 +329,7 @@ function renderApprovalButtons(description) {
       <button class="approval-btn-reject" id="btn-reject">✗ Reject</button>
     </div>`;
   container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
+  scrollToBottom(true);
 
   document.getElementById('btn-approve').addEventListener('click', () => sendApproval(true));
   document.getElementById('btn-reject').addEventListener('click', () => sendApproval(false));
@@ -316,20 +343,22 @@ function removeApprovalButtons() {
 async function sendApproval(approved) {
   if (!pendingInterruptId || !currentSessionId) return;
   removeApprovalButtons();
-  const sendBtn = document.getElementById('send-btn');
-  sendBtn.disabled = true;
 
   let reason = '';
   if (!approved) {
     reason = window.prompt('Reason for rejection (optional):') || '';
   }
 
-  let buffer = '';
+  const abortController = new AbortController();
+  currentAbortController = abortController;
+  setStreamingState(true);
+
   try {
     const res = await fetch(`/sessions/${currentSessionId}/approve`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({approved, reason}),
+      signal: abortController.signal,
     });
 
     if (!res.ok) {
@@ -339,26 +368,15 @@ async function sendApproval(approved) {
     }
 
     pendingInterruptId = null;
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, {stream: true});
-      const lines = buffer.split('\n');
-      buffer = lines.pop();
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (trimmed.startsWith('data:')) {
-          const jsonStr = trimmed.slice(5).trimStart();
-          try { processA2UIMessage(JSON.parse(jsonStr)); } catch (_) {}
-        }
-      }
-    }
+    await consumeSSEStream(res, abortController.signal);
   } catch (err) {
+    if (abortController.signal.aborted) return;
     console.error('Approval error:', err);
   } finally {
-    sendBtn.disabled = false;
+    if (currentAbortController === abortController) {
+      currentAbortController = null;
+      setStreamingState(false);
+    }
     await loadSessions();
   }
 }
@@ -448,6 +466,67 @@ document.getElementById('file-input').addEventListener('change', async (e) => {
 });
 
 // ─── Chat ─────────────────────────────────────────────────────────────────────
+
+function setStreamingState(streaming) {
+  isStreaming = streaming;
+  document.getElementById('abort-btn').style.display = streaming ? 'inline-block' : 'none';
+}
+
+// Shows a queued user message with a preempt indicator while waiting for safe point.
+function showQueuedMessage(message) {
+  const container = document.getElementById('chat-container');
+  // Remove any existing preempt chip.
+  const existing = container.querySelector('.preempt-chip');
+  if (existing) existing.remove();
+
+  const wrapper = document.createElement('div');
+  wrapper.id = 'preempt-queue';
+  wrapper.innerHTML = `
+    <div class="card" data-role="You" style="margin-left:auto;background:#eff6ff;">
+      <div class="column"><div class="caption" style="color:#2563eb">You</div>
+      <div class="body">${esc(message)}</div></div>
+    </div>
+    <div class="preempt-chip">Preempting current turn…</div>`;
+  container.appendChild(wrapper);
+  scrollToBottom(true);
+}
+
+function removeQueuedMessage() {
+  const q = document.getElementById('preempt-queue');
+  if (q) q.remove();
+}
+
+// Reads an SSE response body and feeds A2UI messages to the renderer.
+async function consumeSSEStream(res, signal) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  try {
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream: true});
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('data:')) {
+          const jsonStr = trimmed.slice(5).trimStart();
+          try {
+            const msg = JSON.parse(jsonStr);
+            // Once the new stream starts rendering, clear any queued indicator.
+            if (msg.beginRendering) removeQueuedMessage();
+            processA2UIMessage(msg);
+          } catch (_) {}
+        }
+      }
+    }
+  } catch (err) {
+    if (signal && signal.aborted) return; // expected abort, not an error
+    console.error('Stream error:', err);
+  }
+}
+
 async function sendMessage() {
   const input = document.getElementById('msg-input');
   const sendBtn = document.getElementById('send-btn');
@@ -464,17 +543,29 @@ async function sendMessage() {
   }
 
   input.value = '';
-  sendBtn.disabled = true;
   pendingInterruptId = null;
   removeApprovalButtons();
 
-  let buffer = '';
+  // If already streaming, this is a preempt — show queued indicator and
+  // abort the old SSE reader (the server handles Push(WithPreempt)).
+  if (isStreaming) {
+    showQueuedMessage(message);
+    if (currentAbortController) {
+      currentAbortController.abort();
+      currentAbortController = null;
+    }
+  }
+
+  const abortController = new AbortController();
+  currentAbortController = abortController;
+  setStreamingState(true);
 
   try {
     const res = await fetch(`/sessions/${currentSessionId}/chat`, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({message}),
+      signal: abortController.signal,
     });
 
     if (!res.ok) {
@@ -483,36 +574,43 @@ async function sendMessage() {
       return;
     }
 
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, {stream: true});
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // last incomplete line stays in buffer
-
-      for (const line of lines) {
-        const trimmed = line.trim();
-        // SSE format: "data:{...}" or "data: {...}" — no guaranteed space
-        if (trimmed.startsWith('data:')) {
-          const jsonStr = trimmed.slice(5).trimStart();
-          try {
-            const msg = JSON.parse(jsonStr);
-            processA2UIMessage(msg);
-          } catch (_) { /* skip malformed */ }
-        }
-      }
-    }
+    await consumeSSEStream(res, abortController.signal);
   } catch (err) {
+    if (abortController.signal.aborted) return; // expected, not an error
     console.error('Chat error:', err);
   } finally {
-    sendBtn.disabled = false;
-    await loadSessions(); // refresh title in sidebar
+    if (currentAbortController === abortController) {
+      currentAbortController = null;
+      setStreamingState(false);
+    }
+    await loadSessions();
   }
 }
+
+// ─── Abort ────────────────────────────────────────────────────────────────────
+document.getElementById('abort-btn').addEventListener('click', async () => {
+  if (!currentSessionId) return;
+  // Abort the SSE reader client-side.
+  if (currentAbortController) {
+    currentAbortController.abort();
+    currentAbortController = null;
+  }
+  setStreamingState(false);
+  // Tell the server to stop the loop immediately.
+  try {
+    await fetch(`/sessions/${currentSessionId}/abort`, {method: 'POST'});
+  } catch (err) {
+    console.error('Abort error:', err);
+  }
+  // Show a visual confirmation in the chat.
+  const container = document.getElementById('chat-container');
+  const notice = document.createElement('div');
+  notice.className = 'card';
+  notice.setAttribute('data-role', 'error');
+  notice.innerHTML = '<div class="column"><div class="caption">ABORTED</div><div class="body">Agent run was stopped by user.</div></div>';
+  container.appendChild(notice);
+  scrollToBottom(true);
+});
 
 document.getElementById('send-btn').addEventListener('click', sendMessage);
 document.getElementById('msg-input').addEventListener('keydown', (e) => {
