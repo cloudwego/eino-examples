@@ -44,9 +44,11 @@ func RenderHistory(w io.Writer, sessionID string, history []*schema.Message) err
 }
 
 // StreamToWriter converts an agent event stream into A2UI JSONL messages written to w.
-// It returns the content of the last assistant text response, the interrupt ID if the
-// agent was paused awaiting human approval (non-empty), the final A2UI msgIdx, and any error.
-func StreamToWriter(w io.Writer, sessionID string, history []*schema.Message, events *adk.AsyncIterator[*adk.AgentEvent]) (string, string, int, error) {
+// It returns the content of the last assistant text response, all intermediate messages
+// (assistant tool-call messages and tool results) for session persistence,
+// the interrupt ID if the agent was paused awaiting human approval (non-empty),
+// the final A2UI msgIdx, and any error.
+func StreamToWriter(w io.Writer, sessionID string, history []*schema.Message, events *adk.AsyncIterator[*adk.AgentEvent]) (string, []*schema.Message, string, int, error) {
 	surfaceID := "chat-" + sessionID
 
 	rootChildren := make([]string, 0, len(history))
@@ -57,15 +59,15 @@ func StreamToWriter(w io.Writer, sessionID string, history []*schema.Message, ev
 	if err := emit(w, Message{
 		BeginRendering: &BeginRenderingMsg{SurfaceID: surfaceID, Root: "root-col"},
 	}); err != nil {
-		return "", "", 0, err
+		return "", nil, "", 0, err
 	}
 	if err := emitHistory(w, surfaceID, history, rootChildren); err != nil {
-		return "", "", 0, err
+		return "", nil, "", 0, err
 	}
 
 	msgIdx := len(history)
-	lastContent, interruptID, err := streamEvents(w, surfaceID, &rootChildren, &msgIdx, events)
-	return lastContent, interruptID, msgIdx, err
+	lastContent, intermediates, interruptID, err := streamEvents(w, surfaceID, &rootChildren, &msgIdx, events)
+	return lastContent, intermediates, interruptID, msgIdx, err
 }
 
 // StreamContinue resumes an interrupted stream without resetting the client UI.
@@ -80,14 +82,23 @@ func StreamContinue(w io.Writer, sessionID string, startMsgIdx int, events *adk.
 	}
 
 	msgIdx := startMsgIdx
-	lastContent, interruptID, err := streamEvents(w, surfaceID, &rootChildren, &msgIdx, events)
+	lastContent, _, interruptID, err := streamEvents(w, surfaceID, &rootChildren, &msgIdx, events)
 	return lastContent, interruptID, msgIdx, err
 }
 
 // streamEvents is the shared event-processing loop used by StreamToWriter and StreamContinue.
-func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx *int, events *adk.AsyncIterator[*adk.AgentEvent]) (string, string, error) {
+// Returns: last assistant text content, intermediate messages (tool calls + tool results),
+// interrupt ID (if any), and error.
+func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx *int, events *adk.AsyncIterator[*adk.AgentEvent]) (string, []*schema.Message, string, error) {
 	var lastContent strings.Builder
 	var interruptID string
+	var intermediates []*schema.Message
+
+	// writerBroken is set when SSE writes fail (e.g. browser aborted the
+	// fetch during a preempt). When true we stop writing to the UI but keep
+	// consuming events so that intermediates are fully accumulated for
+	// session persistence.
+	writerBroken := false
 
 	for {
 		event, ok := events.Next()
@@ -98,8 +109,10 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 
 		if event.Err != nil {
 			log.Printf("[a2ui] event error: %v", event.Err)
-			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "error", event.Err.Error())
-			return lastContent.String(), "", event.Err
+			if !writerBroken {
+				_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "error", event.Err.Error())
+			}
+			return lastContent.String(), intermediates, "", event.Err
 		}
 
 		// Detect interrupt: the agent is paused awaiting human input.
@@ -118,13 +131,15 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 				desc = fmt.Sprintf("%v", ictxs[0].Info)
 			}
 			log.Printf("[a2ui] interrupt: id=%s desc=%q", interruptID, desc)
-			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "approval needed", desc)
-			_ = emit(w, Message{
-				InterruptRequest: &InterruptRequestMsg{
-					InterruptID: interruptID,
-					Description: desc,
-				},
-			})
+			if !writerBroken {
+				_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "approval needed", desc)
+				_ = emit(w, Message{
+					InterruptRequest: &InterruptRequestMsg{
+						InterruptID: interruptID,
+						Description: desc,
+					},
+				})
+			}
 			break
 		}
 
@@ -151,9 +166,13 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 		switch role {
 		case schema.Tool:
 			// Drain the stream if needed, then show a compact tool-result chip.
-			content := drainToolResult(mo)
+			content, toolCallID := drainToolResult(mo)
 			log.Printf("[a2ui] tool result (%d chars): %.200s", len(content), content)
-			_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool result", content)
+			if !writerBroken {
+				_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool result", content)
+			}
+			// Persist tool result for history (ToolCallID is required by the LLM API).
+			intermediates = append(intermediates, &schema.Message{Role: schema.Tool, Content: content, ToolCallID: toolCallID})
 
 		default:
 			// Assistant (or unknown role) — may carry text content and/or tool calls.
@@ -170,6 +189,7 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 				dataKey := fmt.Sprintf("%s/msg-%d", surfaceID, textIdx)
 
 				nameByIdx := map[int]string{}
+				idByIdx := map[int]string{}
 				argsByIdx := map[int]*strings.Builder{}
 				var tcOrder []int
 				seenTCIdx := map[int]bool{}
@@ -200,6 +220,9 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 						if tc.Function.Name != "" && nameByIdx[idx] == "" {
 							nameByIdx[idx] = tc.Function.Name
 						}
+						if tc.ID != "" && idByIdx[idx] == "" {
+							idByIdx[idx] = tc.ID
+						}
 						if tc.Function.Arguments != "" {
 							if argsByIdx[idx] == nil {
 								argsByIdx[idx] = &strings.Builder{}
@@ -209,25 +232,35 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 					}
 
 					// Emit text tokens to the UI immediately.
-					if chunk.Content != "" {
+					if chunk.Content != "" && !writerBroken {
 						if !shellEmitted {
 							// Commit this message slot and send the card scaffold with a data binding.
 							*rootChildren = append(*rootChildren, cardID)
 							*msgIdx++
 							if shellErr := emitMessageShell(w, surfaceID, *rootChildren, cardID, colID, roleID, contentID, dataKey, roleToLabel(role)); shellErr != nil {
-								return lastContent.String(), "", shellErr
+								log.Printf("[a2ui] SSE writer broken, continuing for persistence: %v", shellErr)
+								writerBroken = true
+							} else {
+								shellEmitted = true
 							}
-							shellEmitted = true
 						}
+						if !writerBroken {
+							accContent.WriteString(chunk.Content)
+							if dataErr := emitDataUpdate(w, surfaceID, dataKey, accContent.String()); dataErr != nil {
+								log.Printf("[a2ui] SSE writer broken, continuing for persistence: %v", dataErr)
+								writerBroken = true
+							}
+						}
+					}
+					// Always accumulate content for persistence, even when writer is broken.
+					if chunk.Content != "" && writerBroken {
 						accContent.WriteString(chunk.Content)
-						if dataErr := emitDataUpdate(w, surfaceID, dataKey, accContent.String()); dataErr != nil {
-							return lastContent.String(), "", dataErr
-						}
 					}
 				}
 
 				// Build final tool-call list and emit chips.
 				var toolCalls []toolCallInfo
+				var schemaToolCalls []schema.ToolCall
 				for _, i := range tcOrder {
 					name := nameByIdx[i]
 					if name == "" {
@@ -238,35 +271,54 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 						args = ab.String()
 					}
 					toolCalls = append(toolCalls, toolCallInfo{Name: name, Args: args})
+					schemaToolCalls = append(schemaToolCalls, schema.ToolCall{
+						ID:       idByIdx[i],
+						Function: schema.FunctionCall{Name: name, Arguments: args},
+					})
 				}
 				log.Printf("[a2ui] assistant stream: content=%d chars toolCalls=%d", accContent.Len(), len(toolCalls))
 
-				for _, tc := range toolCalls {
-					log.Printf("[a2ui] tool call: %s args=%s", tc.Name, tc.Args)
-					_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(tc))
+				if !writerBroken {
+					for _, tc := range toolCalls {
+						log.Printf("[a2ui] tool call: %s args=%s", tc.Name, tc.Args)
+						_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(tc))
+					}
 				}
-				if shellEmitted {
+				if shellEmitted || accContent.Len() > 0 {
 					lastContent.Reset()
 					lastContent.WriteString(accContent.String())
+				}
+				// Persist assistant message with tool calls for history.
+				if shellEmitted || accContent.Len() > 0 || len(schemaToolCalls) > 0 {
+					intermediates = append(intermediates, schema.AssistantMessage(accContent.String(), schemaToolCalls))
 				}
 
 			} else if mo.Message != nil {
 				msg := mo.Message
 				log.Printf("[a2ui] assistant message: content=%d chars toolCalls=%d", len(msg.Content), len(msg.ToolCalls))
 
-				for _, tc := range msg.ToolCalls {
-					log.Printf("[a2ui] tool call: %s args=%s", tc.Function.Name, tc.Function.Arguments)
-					_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(toolCallInfo{
-						Name: tc.Function.Name,
-						Args: tc.Function.Arguments,
-					}))
+				if !writerBroken {
+					for _, tc := range msg.ToolCalls {
+						log.Printf("[a2ui] tool call: %s args=%s", tc.Function.Name, tc.Function.Arguments)
+						_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "tool call", formatToolCall(toolCallInfo{
+							Name: tc.Function.Name,
+							Args: tc.Function.Arguments,
+						}))
+					}
+					if msg.Content != "" {
+						if err := emitTextCard(w, surfaceID, rootChildren, msgIdx, roleToLabel(role), msg.Content); err != nil {
+							log.Printf("[a2ui] SSE writer broken, continuing for persistence: %v", err)
+							writerBroken = true
+						}
+					}
 				}
 				if msg.Content != "" {
-					if err := emitTextCard(w, surfaceID, rootChildren, msgIdx, roleToLabel(role), msg.Content); err != nil {
-						return lastContent.String(), "", err
-					}
 					lastContent.Reset()
 					lastContent.WriteString(msg.Content)
+				}
+				// Persist assistant message for history.
+				if msg.Content != "" || len(msg.ToolCalls) > 0 {
+					intermediates = append(intermediates, schema.AssistantMessage(msg.Content, msg.ToolCalls))
 				}
 			} else {
 				log.Printf("[a2ui] assistant event with no stream and no message (skipped)")
@@ -279,7 +331,7 @@ func streamEvents(w io.Writer, surfaceID string, rootChildren *[]string, msgIdx 
 		}
 	}
 
-	return lastContent.String(), interruptID, nil
+	return lastContent.String(), intermediates, interruptID, nil
 }
 
 // toolCallInfo holds the accumulated name and arguments for one tool call.
@@ -290,7 +342,7 @@ type toolCallInfo struct {
 
 // consumeStream reads all chunks from a MessageStream, accumulating text content
 // and tool call info. Used for tool-result messages that may arrive as streams.
-func consumeStream(stream *schema.StreamReader[*schema.Message]) (content string, toolCalls []toolCallInfo) {
+func consumeStream(stream *schema.StreamReader[*schema.Message]) (content string, toolCalls []toolCallInfo, toolCallID string) {
 	nameByIdx := map[int]string{}
 	argsByIdx := map[int]*strings.Builder{}
 	var order []int
@@ -308,6 +360,9 @@ func consumeStream(stream *schema.StreamReader[*schema.Message]) (content string
 		}
 		if chunk.Content != "" {
 			buf.WriteString(chunk.Content)
+		}
+		if chunk.ToolCallID != "" && toolCallID == "" {
+			toolCallID = chunk.ToolCallID
 		}
 		for _, tc := range chunk.ToolCalls {
 			idx := 0
@@ -341,19 +396,19 @@ func consumeStream(stream *schema.StreamReader[*schema.Message]) (content string
 		}
 		toolCalls = append(toolCalls, toolCallInfo{Name: name, Args: args})
 	}
-	return buf.String(), toolCalls
+	return buf.String(), toolCalls, toolCallID
 }
 
-// drainToolResult reads content from a tool-result MessageVariant.
-func drainToolResult(mo *adk.MessageVariant) string {
+// drainToolResult reads content and ToolCallID from a tool-result MessageVariant.
+func drainToolResult(mo *adk.MessageVariant) (string, string) {
 	if mo.IsStreaming && mo.MessageStream != nil {
-		content, _ := consumeStream(mo.MessageStream)
-		return content
+		content, _, toolCallID := consumeStream(mo.MessageStream)
+		return content, toolCallID
 	}
 	if mo.Message != nil {
-		return mo.Message.Content
+		return mo.Message.Content, mo.Message.ToolCallID
 	}
-	return ""
+	return "", ""
 }
 
 // formatToolCall formats a toolCallInfo for display in a chip.
@@ -431,11 +486,27 @@ func emitHistory(w io.Writer, surfaceID string, history []*schema.Message, rootC
 		colID := fmt.Sprintf("msg-%d-col", i)
 		roleID := fmt.Sprintf("msg-%d-role", i)
 		contentID := fmt.Sprintf("msg-%d-content", i)
+
+		// Determine the display label and body text.
+		// Assistant messages with tool calls but no text are shown as "tool call" chips.
+		// Tool-role messages are shown as "tool result" chips.
+		label := roleToLabel(msg.Role)
+		body := msg.Content
+		if msg.Role == schema.Assistant && len(msg.ToolCalls) > 0 && msg.Content == "" {
+			label = "tool call"
+			body = formatToolCall(toolCallInfo{
+				Name: msg.ToolCalls[0].Function.Name,
+				Args: msg.ToolCalls[0].Function.Arguments,
+			})
+		} else if msg.Role == schema.Tool {
+			label = "tool result"
+		}
+
 		comps = append(comps,
 			Component{ID: cardID, Component: ComponentValue{Card: &CardComp{Children: []string{colID}}}},
 			Component{ID: colID, Component: ComponentValue{Column: &ColumnComp{Children: []string{roleID, contentID}}}},
-			Component{ID: roleID, Component: ComponentValue{Text: &TextComp{Value: roleToLabel(msg.Role), UsageHint: "caption"}}},
-			Component{ID: contentID, Component: ComponentValue{Text: &TextComp{Value: msg.Content, UsageHint: "body"}}},
+			Component{ID: roleID, Component: ComponentValue{Text: &TextComp{Value: label, UsageHint: "caption"}}},
+			Component{ID: contentID, Component: ComponentValue{Text: &TextComp{Value: body, UsageHint: "body"}}},
 		)
 	}
 	return emit(w, Message{SurfaceUpdate: &SurfaceUpdateMsg{SurfaceID: surfaceID, Components: comps}})

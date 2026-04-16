@@ -74,7 +74,7 @@ func main() {
 
 	iter := runner.Run(ctx, messages)
 
-	lastContent, interruptID, _, err := a2ui.StreamToWriter(&jsonlPrinter{}, "smoketest", messages, iter)
+	lastContent, _, interruptID, _, err := a2ui.StreamToWriter(&jsonlPrinter{}, "smoketest", messages, iter)
 	fmt.Println()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "stream error: %v\n", err)
