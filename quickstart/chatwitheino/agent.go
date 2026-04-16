@@ -71,7 +71,7 @@ func buildAgent(ctx context.Context) (adk.Agent, error) {
 	handlers = append(handlers, &approvalMiddleware{}, &safeToolMiddleware{})
 
 	return deep.New(ctx, &deep.Config{
-		Name:           "ChatWithDocAgent",
+		Name:           "ChatWithEinoAgent",
 		Description:    "An agent that reads and answers questions about documents.",
 		ChatModel:      cm,
 		Backend:        backend,

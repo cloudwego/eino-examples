@@ -24,7 +24,6 @@ import (
 	"time"
 
 	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
-	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/coze-dev/cozeloop-go"
 
@@ -61,11 +60,7 @@ func main() {
 		log.Fatalf("failed to build agent: %v", err)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
-		Agent:           agent,
-		EnableStreaming: true,
-		CheckPointStore: adkstore.NewInMemoryStore(),
-	})
+	checkpointStore := adkstore.NewInMemoryStore()
 
 	sessionDir := os.Getenv("SESSION_DIR")
 	if sessionDir == "" {
@@ -117,12 +112,13 @@ func main() {
 	log.Printf("examples dir: %s", examplesDir)
 
 	srv := server.New(server.Config{
-		Runner:       runner,
-		Store:        store,
-		WorkspaceDir: workspaceDir,
-		ProjectRoot:  projectRoot,
-		ExamplesDir:  examplesDir,
-		Port:         port,
+		Agent:           agent,
+		CheckPointStore: checkpointStore,
+		Store:           store,
+		WorkspaceDir:    workspaceDir,
+		ProjectRoot:     projectRoot,
+		ExamplesDir:     examplesDir,
+		Port:            port,
 	})
 
 	log.Printf("starting server on http://localhost:%s", port)
