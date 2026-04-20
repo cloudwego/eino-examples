@@ -514,6 +514,8 @@ async function consumeSSEStream(res, signal) {
           const jsonStr = trimmed.slice(5).trimStart();
           try {
             const msg = JSON.parse(jsonStr);
+            // Server signals this handler's turn was superseded by a newer preempt.
+            if (msg.event === 'preempted') { removeQueuedMessage(); return; }
             // Once the new stream starts rendering, clear any queued indicator.
             if (msg.beginRendering) removeQueuedMessage();
             processA2UIMessage(msg);
@@ -546,14 +548,18 @@ async function sendMessage() {
   pendingInterruptId = null;
   removeApprovalButtons();
 
-  // If already streaming, this is a preempt — show queued indicator and
-  // abort the old SSE reader (the server handles Push(WithPreempt)).
-  if (isStreaming) {
+  // If already streaming, this is a preempt — show queued indicator but
+  // do NOT abort the old SSE reader. Let the old turn's stream keep
+  // rendering (tool calls, model output) until the server closes it when
+  // the preempt takes effect. The new fetch will open a second concurrent
+  // SSE connection; the server starts keepalives immediately so it stays
+  // alive while the old turn drains.
+  const isPreempt = isStreaming;
+  if (isPreempt) {
     showQueuedMessage(message);
-    if (currentAbortController) {
-      currentAbortController.abort();
-      currentAbortController = null;
-    }
+    // Detach the old controller — its consumeSSEStream will finish
+    // naturally when the server closes the old stream.
+    currentAbortController = null;
   }
 
   const abortController = new AbortController();
