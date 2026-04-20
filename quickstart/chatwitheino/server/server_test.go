@@ -42,7 +42,7 @@ type mockAgent struct {
 }
 
 func (m *mockAgent) Name(context.Context) string        { return m.name }
-func (m *mockAgent) Description(context.Context) string  { return "mock" }
+func (m *mockAgent) Description(context.Context) string { return "mock" }
 func (m *mockAgent) Run(ctx context.Context, input *adk.AgentInput, _ ...adk.AgentRunOption) *adk.AsyncIterator[*adk.AgentEvent] {
 	iter, gen := adk.NewAsyncIteratorPair[*adk.AgentEvent]()
 	go m.onRun(ctx, input, gen)
@@ -314,7 +314,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 
 	// Wrap the GenInput callback to track seen queries.
 	origGenInput := srv.makeGenInput(sess, sessionID)
-	wrappedGenInput := func(ctx context.Context, loop *adk.TurnLoop[*ChatItem], items []*ChatItem) (*adk.GenInputResult[*ChatItem], error) {
+	wrappedGenInput := func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], items []*ChatItem) (*adk.GenInputResult[*ChatItem, *schema.Message], error) {
 		for _, item := range items {
 			if item.Query != "" {
 				mu.Lock()
@@ -326,7 +326,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 	}
 
 	// Create loop with wrapped GenInput.
-	cfg := adk.TurnLoopConfig[*ChatItem]{
+	cfg := adk.TurnLoopConfig[*ChatItem, *schema.Message]{
 		GenInput:      wrappedGenInput,
 		PrepareAgent:  srv.makePrepareAgent(),
 		OnAgentEvents: srv.makeOnAgentEvents(sess, sessionID),
@@ -374,7 +374,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 	ts.iterDone = make(chan iterResult, 1)
 	ts.mu.Unlock()
 
-	loop.Push(&ChatItem{Query: "second"}, adk.WithPreempt[*ChatItem](adk.AfterToolCalls))
+	loop.Push(&ChatItem{Query: "second"}, adk.WithPreempt[*ChatItem, *schema.Message](adk.AfterToolCalls))
 
 	// Consume second turn.
 	select {
@@ -427,9 +427,9 @@ func TestGenResumeFindsApprovalItem(t *testing.T) {
 	}
 
 	result, err := genResume(context.Background(), nil,
-		[]*ChatItem{{Query: "canceled"}},     // canceledItems
-		[]*ChatItem{},                         // unhandledItems
-		[]*ChatItem{approvalItem},             // newItems
+		[]*ChatItem{{Query: "canceled"}}, // canceledItems
+		[]*ChatItem{},                    // unhandledItems
+		[]*ChatItem{approvalItem},        // newItems
 	)
 	if err != nil {
 		t.Fatalf("genResume error: %v", err)
