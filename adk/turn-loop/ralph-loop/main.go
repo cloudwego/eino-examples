@@ -34,6 +34,7 @@
 //   - TurnLoop[*Task] to drive the push-based event loop
 //   - InMemoryBackend + filesystem middleware for persistent file tools
 //   - OnAgentEvents as the "Stop Hook" with a verification gate
+//   - Stop(UntilIdleFor) as a safety net for unexpected idle states
 //   - ToolCallMiddleware to make tool errors non-fatal (returns error as string)
 //   - ModelRetryConfig for resilient API calls with exponential backoff
 package main
@@ -136,6 +137,12 @@ func main() {
 
 	// Start the loop (non-blocking).
 	loop.Run(ctx)
+
+	// Safety net: if the loop becomes idle (no items in buffer, no agent
+	// running) for 30 seconds, stop it automatically. This guards against
+	// edge cases where neither GenInput nor OnAgentEvents triggers a Stop —
+	// e.g. if OnAgentEvents forgets to re-push the task after a failed turn.
+	loop.Stop(adk.UntilIdleFor(30 * time.Second))
 
 	// Block until the loop exits.
 	// The loop will stop when either:
