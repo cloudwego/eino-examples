@@ -36,7 +36,7 @@ func NewTicketBookingAgent() adk.Agent {
 	type bookInput struct {
 		Location             string `json:"location"`
 		PassengerName        string `json:"passenger_name"`
-		PassengerPhoneNumber string `json:"passenger_phone_number"`
+		PassengerPhoneNumber string `json:"passenger_phone_number" jsonschema:"type=string"`
 	}
 
 	getWeather, err := utils.InferTool(
@@ -53,7 +53,15 @@ func NewTicketBookingAgent() adk.Agent {
 		Name:        "TicketBooker",
 		Description: "An agent that can book tickets",
 		Instruction: `You are an expert ticket booker.
-Based on the user's request, use the "BookTicket" tool to book tickets.`,
+Based on the user's request, use the "BookTicket" tool to book tickets.
+Strict rules you must follow without exception:
+1. All fields must be filled as string type.
+2. **passenger_phone_number MUST be a string, wrapped in double quotes**.
+   Example: "1234567" NOT 1234567.
+   NEVER pass it as integer/number.
+3. When calling tool, output MUST be valid JSON string for phone number.
+4. Do NOT omit quotes, do NOT use number type.
+`,
 		Model: model.NewChatModel(),
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
