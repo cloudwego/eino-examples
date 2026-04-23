@@ -31,10 +31,9 @@
 // remove these markers across multiple turns.
 //
 // Key TurnLoop features demonstrated:
-//   - TurnLoop[*Task] to drive the push-based event loop
+//   - RalphLoop wrapping TurnLoop to drive the push-based event loop
 //   - InMemoryBackend + filesystem middleware for persistent file tools
-//   - OnAgentEvents as the "Stop Hook" with a verification gate
-//   - Stop(UntilIdleFor) as a safety net for unexpected idle states
+//   - VerifyCompletion as the verification gate
 //   - ToolCallMiddleware to make tool errors non-fatal (returns error as string)
 //   - ModelRetryConfig for resilient API calls with exponential backoff
 package main
@@ -49,23 +48,11 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/filesystem"
 	fsmiddleware "github.com/cloudwego/eino/adk/middlewares/filesystem"
-	cmodel "github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/compose"
-	"github.com/cloudwego/eino/schema"
 
 	commonmodel "github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 )
-
-// Task is the item type for TurnLoop. A single Task circulates through the
-// loop — consumed each turn by GenInput, then re-pushed by OnAgentEvents if
-// the agent hasn't output the completion promise.
-type Task struct {
-	Prompt   string // The task description (same every turn)
-	Turn     int    // Current turn count
-	MaxTurns int    // Max turns before forced stop
-	Complete bool   // True when <COMPLETE/> is detected
-}
 
 const completionPromise = "<COMPLETE/>"
 
@@ -118,46 +105,85 @@ func main() {
 	backend := filesystem.NewInMemoryBackend()
 
 	// Seed the filesystem with a buggy starter project.
-	// The agent's job is to find and fix all the issues iteratively.
 	seedBuggyProject(ctx, backend)
 
-	task := &Task{
-		Prompt:   taskPrompt,
-		MaxTurns: 10,
+	// Build the agent with filesystem tools and error-tolerant tool middleware.
+	fsMw, err := fsmiddleware.New(ctx, &fsmiddleware.MiddlewareConfig{
+		Backend: backend,
+	})
+	if err != nil {
+		log.Fatalf("create filesystem middleware: %v", err)
 	}
 
-	loop := adk.NewTurnLoop(adk.TurnLoopConfig[*Task]{
-		GenInput:      makeGenInput(),
-		PrepareAgent:  makePrepareAgent(chatModel, backend),
-		OnAgentEvents: makeOnAgentEvents(backend),
+	agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+		Name: "ralph",
+		Instruction: "You are an autonomous AI developer. " +
+			"Use the filesystem tools to read and write code files. " +
+			"Follow the task instructions precisely. " +
+			"When all deliverables are complete, output exactly: " + completionPromise,
+		Model:    chatModel,
+		Handlers: []adk.ChatModelAgentMiddleware{fsMw},
+		ModelRetryConfig: &adk.ModelRetryConfig{
+			MaxRetries: 3,
+			BackoffFunc: func(_ context.Context, attempt int) time.Duration {
+				return time.Duration(5<<(attempt-1)) * time.Second
+			},
+		},
+		Middlewares: []adk.AgentMiddleware{
+			{
+				WrapToolCall: compose.ToolMiddleware{
+					Invokable: func(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
+						return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
+							out, err := next(ctx, input)
+							if err != nil {
+								return &compose.ToolOutput{Result: fmt.Sprintf("Error: %v", err)}, nil
+							}
+							return out, nil
+						}
+					},
+				},
+			},
+		},
+	})
+	if err != nil {
+		log.Fatalf("create agent: %v", err)
+	}
+
+	// Run the Ralph Loop.
+	rl := NewRalphLoop(RalphLoopConfig{
+		Agent:             agent,
+		Prompt:            taskPrompt,
+		MaxTurns:          10,
+		CompletionPromise: completionPromise,
+		VerifyCompletion: func(ctx context.Context) error {
+			bugs, _ := backend.GrepRaw(ctx, &filesystem.GrepRequest{
+				Path:    "/project",
+				Pattern: "BUG:",
+			})
+			if len(bugs) > 0 {
+				msg := fmt.Sprintf("%d BUG markers remaining", len(bugs))
+				for _, b := range bugs {
+					msg += fmt.Sprintf("\n    %s:%d: %s", b.Path, b.Line, strings.TrimSpace(b.Content))
+				}
+				return fmt.Errorf("%s", msg)
+			}
+			return nil
+		},
+		OnEvent: func(event *adk.AgentEvent) {
+			prints.Event(event)
+		},
 	})
 
-	// Push the single task before starting.
-	loop.Push(task)
-
-	// Start the loop (non-blocking).
-	loop.Run(ctx)
-
-	// Safety net: if the loop becomes idle (no items in buffer, no agent
-	// running) for 30 seconds, stop it automatically. This guards against
-	// edge cases where neither GenInput nor OnAgentEvents triggers a Stop —
-	// e.g. if OnAgentEvents forgets to re-push the task after a failed turn.
-	loop.Stop(adk.UntilIdleFor(30 * time.Second))
-
-	// Block until the loop exits.
-	// The loop will stop when either:
-	// - OnAgentEvents detects the completion promise and calls Stop()
-	// - GenInput detects max turns exceeded and calls Stop()
-	result := loop.Wait()
+	result := rl.Run(ctx)
 
 	// --- Summary ---
 	fmt.Println()
 	fmt.Println("=== Ralph Loop Complete ===")
 	fmt.Printf("Stop cause:  %s\n", result.StopCause)
-	fmt.Printf("Turns:       %d/%d\n", task.Turn, task.MaxTurns)
-	fmt.Printf("Complete:    %v\n", task.Complete)
-	if result.ExitReason != nil {
-		fmt.Printf("Exit error:  %v\n", result.ExitReason)
+	fmt.Printf("Turns:       %d/%d\n", result.Turns, result.MaxTurns)
+	fmt.Printf("Complete:    %v\n", result.Complete)
+	if result.Err != nil {
+		fmt.Printf("Exit error:  %v\n", result.Err)
 	}
 
 	// Print the final state of the in-memory filesystem.
@@ -183,161 +209,5 @@ func main() {
 		}
 		lines := strings.Count(content.Content, "\n") + 1
 		fmt.Printf("  (%d lines)\n", lines)
-	}
-}
-
-// makeGenInput returns the GenInput callback.
-// It acts as the turn gate: checks if the task is already complete or if
-// max turns have been reached, and stops the loop accordingly.
-// Otherwise it re-injects the same prompt for another agent turn.
-func makeGenInput() func(ctx context.Context, loop *adk.TurnLoop[*Task], items []*Task) (*adk.GenInputResult[*Task], error) {
-	return func(ctx context.Context, loop *adk.TurnLoop[*Task], items []*Task) (*adk.GenInputResult[*Task], error) {
-		task := items[0]
-
-		// Already marked complete by OnAgentEvents?
-		if task.Complete {
-			loop.Stop(adk.WithStopCause("completion promise detected"))
-			return &adk.GenInputResult[*Task]{
-				Input:     &adk.AgentInput{Messages: []adk.Message{schema.UserMessage("done")}},
-				Remaining: items,
-			}, nil
-		}
-
-		// Max turns exceeded?
-		if task.Turn >= task.MaxTurns {
-			loop.Stop(adk.WithStopCause("max turns reached"))
-			return &adk.GenInputResult[*Task]{
-				Input:     &adk.AgentInput{Messages: []adk.Message{schema.UserMessage("done")}},
-				Remaining: items,
-			}, nil
-		}
-
-		task.Turn++
-		fmt.Printf("\n=== Turn %d/%d (same prompt re-injected) ===\n", task.Turn, task.MaxTurns)
-		fmt.Println("The agent gets a fresh context window but sees prior work via the filesystem.")
-
-		// Feed the SAME prompt every iteration. The agent discovers prior work
-		// by using the filesystem tools (ls, read_file, etc.).
-		return &adk.GenInputResult[*Task]{
-			Input:    &adk.AgentInput{Messages: []adk.Message{schema.UserMessage(task.Prompt)}},
-			Consumed: items,
-		}, nil
-	}
-}
-
-// makePrepareAgent returns the PrepareAgent callback.
-// Each turn creates a FRESH ChatModelAgent (fresh context window) with
-// filesystem tools, but the InMemoryBackend is shared — so files written in
-// previous iterations are visible.
-func makePrepareAgent(
-	chatModel cmodel.BaseChatModel,
-	backend *filesystem.InMemoryBackend,
-) func(ctx context.Context, loop *adk.TurnLoop[*Task], consumed []*Task) (adk.Agent, error) {
-	return func(ctx context.Context, loop *adk.TurnLoop[*Task], consumed []*Task) (adk.Agent, error) {
-		fsMw, err := fsmiddleware.New(ctx, &fsmiddleware.MiddlewareConfig{
-			Backend: backend,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("create filesystem middleware: %w", err)
-		}
-
-		return adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-			Name: "ralph",
-			Instruction: "You are an autonomous AI developer. " +
-				"Use the filesystem tools to read and write code files. " +
-				"Follow the task instructions precisely. " +
-				"When all deliverables are complete, output exactly: " + completionPromise,
-			Model:    chatModel,
-			Handlers: []adk.ChatModelAgentMiddleware{fsMw},
-			ModelRetryConfig: &adk.ModelRetryConfig{
-				MaxRetries: 3,
-				BackoffFunc: func(_ context.Context, attempt int) time.Duration {
-					// Aggressive backoff for rate limits: 5s, 10s, 20s.
-					return time.Duration(5<<(attempt-1)) * time.Second
-				},
-			},
-			Middlewares: []adk.AgentMiddleware{
-				{
-					// Catch tool errors (e.g. "file not found") and return them as
-					// string results so the model can see the error and adapt, instead
-					// of treating them as fatal graph errors.
-					WrapToolCall: compose.ToolMiddleware{
-						Invokable: func(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
-							return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
-								out, err := next(ctx, input)
-								if err != nil {
-									return &compose.ToolOutput{Result: fmt.Sprintf("Error: %v", err)}, nil
-								}
-								return out, nil
-							}
-						},
-					},
-				},
-			},
-		})
-	}
-}
-
-// makeOnAgentEvents returns the OnAgentEvents callback — the "Stop Hook".
-// It drains agent events, collects the text output, and checks for the
-// completion promise. If found, it runs a verification gate (grep for
-// remaining BUG: markers) before accepting. If not, re-pushes the task.
-func makeOnAgentEvents(backend *filesystem.InMemoryBackend) func(ctx context.Context, tc *adk.TurnContext[*Task], events *adk.AsyncIterator[*adk.AgentEvent]) error {
-	return func(ctx context.Context, tc *adk.TurnContext[*Task], events *adk.AsyncIterator[*adk.AgentEvent]) error {
-		task := tc.Consumed[0]
-		var response strings.Builder
-
-		for {
-			event, ok := events.Next()
-			if !ok {
-				break
-			}
-			if event.Err != nil {
-				return event.Err
-			}
-
-			// Print the event for observability.
-			prints.Event(event)
-
-			// Collect text output from non-streaming message events.
-			if event.Output != nil && event.Output.MessageOutput != nil {
-				if m := event.Output.MessageOutput.Message; m != nil && m.Content != "" {
-					response.WriteString(m.Content)
-				}
-			}
-		}
-
-		output := response.String()
-
-		// === THE STOP HOOK ===
-		// Check for the completion promise in the agent's output.
-		if strings.Contains(output, completionPromise) {
-			// === VERIFICATION GATE ===
-			// Before accepting completion, grep for remaining BUG: markers
-			// in the project files. This simulates an external test/lint check.
-			bugs, _ := backend.GrepRaw(ctx, &filesystem.GrepRequest{
-				Path:    "/project",
-				Pattern: "BUG:",
-			})
-			if len(bugs) > 0 {
-				fmt.Printf("\n✗ Completion promise rejected! %d BUG markers remaining:\n", len(bugs))
-				for _, b := range bugs {
-					fmt.Printf("    %s:%d: %s\n", b.Path, b.Line, strings.TrimSpace(b.Content))
-				}
-				fmt.Printf("  Re-pushing for another turn.\n")
-				tc.Loop.Push(task)
-				return nil
-			}
-
-			fmt.Printf("\n✓ Completion promise accepted — all BUG markers resolved!\n")
-			task.Complete = true
-			tc.Loop.Stop(adk.WithStopCause("completion promise detected"))
-			return nil
-		}
-
-		// No completion promise — re-push the task for another turn.
-		fmt.Printf("\n⟳ No completion promise found. Re-pushing for next turn.\n")
-		tc.Loop.Push(task)
-		return nil
 	}
 }

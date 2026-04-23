@@ -1,6 +1,6 @@
 # Ralph Loop
 
-This example demonstrates the **Ralph Loop** pattern using the ADK's `TurnLoop` API.
+This example demonstrates the **Ralph Loop** pattern using the ADK's `TurnLoop` API, wrapped in a reusable `RalphLoop` abstraction.
 
 ## What is a Ralph Loop?
 
@@ -8,49 +8,105 @@ The Ralph Loop (originated by [Geoffrey Huntley](https://github.com/snarktank/ra
 
 1. A **single task prompt** is fed to an AI agent **repeatedly**
 2. Each turn, the agent gets a **fresh context window** but discovers prior work via the filesystem
-3. A **stop hook** inspects the agent's output for a **completion promise** (`<COMPLETE/>`)
-4. A **verification gate** rejects premature completion — it greps the project files for remaining `BUG:` markers and only accepts the promise when all markers are resolved
-5. If rejected or no promise → the task is re-injected for another turn
+3. The agent's output is inspected for a **completion promise** (`<COMPLETE/>`)
+4. A **verification gate** rejects premature completion — the caller decides what "done" means
+5. If rejected or no promise → the prompt is re-injected for another turn
 6. A **max turns** limit provides a safety bound
 
-## How TurnLoop Maps to Ralph
+## The `RalphLoop` Abstraction
 
-| Ralph Concept | TurnLoop Implementation |
+The example provides a `RalphLoop` type that encapsulates the pattern, hiding the raw `TurnLoop` mechanics:
+
+```go
+agent, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+    Name:        "ralph",
+    Instruction: "You are an autonomous AI developer...",
+    Model:       chatModel,
+    Handlers:    []adk.ChatModelAgentMiddleware{fsMw},
+})
+
+rl := NewRalphLoop(RalphLoopConfig{
+    Agent:             agent,
+    Prompt:            taskPrompt,
+    MaxTurns:          10,
+    CompletionPromise: "<COMPLETE/>",
+    VerifyCompletion: func(ctx context.Context) error {
+        // Return nil to accept, error to reject and continue.
+        bugs, _ := backend.GrepRaw(ctx, &filesystem.GrepRequest{
+            Path: "/project", Pattern: "BUG:",
+        })
+        if len(bugs) > 0 {
+            return fmt.Errorf("%d BUG markers remaining", len(bugs))
+        }
+        return nil
+    },
+    OnEvent: func(event *adk.AgentEvent) {
+        // Observability hook — print events, log metrics, etc.
+        prints.Event(event)
+    },
+})
+
+result := rl.Run(ctx) // blocking
+fmt.Printf("Complete: %v, Turns: %d/%d\n", result.Complete, result.Turns, result.MaxTurns)
+```
+
+### `RalphLoopConfig`
+
+| Field | Description |
 |---|---|
-| Task prompt | `*Task` item pushed into the loop |
-| Same prompt each turn | `GenInput` always consumes the single item; `OnAgentEvents` re-pushes it if incomplete |
-| Stop hook (check for promise) | `OnAgentEvents` inspects output for `<COMPLETE/>` |
-| Verification gate | `OnAgentEvents` greps for `BUG:` markers before accepting the completion promise |
+| `Agent` | The `adk.Agent` to run each turn. Built by the caller with desired tools, middleware, retry config. |
+| `Prompt` | Task description re-injected every turn. |
+| `MaxTurns` | Safety bound — forced stop when reached. |
+| `CompletionPromise` | String the agent must output to signal completion. Defaults to `<COMPLETE/>`. |
+| `VerifyCompletion` | Called when the promise is detected. Return `nil` to accept, `error` to reject and continue. Optional. |
+| `OnEvent` | Called for each agent event during a turn (observability). Optional. |
+| `IdleTimeout` | Safety net — auto-stop if the loop is idle for this long. Defaults to 30s. |
+
+### `RalphLoopResult`
+
+| Field | Description |
+|---|---|
+| `Complete` | `true` if the agent's completion promise was accepted. |
+| `Turns` | Number of turns executed. |
+| `MaxTurns` | Configured maximum. |
+| `StopCause` | Reason the loop stopped (e.g. `"completion promise accepted"`, `"max turns reached"`). |
+| `Err` | Non-nil if the loop exited due to an error. |
+
+## How It Maps to TurnLoop
+
+| Ralph Concept | TurnLoop Implementation (inside `RalphLoop`) |
+|---|---|
+| Task prompt | Internal item pushed into the loop |
+| Same prompt each turn | `GenInput` always re-injects the prompt; `OnAgentEvents` re-pushes the item if incomplete |
+| Completion detection | `OnAgentEvents` inspects output for `CompletionPromise` |
+| Verification gate | `VerifyCompletion` callback — caller decides what "done" means |
 | External state as memory | Shared `InMemoryBackend` — file writes persist across turns |
-| Fresh context per turn | `PrepareAgent` creates a new `ChatModelAgent` each turn |
+| Fresh context per turn | `PrepareAgent` returns the same agent; TurnLoop feeds fresh input each turn |
 | Max turns | Counter in `GenInput`; calls `Stop()` when exceeded |
-| Tool error resilience | `ToolCallMiddleware` catches tool errors and returns them as string results |
-| Rate limit handling | `ModelRetryConfig` with exponential backoff retries transient API errors |
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                    TurnLoop                          │
+│                   RalphLoop.Run()                    │
 │                                                      │
 │  ┌──────────┐    ┌──────────────┐    ┌────────────┐  │
-│  │ GenInput  │───▶│ PrepareAgent │───▶│   Agent    │  │
-│  │(same      │    │(fresh agent, │    │ (runs turn,│  │
-│  │ prompt)   │    │ shared fs)   │    │  uses fs   │  │
+│  │ GenInput  │───▶│PrepareAgent  │───▶│   Agent    │  │
+│  │(same      │    │(returns the  │    │ (runs turn,│  │
+│  │ prompt)   │    │ shared agent)│    │  uses fs   │  │
 │  └──────────┘    └──────────────┘    │  tools)    │  │
 │       ▲                              └─────┬──────┘  │
 │       │          ┌─────────────────┐       │         │
 │       │          │ OnAgentEvents   │◀──────┘         │
-│       │          │ (stop hook)     │                 │
 │       │          └──┬──────────────┘                 │
 │       │             │                                │
-│       │   <COMPLETE/>?                               │
-│       │     YES ─▶ grep BUG: markers                 │
-│       │              ├─ found → REJECT, Push(task)   │
-│       │              └─ none  → ACCEPT, Stop()       │
-│       │     NO  ─▶ Push(task) ───────────────────┐   │
-│       │                                          │   │
-│       └──────────────────────────────────────────┘   │
+│       │   CompletionPromise detected?                │
+│       │     YES ─▶ VerifyCompletion()                │
+│       │              ├─ error → REJECT, re-push      │
+│       │              └─ nil   → ACCEPT, Stop()       │
+│       │     NO  ─▶ re-push ───────────────────┐      │
+│       │                                       │      │
+│       └───────────────────────────────────────┘      │
 │                                                      │
 │  ┌────────────────────────────────────────────────┐  │
 │  │          InMemoryBackend (shared)              │  │
@@ -72,7 +128,7 @@ The agent must iteratively:
 4. Verify fixes by re-reading the edited files
 5. Only declare `<COMPLETE/>` when all `BUG:` markers are gone
 
-The verification gate ensures the agent can't declare victory prematurely.
+The `VerifyCompletion` gate ensures the agent can't declare victory prematurely.
 
 ## Environment Variables
 
