@@ -42,8 +42,8 @@ github.com/cloudwego/eino v0.8.11 h1:lf/j1VXQTzPV9/pXijgjAIELTxvZi6zbPobmv3h/gco
 github.com/cloudwego/eino v0.8.11/go.mod h1:+2N4nsMPxA6kGBHpH+75JuTfEcGprAMTdsZESrShKpU=
 github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1 h1:aP9vfE61IBQXTjTiHf4gHUJ0QlgmVYlvZgmvxgVFkE8=
 github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1/go.mod h1:9WpHGYt5Ix2TeiTkY5oRzgt+d11KovNp73tufD5C9Ac=
-github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.1 h1:EnCDxblvpcq1GIEI+SL9yZhy5uwPqWDZYqufqSLWnRk=
-github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.1/go.mod h1:nJf/6LvrW3pJlqa1Qk9wrh6SYIjjrZACoWknH8CNj1s=
+github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2 h1:LZb3PQ1iZ3BqrEt7HMhhUXHirfVAQjwQQGsPf+eO/TA=
+github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2/go.mod h1:nJf/6LvrW3pJlqa1Qk9wrh6SYIjjrZACoWknH8CNj1s=
 github.com/cloudwego/eino-ext/components/model/openai v0.1.13 h1:5XHRTiTD5bt9KQrMHcfvuWNklEC3tpm3XHejdozt9vM=
 github.com/cloudwego/eino-ext/components/model/openai v0.1.13/go.mod h1:mgIoqYYOc0eECCqvLbEYpOJrQNTNxkwXzSJzFU+v5sQ=
 github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250514085234-473e80da5261 h1:bjNUIUzuqDOm6Z+HmP+2Xl33BKr/cti7w+DPklAujrs=
