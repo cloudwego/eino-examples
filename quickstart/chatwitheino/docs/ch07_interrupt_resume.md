@@ -165,11 +165,15 @@ func (m *approvalMiddleware) WrapInvokableToolCall(
             return fmt.Sprintf("tool '%s' disapproved", tCtx.Name), nil
         }
         
-        // 重新中断
-        return "", tool.StatefulInterrupt(ctx, &commontool.ApprovalInfo{
-            ToolName:        tCtx.Name,
-            ArgumentsInJSON: storedArgs,
-        }, storedArgs)
+        isTarget, _, _ = tool.GetResumeContext[any](ctx)
+        if !isTarget {
+            return "", tool.StatefulInterrupt(ctx, &commontool.ApprovalInfo{
+                ToolName:        tCtx.Name,
+                ArgumentsInJSON: storedArgs,
+            }, storedArgs)
+        }
+
+        return endpoint(ctx, storedArgs, opts...)
     }, nil
 }
 
