@@ -8,18 +8,18 @@ require (
 	github.com/chromedp/chromedp v0.9.5
 	github.com/cloudwego/eino v0.8.11
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.1
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.66
-	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.67
+	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.5
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5
 	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0
-	github.com/cloudwego/eino-ext/devops v0.1.8
+	github.com/cloudwego/eino-ext/devops v0.1.9
 	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 	github.com/eino-contrib/jsonschema v1.0.3
@@ -52,7 +52,7 @@ require (
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.17 // indirect
-	github.com/cohesion-org/deepseek-go v1.3.2 // indirect
+	github.com/cohesion-org/deepseek-go v1.3.4 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/coze-dev/cozeloop-go/spec v0.1.8 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
