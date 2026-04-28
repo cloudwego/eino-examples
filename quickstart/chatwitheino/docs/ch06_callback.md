@@ -238,48 +238,26 @@ callbacks.AppendGlobalHandlers(handler)
 ### 2. 集成 CozeLoop
 
 ```go
-func setupCozeLoop(ctx context.Context) (*cozeloop.Client, error) {
-    apiToken := os.Getenv("COZELOOP_API_TOKEN")
-    workspaceID := os.Getenv("COZELOOP_WORKSPACE_ID")
-    
-    if apiToken == "" || workspaceID == "" {
-        return nil, nil  // 未配置则跳过
-    }
-    
+// Setup CozeLoop tracing (optional)
+// Set COZELOOP_API_TOKEN and COZELOOP_WORKSPACE_ID to enable
+cozeloopApiToken := os.Getenv("COZELOOP_API_TOKEN")
+cozeloopWorkspaceID := os.Getenv("COZELOOP_WORKSPACE_ID")
+if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
     client, err := cozeloop.NewClient(
-        cozeloop.WithAPIToken(apiToken),
-        cozeloop.WithWorkspaceID(workspaceID),
+        cozeloop.WithAPIToken(cozeloopApiToken),
+        cozeloop.WithWorkspaceID(cozeloopWorkspaceID),
     )
     if err != nil {
-        return nil, err
+        log.Fatalf("cozeloop.NewClient failed: %v", err)
     }
-    
-    // 注册为全局 Callback
+    defer func() {
+        time.Sleep(5 * time.Second)
+        client.Close(ctx)
+    }()
     callbacks.AppendGlobalHandlers(clc.NewLoopHandler(client))
-    
-    return client, nil
-}
-```
-
-### 3. 在 main 中使用
-
-```go
-func main() {
-    ctx := context.Background()
-    
-    // 设置 CozeLoop（可选）
-    client, err := setupCozeLoop(ctx)
-    if err != nil {
-        log.Printf("cozeloop setup failed: %v", err)
-    }
-    if client != nil {
-        defer func() {
-            time.Sleep(5 * time.Second)  // 等待数据上报
-            client.Close(ctx)
-        }()
-    }
-    
-    // 创建 Agent 并运行...
+    log.Println("CozeLoop tracing enabled")
+} else {
+    log.Println("CozeLoop tracing disabled (set COZELOOP_API_TOKEN and COZELOOP_WORKSPACE_ID to enable)")
 }
 ```
 

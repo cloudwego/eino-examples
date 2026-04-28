@@ -18,9 +18,7 @@ Eino 更关注“可组合的智能执行与编排能力”，至于“如何呈
 
 ## 代码位置
 
-- 入口代码：[main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/main.go)
-- Agent 构建：[agent.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/agent.go)
-- 服务端路由：[server/server.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/server/server.go)
+- 入口代码（Runner 版）：[cmd/ch10/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch10/main.go)
 - A2UI 子集实现：[a2ui/types.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/a2ui/types.go)
 - A2UI 事件流转换：[a2ui/streamer.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/a2ui/streamer.go)
 - 前端页面：[static/index.html](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/static/index.html)
@@ -34,7 +32,7 @@ Eino 更关注“可组合的智能执行与编排能力”，至于“如何呈
 在 `quickstart/chatwitheino` 目录下执行：
 
 ```bash
-go run .
+go run ./cmd/ch10/
 ```
 
 输出示例：
@@ -49,7 +47,7 @@ starting server on http://localhost:8080
 
 ```bash
 go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/eino-ext -clean
-EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
+EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run ./cmd/ch10/
 ```
 
 ## 从文本到 UI：为什么需要 A2UI
@@ -120,7 +118,7 @@ type Message struct {
 
 ### 服务端路由（高层）
 
-与 A2UI 相关的关键接口（见 [server/server.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/server/server.go)）：
+与 A2UI 相关的关键接口（见 [cmd/ch10/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch10/main.go)）：
 
 - `GET /`：返回前端页面 `static/index.html`
 - `POST /sessions/:id/chat`：返回 SSE 流（A2UI messages），把 Agent 运行结果边跑边渲染到 UI
@@ -212,31 +210,8 @@ while (true) {
 - **流式输出**：后端以 SSE 推送 A2UI JSONL，前端增量渲染组件树
 - **事件到 UI**：把 `AgentEvent` 转为 `tool call / tool result / assistant stream` 的可视化输出
 
-## 系列收尾：这个 Quickstart Agent 的完整愿景
+## 下一步
 
-到本章为止，我们用一个可以实际运行的 Agent 串起了 Eino 的核心能力。你可以把它理解为一个可扩展的“端到端 Agent 应用骨架”：
+本章的 `cmd/ch10` 使用 `adk.Runner` 实现了完整的 Web 应用。但 Runner 是"一次性"模型——如果用户在 Agent 回答到一半时发出新问题，Runner 没有内置机制来取消当前执行并切换到新输入。
 
-- 运行时：Runner 驱动执行，支持流式输出与事件模型
-- 工具层：Filesystem / Shell 等 Tool 能力接入，工具错误可被安全处理
-- 中间件：可插拔的 middleware/handler，用于错误处理、重试、审批等横切能力
-- 可观测：callbacks/trace 能力把关键链路打通，便于调试与线上观测
-- 人机协作：interrupt/resume + checkpoint 支持审批、补参、分支选择等交互式流程
-- 确定性编排：compose（graph/chain/workflow）把复杂业务流程组织为可维护、可复用的执行图
-- 业务交付：像 A2UI 这样的 UI 集成，属于业务层自由选择的一环，用来把 Agent 能力以合适的产品形态呈现给用户
-
-你可以在这个骨架上逐步替换/扩展任意环节：模型、工具、存储、工作流、前端渲染协议，而不需要推倒重来。
-
-## 扩展思考
-
-**其他组件类型：**
-- 图表组件（折线图、柱状图、饼图）
-- 地图组件
-- 时间线组件
-- 树形组件
-- 标签页组件
-
-**高级功能：**
-- 组件交互（点击、拖拽、输入）
-- 条件渲染
-- 组件动画
-- 响应式布局
+下一章将引入 `adk.TurnLoop`，为 Agent 增加 **抢占（Preempt）** 和 **中止（Abort）** 能力。

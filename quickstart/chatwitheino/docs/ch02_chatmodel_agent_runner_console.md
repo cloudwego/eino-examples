@@ -250,7 +250,7 @@ for {
     events := runner.Run(ctx, history)
     
     // 4. 消费事件流，收集 assistant 回复
-    content := collectAssistantFromEvents(events)
+    content := printAndCollectAssistantFromEvents(events)
     
     // 5. 追加 assistant 消息到 history
     history = append(history, schema.AssistantMessage(content, nil))

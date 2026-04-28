@@ -193,14 +193,14 @@ if err != nil {
 defer stream.Close()
 
 for {
-    chunk, err := stream.Recv()
+    frame, err := stream.Recv()
     if errors.Is(err, io.EOF) {
         break
     }
     if err != nil {
         log.Fatal(err)
     }
-    fmt.Print(chunk.Content)
+    fmt.Print(frame.Content)
 }
 ```
 

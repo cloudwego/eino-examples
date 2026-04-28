@@ -175,6 +175,9 @@ func (m *safeToolMiddleware) WrapInvokableToolCall(
     return func(ctx context.Context, args string, opts ...tool.Option) (string, error) {
         result, err := endpoint(ctx, args, opts...)
         if err != nil {
+            if _, ok := compose.IsInterruptRerunError(err); ok {
+                return "", err
+            }
             // 将错误转换为字符串，而不是返回错误
             return fmt.Sprintf("[tool error] %v", err), nil
         }
@@ -297,7 +300,8 @@ agent, err := deep.New(ctx, &deep.Config{
         MaxRetries: 5,
         IsRetryAble: func(_ context.Context, err error) bool {
             return strings.Contains(err.Error(), "429") ||
-                strings.Contains(err.Error(), "Too Many Requests")
+                strings.Contains(err.Error(), "Too Many Requests") ||
+                strings.Contains(err.Error(), "qpm limit")
         },
     },
 })
