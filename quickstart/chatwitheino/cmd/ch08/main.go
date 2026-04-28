@@ -437,8 +437,11 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 					}
 				}
 				for _, tc := range accumulatedToolCalls {
-					if tc.Function.Name != "" && tc.Function.Arguments != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
+					if tc.Function.Name != "" {
+						fmt.Printf("\n[tool call] %s", tc.Function.Name)
+					}
+					if tc.Function.Arguments != "" {
+						fmt.Printf("%s", tc.Function.Arguments)
 					}
 				}
 				_, _ = fmt.Fprintln(os.Stdout)
