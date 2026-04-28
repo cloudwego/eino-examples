@@ -271,7 +271,7 @@ func TestAbortStopsLoop(t *testing.T) {
 					break
 				}
 			}
-			ts.iterDone <- iterResult{err: context.Canceled}
+			envelope.done <- iterResult{err: context.Canceled}
 		}()
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout waiting for iterReady")
@@ -356,7 +356,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 				break
 			}
 		}
-		ts.iterDone <- iterResult{lastContent: "reply"}
+		envelope.done <- iterResult{lastContent: "reply"}
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout on first turn")
 	}
@@ -385,7 +385,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 				break
 			}
 		}
-		ts.iterDone <- iterResult{lastContent: "reply"}
+		envelope.done <- iterResult{lastContent: "reply"}
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout on second turn")
 	}
