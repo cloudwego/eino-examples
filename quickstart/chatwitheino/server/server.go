@@ -609,10 +609,21 @@ func (s *Server) makeOnAgentEvents(sess *mem.Session, sessionID string) func(ctx
 
 		// Send the iterator to the HTTP handler. Include the done channel
 		// so the handler replies to THIS invocation, not a future one.
-		ready <- iterEnvelope{events: events, history: history, done: done}
+		select {
+		case ready <- iterEnvelope{events: events, history: history, done: done}:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 
-		// Wait for the HTTP handler to finish draining.
-		result := <-done
+		// Wait for the HTTP handler to finish draining. Also select on ctx.Done
+		// to avoid hanging when a preempt supersedes the handler — in that case
+		// the old handler bails via handlerDone and nobody sends to our done channel.
+		var result iterResult
+		select {
+		case result = <-done:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 
 		// Persist all intermediate messages (assistant text+tool calls, tool results).
 		// The intermediates already include the final assistant text message if any,
