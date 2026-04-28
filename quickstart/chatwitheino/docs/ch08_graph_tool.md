@@ -124,8 +124,8 @@ wf.AddLambdaNode("answer", answerFunc).
 
 ```go
 type Input struct {
-    FilePath string `json:"file_path" jsonschema:"description=Absolute path to the document"`
-    Question string `json:"question"  jsonschema:"description=The question to answer"`
+    FilePath string `json:"file_path" jsonschema:"description=Absolute path to the uploaded document file"`
+    Question string `json:"question"  jsonschema:"description=The question to answer from the document"`
 }
 
 type Output struct {
@@ -181,23 +181,35 @@ func buildWorkflow(cm model.BaseChatModel) *compose.Workflow[Input, Output] {
         AddInputWithOptions("chunk", []*compose.FieldMapping{compose.ToField("Chunks")}, compose.WithNoDirectDependency()).
         AddInputWithOptions(compose.START, []*compose.FieldMapping{compose.MapFields("Question", "Question")}, compose.WithNoDirectDependency())
 
-    // filter: 筛选 top-k
+    // filter: sort descending by score, keep up to top-3 chunks with score ≥ 3.
     wf.AddLambdaNode("filter", compose.InvokableLambda(
         func(ctx context.Context, scored []scoredChunk) ([]scoredChunk, error) {
             sort.Slice(scored, func(i, j int) bool {
                 return scored[i].Score > scored[j].Score
             })
-            // 返回 top-3
-            if len(scored) > 3 {
-                scored = scored[:3]
+            const maxK = 3
+            var top []scoredChunk
+            for _, c := range scored {
+                if c.Score < 3 {
+                    break
+                }
+                top = append(top, c)
+                if len(top) == maxK {
+                    break
+                }
             }
-            return scored, nil
+            return top, nil
         },
     )).AddInput("score")
 
-    // answer: 生成答案
+    // answer: synthesize a response from top-k chunks, or return a not-found message if empty.
     wf.AddLambdaNode("answer", compose.InvokableLambda(
         func(ctx context.Context, in synthIn) (Output, error) {
+            if len(in.TopK) == 0 {
+                return Output{
+                    Answer: fmt.Sprintf("No relevant content found in the document for: %q", in.Question),
+                }, nil
+            }
             return synthesize(ctx, cm, in)
         },
     )).
@@ -218,7 +230,9 @@ func BuildTool(ctx context.Context, cm model.BaseChatModel) (tool.BaseTool, erro
     return graphtool.NewInvokableGraphTool[Input, Output](
         wf,
         "answer_from_document",
-        "Search a large document for relevant content and synthesize an answer.",
+        "Search a large uploaded document for content relevant to a question and synthesize a "+
+            "cited answer from the most relevant passages. "+
+            "Use this instead of read_file when the document may be too large to fit in context.",
     )
 }
 ```

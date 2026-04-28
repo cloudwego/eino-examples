@@ -162,7 +162,7 @@ if err := session.Append(userMsg); err != nil {
 ```go
 history := session.GetMessages()
 events := runner.Run(ctx, history)
-content := collectAssistantFromEvents(events)
+content := printAndCollectAssistantFromEvents(events)
 ```
 
 ### 5. 追加助手消息
@@ -192,7 +192,7 @@ if err := session.Append(userMsg); err != nil {
 // 调用 Agent
 history := session.GetMessages()
 events := runner.Run(ctx, history)
-content := collectAssistantFromEvents(events)
+content := printAndCollectAssistantFromEvents(events)
 
 // 保存助手回复
 assistantMsg := schema.AssistantMessage(content, nil)
