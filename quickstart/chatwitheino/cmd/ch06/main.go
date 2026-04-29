@@ -321,14 +321,7 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 						}
 					}
 				}
-				for _, tc := range accumulatedToolCalls {
-					if tc.Function.Name != "" {
-						fmt.Printf("\n[tool call] %s", tc.Function.Name)
-					}
-					if tc.Function.Arguments != "" {
-						fmt.Printf("%s", tc.Function.Arguments)
-					}
-				}
+				printToolCallsByIndex(accumulatedToolCalls)
 				_, _ = fmt.Fprintln(os.Stdout)
 				continue
 			}
@@ -337,13 +330,60 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 				sb.WriteString(mv.Message.Content)
 				_, _ = fmt.Fprintln(os.Stdout, mv.Message.Content)
 				for _, tc := range mv.Message.ToolCalls {
-					fmt.Printf("[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
+					printToolCall(tc.Function.Name, tc.Function.Arguments)
 				}
 			}
 		}
 	}
 
 	return sb.String(), nil
+}
+
+func printToolCallsByIndex(toolCalls []schema.ToolCall) {
+	type callParts struct {
+		name string
+		args strings.Builder
+	}
+
+	partsByIndex := map[int]*callParts{}
+	var indexOrder []int
+
+	for _, tc := range toolCalls {
+		idx := 0
+		if tc.Index != nil {
+			idx = *tc.Index
+		}
+		parts, ok := partsByIndex[idx]
+		if !ok {
+			parts = &callParts{}
+			partsByIndex[idx] = parts
+			indexOrder = append(indexOrder, idx)
+		}
+		if parts.name == "" && tc.Function.Name != "" {
+			parts.name = tc.Function.Name
+		}
+		parts.args.WriteString(tc.Function.Arguments)
+	}
+
+	for _, idx := range indexOrder {
+		parts := partsByIndex[idx]
+		if parts.name == "" {
+			continue
+		}
+		fmt.Printf("\n")
+		printToolCall(parts.name, parts.args.String())
+	}
+}
+
+func printToolCall(name, args string) {
+	if name == "" {
+		return
+	}
+	if args == "" {
+		fmt.Printf("[tool call] %s\n", name)
+		return
+	}
+	fmt.Printf("[tool call] %s(%s)\n", name, args)
 }
 
 func drainToolResult(mo *adk.MessageVariant) string {
