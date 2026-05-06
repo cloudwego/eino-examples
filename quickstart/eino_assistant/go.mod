@@ -5,14 +5,14 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/cloudwego/eino v0.8.5
+	github.com/cloudwego/eino v0.8.13
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.67
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20250707031732-1bfb5847488c
-	github.com/cloudwego/eino-ext/devops v0.1.8
+	github.com/cloudwego/eino-ext/devops v0.1.9
 	github.com/cloudwego/hertz v0.9.5
 	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/google/uuid v1.6.0
