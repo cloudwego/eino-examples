@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 CloudWeGo Authors
+ * Copyright 2024-2026 CloudWeGo Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,13 +56,15 @@ func newTranslateNode() *compose.Lambda {
 		var roundNum int
 		var historyStr string
 
-		compose.ProcessState[*translateState](ctx, func(ctx context.Context, s *translateState) error {
+		if err := compose.ProcessState[*translateState](ctx, func(ctx context.Context, s *translateState) error {
 			roundNum = s.round
 			if len(s.history) > 0 {
 				historyStr = "\n\nPrevious translations:\n" + strings.Join(s.history, "\n")
 			}
 			return nil
-		})
+		}); err != nil {
+			return "", err
+		}
 
 		return fmt.Sprintf("[Round %d translation]%s\n  %s", roundNum, historyStr, mockTranslate(in)), nil
 	})
@@ -92,11 +94,11 @@ func saveHistory(ctx context.Context, out string, state *translateState) (string
 // （闭包变量在 Branch 中不可访问，State 是唯一途径）
 func qualityBranch(ctx context.Context, out string) (string, error) {
 	var next string
-	compose.ProcessState[*translateState](ctx, func(ctx context.Context, s *translateState) error {
+	if err := compose.ProcessState[*translateState](ctx, func(ctx context.Context, s *translateState) error {
 		quality := mockQualityCheck(out)
 		fmt.Printf("  [Branch] round=%d, quality=%d/10\n", s.round, quality)
 
-		if quality >= 8 || s.round >= 3 {
+		if quality >= 6 || s.round >= 3 {
 			next = compose.END
 			fmt.Printf("  [Branch] → END\n")
 		} else {
@@ -104,7 +106,9 @@ func qualityBranch(ctx context.Context, out string) (string, error) {
 			fmt.Printf("  [Branch] → translate\n")
 		}
 		return nil
-	})
+	}); err != nil {
+		return "", err
+	}
 	return next, nil
 }
 

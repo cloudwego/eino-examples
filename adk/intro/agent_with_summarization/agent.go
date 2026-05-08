@@ -94,6 +94,8 @@ func newAgent(ctx context.Context) (adk.Agent, error) {
 		Trigger: &summarization.TriggerCondition{
 			ContextTokens: summaryMaxTokensBefore,
 		},
+		// Callback receives the full ChatModelAgentState, including Messages, for observability only.
+		// Mutating before or after here does not update the agent state.
 		Callback: func(ctx context.Context, before, after adk.ChatModelAgentState) error {
 			log.Printf("summarization compressed messages: before=%d after=%d", len(before.Messages), len(after.Messages))
 			return nil
