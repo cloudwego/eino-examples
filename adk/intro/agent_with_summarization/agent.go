@@ -22,20 +22,22 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/summarization"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 
 	"github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/adk/common/prints"
 	"github.com/cloudwego/eino-examples/adk/common/trace"
-	"github.com/cloudwego/eino-examples/adk/intro/agent_with_summarization/summarization"
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 const (
 	summaryMaxTokensBefore = 10 * 1024
-	summaryMaxTokensRecent = 2 * 1024
 	agentMaxIterations     = 30
+	summaryUserInstruction = `Summarize the conversation history so the long-form report writer can continue without losing context.
+Preserve the user's original request, the report structure, key facts already written, tool calls and tool results, and any remaining work.
+Respond with plain text only. Do not call tools.`
 )
 
 func main() {
@@ -87,9 +89,15 @@ func main() {
 
 func newAgent(ctx context.Context) (adk.Agent, error) {
 	sumMW, err := summarization.New(ctx, &summarization.Config{
-		Model:                      model.NewChatModel(),
-		MaxTokensBeforeSummary:     summaryMaxTokensBefore,
-		MaxTokensForRecentMessages: summaryMaxTokensRecent,
+		Model:           model.NewChatModel(),
+		UserInstruction: summaryUserInstruction,
+		Trigger: &summarization.TriggerCondition{
+			ContextTokens: summaryMaxTokensBefore,
+		},
+		Callback: func(ctx context.Context, before, after adk.ChatModelAgentState) error {
+			log.Printf("summarization compressed messages: before=%d after=%d", len(before.Messages), len(after.Messages))
+			return nil
+		},
 	})
 	if err != nil {
 		return nil, err
@@ -98,12 +106,12 @@ func newAgent(ctx context.Context) (adk.Agent, error) {
 	a, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
 		Name:        "main_agent",
 		Description: "A long-form report assistant",
-		Instruction: `You are a long-form report writer working in ReAct mode.
-Think step by step, call tools to expand content by repeating paragraphs, then synthesize a cohesive response.
-one time call one tool, do not call multiple tools in one turn.
-Each tool call should indicate the call number. After 20 tool calls, produce a final summary.`,
-		Model:       model.NewChatModel(),
-		Middlewares: []adk.AgentMiddleware{sumMW},
+		Instruction: "You are a long-form report writer working in ReAct mode.\n" +
+			"Think step by step, call tools to expand content by repeating paragraphs, then synthesize a cohesive response.\n" +
+			"One time call one tool, do not call multiple tools in one turn.\n" +
+			"Each tool call should indicate the call number. After 20 tool calls, produce a final summary.",
+		Model:    model.NewChatModel(),
+		Handlers: []adk.ChatModelAgentMiddleware{sumMW},
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{

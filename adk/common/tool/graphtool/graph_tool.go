@@ -326,12 +326,12 @@ func NewInstance[T any]() T {
 		return reflect.MakeMap(typ).Interface().(T)
 	case reflect.Slice, reflect.Array:
 		return reflect.MakeSlice(typ, 0, 0).Interface().(T)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		typ = typ.Elem()
 		origin := reflect.New(typ)
 		inst := origin
 
-		for typ.Kind() == reflect.Ptr {
+		for typ.Kind() == reflect.Pointer {
 			typ = typ.Elem()
 			inst = inst.Elem()
 			inst.Set(reflect.New(typ))
