@@ -28,7 +28,7 @@
 | 目录 | 名称 | 说明 |
 |------|------|------|
 | [compose/chain](./compose/chain) | Chain | 使用 compose.Chain 进行顺序编排，包含 Prompt + ChatModel |
-| [compose/graph](./compose/graph) | Graph | 图编排示例：状态图、工具调用 Agent、异步节点、中断机制 |
+| [compose/graph](./compose/graph) | Graph | 图编排示例：状态图、单次工具调用、异步节点、中断机制 |
 | [compose/workflow](./compose/workflow) | Workflow | 工作流示例：字段映射、纯数据流、纯控制流、静态值、流式处理 |
 | [compose/batch](./compose/batch) | BatchNode | 批量处理组件，支持并发控制和中断恢复 |
 

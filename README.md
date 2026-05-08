@@ -28,7 +28,7 @@ This repository contains examples and demonstrations for using the Eino framewor
 | Directory | Name | Description |
 |-----------|------|-------------|
 | [compose/chain](./compose/chain) | Chain | Sequential orchestration with compose.Chain, including Prompt + ChatModel |
-| [compose/graph](./compose/graph) | Graph | Graph orchestration examples: state graph, tool call agent, async nodes, interrupt |
+| [compose/graph](./compose/graph) | Graph | Graph orchestration examples: state graph, single tool call, async nodes, interrupt |
 | [compose/workflow](./compose/workflow) | Workflow | Workflow examples: field mapping, data-only, control-only, static values, streaming |
 | [compose/batch](./compose/batch) | BatchNode | Batch processing component with concurrency control and interrupt/resume support |
 

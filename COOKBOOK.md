@@ -70,10 +70,8 @@
 | 目录 | 名称 | 说明 |
 |------|------|------|
 | [compose/graph/simple](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/simple) | 简单 Graph | Graph 基础用法示例 |
-| [compose/graph/state](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/state) | State Graph | 带状态的 Graph 示例 |
-| [compose/graph/tool_call_agent](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/tool_call_agent) | Tool Call Agent | 使用 Graph 构建工具调用 Agent |
+| [compose/graph/state](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/state) | 多轮翻译 State Graph | 展示使用 State 在翻译-审校循环中做有状态分支决策 |
 | [compose/graph/tool_call_once](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/tool_call_once) | 单次工具调用 | 展示单次工具调用的 Graph 实现 |
-| [compose/graph/two_model_chat](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/two_model_chat) | 双模型对话 | 两个模型相互对话的 Graph 示例 |
 | [compose/graph/async_node](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/async_node) | 异步节点 | 展示异步 Lambda 节点，包含报告生成和实时转录场景 |
 | [compose/graph/react_with_interrupt](https://github.com/cloudwego/eino-examples/tree/main/compose/graph/react_with_interrupt) | ReAct + 中断 | 票务预订场景，展示 Interrupt 和 Checkpoint 实践 |
 
