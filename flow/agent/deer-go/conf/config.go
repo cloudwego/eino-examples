@@ -51,7 +51,7 @@ var Config *DeerConfig = &DeerConfig{}
 func LoadDeerConfig(ctx context.Context) {
 	dir, err := os.Getwd()
 	if err != nil {
-		panic(fmt.Sprintf("获取当前工作目录失败: %w", err))
+		panic(fmt.Sprintf("获取当前工作目录失败: %v", err))
 	}
 
 	// 构建模板文件路径
@@ -60,12 +60,12 @@ func LoadDeerConfig(ctx context.Context) {
 	// 读取 YAML 文件内容
 	configData, err := os.ReadFile(configPath)
 	if err != nil {
-		panic(fmt.Sprintf("读取配置文件 %s 失败: %w", configPath, err))
+		panic(fmt.Sprintf("读取配置文件 %s 失败: %v", configPath, err))
 	}
 
 	var deerConfig DeerConfig
 	if err := yaml.Unmarshal(configData, &deerConfig); err != nil {
-		panic(fmt.Sprintf("解析配置文件 %s 失败: %w", configPath, err))
+		panic(fmt.Sprintf("解析配置文件 %s 失败: %v", configPath, err))
 	}
 
 	ilog.EventInfo(ctx, "load_config", "conf", deerConfig)

@@ -31,7 +31,7 @@ import (
 	"github.com/cloudwego/eino-ext/components/tool/browseruse"
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino-ext/components/tool/commandline/sandbox"
-	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/ddgsearch"
+	"github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
@@ -168,30 +168,6 @@ func composeAgent(ctx context.Context,
 	tools []tool.BaseTool,
 ) compose.Runnable[string, string] {
 	err := compose.RegisterSerializableType[state]("my state")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ChatMessagePartType]("cmpt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ChatMessageImageURL]("cmiu")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ChatMessageAudioURL]("cnau")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ChatMessageVideoURL]("cmvu")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ChatMessageFileURL]("cmfu")
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = compose.RegisterSerializableType[schema.ImageURLDetail]("iud")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -452,7 +428,7 @@ func newCommandLineTools(ctx context.Context, sb commandline.Operator) []tool.Ba
 }
 
 func newBrowserTool(ctx context.Context) *browseruse.Tool {
-	ddgs, err := ddgsearch.New(&ddgsearch.Config{Timeout: time.Second * 30})
+	ddgs, err := duckduckgo.NewSearch(ctx, &duckduckgo.Config{Timeout: time.Second * 30})
 	if err != nil {
 		log.Fatal(err)
 	}

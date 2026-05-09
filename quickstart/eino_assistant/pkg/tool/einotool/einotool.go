@@ -86,7 +86,7 @@ var (
 	EinoExample = map[string][]string{
 		"agent":      {"https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react"},
 		"components": {"https://github.com/cloudwego/eino-examples/tree/main/components"},
-		"graph":      {"https://github.com/cloudwego/eino-examples/tree/main/compose/graph/tool_call_agent.go"},
+		"graph":      {"https://github.com/cloudwego/eino-examples/tree/main/compose/graph"},
 		"quickstart": {"https://github.com/cloudwego/eino-examples/tree/main/quickstart"},
 	}
 

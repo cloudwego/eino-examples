@@ -198,7 +198,7 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 
 			if mv.IsStreaming {
 				mv.MessageStream.SetAutomaticClose()
-				var accumulatedToolCalls []schema.ToolCall
+				var accumulatedMessages []*schema.Message
 				for {
 					frame, err := mv.MessageStream.Recv()
 					if errors.Is(err, io.EOF) {
@@ -208,18 +208,19 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 						return "", err
 					}
 					if frame != nil {
+						accumulatedMessages = append(accumulatedMessages, frame)
 						if frame.Content != "" {
 							sb.WriteString(frame.Content)
 							_, _ = fmt.Fprint(os.Stdout, frame.Content)
 						}
-						// 累积 ToolCalls
-						if len(frame.ToolCalls) > 0 {
-							accumulatedToolCalls = append(accumulatedToolCalls, frame.ToolCalls...)
-						}
 					}
 				}
 				// 流结束后打印完整的 ToolCalls
-				for _, tc := range accumulatedToolCalls {
+				mergedMsg, err := schema.ConcatMessages(accumulatedMessages)
+				if err != nil {
+					return "", err
+				}
+				for _, tc := range mergedMsg.ToolCalls {
 					if tc.Function.Name != "" && tc.Function.Arguments != "" {
 						fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
 					}
