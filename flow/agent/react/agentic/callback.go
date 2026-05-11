@@ -38,9 +38,7 @@ func newAgenticModelCallback() *agenticModelCallback {
 
 type agenticModelCallback struct{}
 
-func (a *agenticModelCallback) OnEndWithStreamOutput(ctx context.Context, runInfo *callbacks.RunInfo,
-	output *schema.StreamReader[*model.AgenticCallbackOutput]) context.Context {
-
+func (a *agenticModelCallback) OnEndWithStreamOutput(ctx context.Context, runInfo *callbacks.RunInfo, output *schema.StreamReader[*model.AgenticCallbackOutput]) context.Context {
 	printHeader(fmt.Sprintf("AgenticModel Name: %s", runInfo.Name), "\033[36m")
 
 	go func() {
@@ -109,8 +107,8 @@ func (a *agenticModelCallback) OnEndWithStreamOutput(ctx context.Context, runInf
 						printHeader(fmt.Sprintf("server tool result: %s", block.ServerToolResult.Name), "\033[32m")
 						lineLength = 0
 					}
-					if block.ServerToolResult.Result != nil {
-						res, _ := sonic.MarshalIndent(block.ServerToolResult.Result, "", "  ")
+					if block.ServerToolResult.Content != nil {
+						res, _ := sonic.MarshalIndent(block.ServerToolResult.Content, "", "  ")
 						fmt.Println(string(res))
 						lineLength = 0
 					}
@@ -158,13 +156,12 @@ func printWrapped(content string, currentLength int) int {
 	return currentLength
 }
 
-func printHeader(content string, color string) {
+func printHeader(content, color string) {
 	const lineLength = 60
 	separator := strings.Repeat("=", lineLength)
 
 	contentLength := len(content)
 	if contentLength >= lineLength {
-		// Content too long, just print it within separators
 		fmt.Printf("\n\n%s%s\n%s\n%s\033[0m\n\n", color, separator, content, separator)
 		return
 	}
@@ -172,7 +169,6 @@ func printHeader(content string, color string) {
 	padding := lineLength - contentLength
 	leftPad := padding / 2
 
-	// Create padding string with spaces
 	padStr := strings.Repeat(" ", leftPad)
 
 	fmt.Printf("\n\n%s%s\n%s%s\n%s\033[0m\n\n", color, separator, padStr, content, separator)

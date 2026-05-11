@@ -65,19 +65,7 @@ type Agent struct {
 
 // NewAgent creates a ReAct agent that feeds tool response into next round of Chat Model generation.
 func NewAgent(ctx context.Context, config *AgentConfig) (_ *Agent, err error) {
-	var (
-		toolsNode *compose.AgenticToolsNode
-		toolInfos []*schema.ToolInfo
-	)
-
-	if toolInfos, err = genToolInfos(ctx, config.ToolsConfig); err != nil {
-		return nil, err
-	}
-
-	agenticModel, err := config.Model.WithTools(toolInfos)
-	if err != nil {
-		return nil, err
-	}
+	var toolsNode *compose.AgenticToolsNode
 
 	if toolsNode, err = compose.NewAgenticToolsNode(ctx, &config.ToolsConfig); err != nil {
 		return nil, err
@@ -96,7 +84,7 @@ func NewAgent(ctx context.Context, config *AgentConfig) (_ *Agent, err error) {
 		return modifiedInput, nil
 	}
 
-	_ = graph.AddAgenticModelNode(nodeKeyModel, agenticModel,
+	_ = graph.AddAgenticModelNode(nodeKeyModel, config.Model,
 		compose.WithStatePreHandler(modelPreHandle),
 		compose.WithNodeName("News Assistant"),
 	)
@@ -181,6 +169,7 @@ func buildReturnDirectly(graph *compose.Graph[[]*schema.AgenticMessage, *schema.
 					msg_ := msgs[i]
 					for _, block := range msg_.ContentBlocks {
 						if block.Type == schema.ContentBlockTypeFunctionToolResult &&
+							block.FunctionToolResult != nil &&
 							block.FunctionToolResult.CallID == state.ReturnDirectlyToolCallID {
 							msg = msg_
 							return nil
