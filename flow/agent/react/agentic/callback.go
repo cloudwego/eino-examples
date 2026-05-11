@@ -109,8 +109,8 @@ func (a *agenticModelCallback) OnEndWithStreamOutput(ctx context.Context, runInf
 						printHeader(fmt.Sprintf("server tool result: %s", block.ServerToolResult.Name), "\033[32m")
 						lineLength = 0
 					}
-					if block.ServerToolResult.Result != nil {
-						res, _ := sonic.MarshalIndent(block.ServerToolResult.Result, "", "  ")
+					if block.ServerToolResult.Content != nil {
+						res, _ := sonic.MarshalIndent(block.ServerToolResult.Content, "", "  ")
 						fmt.Println(string(res))
 						lineLength = 0
 					}

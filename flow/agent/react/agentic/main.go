@@ -22,52 +22,63 @@ import (
 	"io"
 	"log"
 	"os"
+	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/cloudwego/eino-ext/components/model/agenticark"
+	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
+	"github.com/cloudwego/eino-ext/components/model/agenticopenai"
+	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/cloudwego/eino/utils/callbacks"
-	"github.com/volcengine/volcengine-go-sdk/service/arkruntime/model/responses"
+	"github.com/coze-dev/cozeloop-go"
+	"github.com/openai/openai-go/v3/responses"
 )
 
 func main() {
 	ctx := context.Background()
 
-	am, err := agenticark.New(ctx, &agenticark.Config{
-		Model:  os.Getenv("ARK_MODEL_ID"),
-		APIKey: os.Getenv("ARK_API_KEY"),
-		Thinking: &responses.ResponsesThinking{
-			Type: responses.ThinkingType_enabled.Enum(),
-		},
-		ServerTools: []*agenticark.ServerToolConfig{
+	cli, err := cozeloop.NewClient(
+		cozeloop.WithAPIToken(os.Getenv("COZLOOP_API_TOKEN")),
+		cozeloop.WithWorkspaceID(os.Getenv("COZLOOP_WORKSPACE_ID")),
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer cli.Close(ctx)
+
+	am, err := agenticopenai.New(ctx, &agenticopenai.Config{
+		Model:   os.Getenv("OPENAI_MODEL"),
+		APIKey:  os.Getenv("OPENAI_API_KEY"),
+		BaseURL: "https://api.openai.com/v1",
+		ServerTools: []*agenticopenai.ServerToolConfig{
 			{
-				WebSearch: &responses.ToolWebSearch{
-					Type: responses.ToolType_web_search,
+				WebSearch: &responses.WebSearchToolParam{
+					Type: responses.WebSearchToolTypeWebSearch,
 				},
 			},
-		},
-		Reasoning: &responses.ResponsesReasoning{
-			Effort: responses.ReasoningEffort_low,
 		},
 	})
 	if err != nil {
 		log.Fatalf("failed to create agentic model, err=%v", err)
 	}
 
-	r, err := NewAgent(ctx, &AgentConfig{
+	config := &AgentConfig{
 		Model: am,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools: []tool.BaseTool{
 				&SummarizeNewsTool{},
 				&GetUserLocationTool{},
+				&GetNewsPosterTool{},
 			},
 		},
 		ToolReturnDirectly: map[string]struct{}{
 			summarizeNewsToolName: {},
 		},
-	})
+	}
+
+	r, err := NewAgent(ctx, config)
 	if err != nil {
 		log.Fatalf("failed to create agent, err=%v", err)
 	}
@@ -75,28 +86,38 @@ func main() {
 	input := []*schema.AgenticMessage{
 		schema.SystemAgenticMessage("You are a news assistant that helps users search for recent news. " +
 			"Before using the `summarize_news` tool, " +
-			"You MUST use the `get_user_location` tool to get the user's country." +
+			"You MUST use the `get_user_location` tool to get the user's country. " +
+			"If the user asks for a poster, you MUST call `get_news_poster`. " +
 			"You MUST use the `summarize_news` tool to summarize the news and return the result."),
-		schema.UserAgenticMessage("What news has been happening in the last three days?"),
+		schema.UserAgenticMessage("What news has been happening in the last three days? Also return a poster for the hottest topic."),
 	}
 
 	cb := callbacks.NewHandlerHelper().AgenticModel(&callbacks.AgenticModelCallbackHandler{
 		OnEndWithStreamOutput: newAgenticModelCallback().OnEndWithStreamOutput,
 	}).Handler()
 
-	sr, err := r.Stream(ctx, input, WithComposeOptions(compose.WithCallbacks(cb)))
+	toolInfos, err := genToolInfos(ctx, config.ToolsConfig)
+	if err != nil {
+		log.Fatalf("failed to generate tool infos, err=%v", err)
+	}
+
+	sr, err := r.Stream(ctx, input,
+		WithComposeOptions(
+			compose.WithChatModelOption(model.WithTools(toolInfos)),
+			compose.WithCallbacks(cb, clc.NewLoopHandler(cli)),
+		))
 	if err != nil {
 		log.Fatalf("failed to stream, err=%v", err)
 	}
 
 	var msgs []*schema.AgenticMessage
 	for {
-		msg, err := sr.Recv()
-		if err != nil {
-			if err == io.EOF {
+		msg, recvErr := sr.Recv()
+		if recvErr != nil {
+			if recvErr == io.EOF {
 				break
 			}
-			log.Fatalf("failed to recv, err=%v", err)
+			log.Fatalf("failed to recv, err=%v", recvErr)
 		}
 		msgs = append(msgs, msg)
 	}
@@ -111,20 +132,44 @@ func main() {
 	for _, block := range msg.ContentBlocks {
 		switch block.Type {
 		case schema.ContentBlockTypeFunctionToolResult:
-			var res *SummarizeNewsToolInput
-			if err = sonic.UnmarshalString(block.FunctionToolResult.Result, &res); err != nil {
-				log.Fatalf("failed to unmarshal function tool result, err=%v", err)
-			}
+			switch block.FunctionToolResult.Name {
+			case summarizeNewsToolName:
+				if len(block.FunctionToolResult.Content) == 0 || block.FunctionToolResult.Content[0].Text == nil {
+					log.Fatalf("summarize_news returned empty content")
+				}
 
-			b, err := sonic.MarshalIndent(res.News, "", "  ")
-			if err != nil {
-				log.Fatalf("failed to marshal function tool result, err=%v", err)
-			}
+				var res *SummarizeNewsToolInput
+				if err = sonic.UnmarshalString(block.FunctionToolResult.Content[0].Text.Text, &res); err != nil {
+					log.Fatalf("failed to unmarshal function tool result, err=%v", err)
+				}
 
-			fmt.Println(string(b))
+				b, err := sonic.MarshalIndent(res.News, "", "  ")
+				if err != nil {
+					log.Fatalf("failed to marshal function tool result, err=%v", err)
+				}
+
+				fmt.Println(string(b))
+			case getNewsPosterToolName:
+				for _, part := range block.FunctionToolResult.Content {
+					switch part.Type {
+					case schema.FunctionToolResultContentBlockTypeText:
+						if part.Text != nil {
+							fmt.Println(part.Text.Text)
+						}
+					case schema.FunctionToolResultContentBlockTypeImage:
+						if part.Image != nil {
+							fmt.Printf("poster image: mime=%s base64_len=%d\n", part.Image.MIMEType, len(part.Image.Base64Data))
+						}
+					}
+				}
+			default:
+				fmt.Printf("%s\n", block)
+			}
 
 		default:
-			fmt.Println(fmt.Sprintf("%s", block))
+			fmt.Printf("%s\n", block)
 		}
 	}
+
+	time.Sleep(5 * time.Second)
 }

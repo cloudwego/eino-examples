@@ -67,17 +67,7 @@ type Agent struct {
 func NewAgent(ctx context.Context, config *AgentConfig) (_ *Agent, err error) {
 	var (
 		toolsNode *compose.AgenticToolsNode
-		toolInfos []*schema.ToolInfo
 	)
-
-	if toolInfos, err = genToolInfos(ctx, config.ToolsConfig); err != nil {
-		return nil, err
-	}
-
-	agenticModel, err := config.Model.WithTools(toolInfos)
-	if err != nil {
-		return nil, err
-	}
 
 	if toolsNode, err = compose.NewAgenticToolsNode(ctx, &config.ToolsConfig); err != nil {
 		return nil, err
@@ -96,7 +86,7 @@ func NewAgent(ctx context.Context, config *AgentConfig) (_ *Agent, err error) {
 		return modifiedInput, nil
 	}
 
-	_ = graph.AddAgenticModelNode(nodeKeyModel, agenticModel,
+	_ = graph.AddAgenticModelNode(nodeKeyModel, config.Model,
 		compose.WithStatePreHandler(modelPreHandle),
 		compose.WithNodeName("News Assistant"),
 	)
