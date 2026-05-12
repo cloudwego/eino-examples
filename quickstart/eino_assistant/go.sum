@@ -58,8 +58,8 @@ github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250225083118-fd2
 github.com/cloudwego/eino-ext/components/embedding/ark v0.0.0-20250225083118-fd27d80f189c/go.mod h1:xfLjO0stTs9PopgXSBmj8dmUDJLXEiuPESN1dDWT2so=
 github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250225083118-fd27d80f189c h1:58ajRmwJaTSBmDTNWAreZ4ZVQE8bEw0mM+Z5PlwIjLo=
 github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250225083118-fd27d80f189c/go.mod h1:KDaN8oztE3Cu2ZcV0zHufVBa13BhJVbbG5RDzXKYaoc=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.67 h1:+sVn9r6P5dZN4CdoG6eWlDULz6RobZYbIbsqIR1m9qQ=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.67/go.mod h1:E+9WaIMWnqKl8xZXYhZUiT5giCwfIfWh/zgCzLzGhFg=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.68 h1:ZW7sAXxA3BoaCksnxM82tF7aM7jfn2XOzuiWYL8KsMU=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.68/go.mod h1:IctHLV+EmEhf3o2fBw0N873mLIyNlEAAGcEpUGEQdvk=
 github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c h1:/WS9PynViCEdBK+zUUteFRxqx82fvPOVcjmtNrqxJmU=
 github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c/go.mod h1:iU/5QoRRQK1GyldawI6BbogyuIqOPLDJct3zDIVWqJ8=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260427010451-749e3706378b h1:Bu2g5EgsWM/NN/ral3t8Bx3kXQLdJNS1DSlQCEsp7Rs=
@@ -271,8 +271,8 @@ github.com/valyala/fasttemplate v1.2.2 h1:lxLXG0uE3Qnshl9QyaK6XJxMXlQZELvChBOCmQ
 github.com/valyala/fasttemplate v1.2.2/go.mod h1:KHLXt3tVN2HBp8eijSv/kGJopbvo7S+qRAEEKiv+SiQ=
 github.com/volcengine/volc-sdk-golang v1.0.23 h1:anOslb2Qp6ywnsbyq9jqR0ljuO63kg9PY+4OehIk5R8=
 github.com/volcengine/volc-sdk-golang v1.0.23/go.mod h1:AfG/PZRUkHJ9inETvbjNifTDgut25Wbkm2QoYBTbvyU=
-github.com/volcengine/volcengine-go-sdk v1.2.9 h1:du2gnImtyWXKkQFnJW/GXCs+UBibGGOXIbP1Ams2pB8=
-github.com/volcengine/volcengine-go-sdk v1.2.9/go.mod h1:oxoVo+A17kvkwPkIeIHPVLjSw7EQAm+l/Vau1YGHN+A=
+github.com/volcengine/volcengine-go-sdk v1.2.27 h1:azBueeKhhGQukss+ob6m3oJ5K8GGYbfDNj8RKAEXVTE=
+github.com/volcengine/volcengine-go-sdk v1.2.27/go.mod h1:oxoVo+A17kvkwPkIeIHPVLjSw7EQAm+l/Vau1YGHN+A=
 github.com/wk8/go-ordered-map/v2 v2.1.8 h1:5h/BUHu93oj4gIdvHHHGsScSTMijfx5PeYkE/fJgbpc=
 github.com/wk8/go-ordered-map/v2 v2.1.8/go.mod h1:5nJHM5DyteebpVlHnWMV0rPz6Zp7+xBAnxjb1X5vnTw=
 github.com/x-cray/logrus-prefixed-formatter v0.5.2 h1:00txxvfBM9muc0jiLIEAkAcIMJzfthRT6usrui8uGmg=

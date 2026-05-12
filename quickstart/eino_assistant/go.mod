@@ -9,7 +9,7 @@ require (
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.67
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260427010451-749e3706378b
 	github.com/cloudwego/eino-ext/devops v0.1.9
@@ -81,7 +81,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.2.9 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.2.27 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.59.0 // indirect
