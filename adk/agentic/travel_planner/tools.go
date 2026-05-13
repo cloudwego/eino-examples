@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     https://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,143 +18,115 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
 )
 
-type noInput struct{}
-
-type userProfile struct {
-	Traveler       string   `json:"traveler"`
-	City           string   `json:"city"`
-	Days           int      `json:"days"`
-	Interests      []string `json:"interests"`
-	Pace           string   `json:"pace"`
-	WakeUpStyle    string   `json:"wake_up_style"`
-	FoodPreference string   `json:"food_preference"`
+type lookupUserProfileInput struct {
+	Destination string `json:"destination,omitempty" jsonschema_description:"目的地城市或区域。"`
 }
 
-type travelPolicy struct {
-	BudgetCNY          int      `json:"budget_cny"`
-	HotelMaxCNY        int      `json:"hotel_max_cny"`
-	Transport          string   `json:"transport"`
-	MustAvoid          []string `json:"must_avoid"`
-	PreferredTimeSlots []string `json:"preferred_time_slots"`
+type lookupTravelConstraintsInput struct {
+	TripLength string `json:"trip_length,omitempty" jsonschema_description:"行程长度，例如两天。"`
 }
 
-type estimateTripCostInput struct {
-	HotelCNY       int `json:"hotel_cny" jsonschema_description:"Hotel cost in CNY"`
-	TransportCNY   int `json:"transport_cny" jsonschema_description:"Transport cost in CNY"`
-	TicketsCNY     int `json:"tickets_cny" jsonschema_description:"Museum or exhibition ticket cost in CNY"`
-	MealsCNY       int `json:"meals_cny" jsonschema_description:"Meals cost in CNY"`
-	CoffeeCNY      int `json:"coffee_cny" jsonschema_description:"Coffee and snacks cost in CNY"`
-	ContingencyCNY int `json:"contingency_cny" jsonschema_description:"Buffer for unexpected costs in CNY"`
+type bookingOptionInput struct {
+	Name             string  `json:"name" jsonschema_description:"需要评估的体验、场馆、展览、咖啡馆或活动名称。"`
+	Category         string  `json:"category,omitempty" jsonschema_description:"类别，例如展览、博物馆、咖啡、散步、演出。"`
+	Date             string  `json:"date,omitempty" jsonschema_description:"计划日期或时间段。"`
+	Action           string  `json:"action" jsonschema_description:"Agent 想执行的动作，例如 recommend、reserve、pay。"`
+	EstimatedCostCNY float64 `json:"estimated_cost_cny,omitempty" jsonschema_description:"预估单项费用，单位人民币。"`
+	Notes            string  `json:"notes,omitempty" jsonschema_description:"简要说明这个候选项为什么值得评估。"`
 }
 
-type estimateTripCostOutput struct {
-	TotalCNY int    `json:"total_cny"`
-	Within   bool   `json:"within_budget"`
-	Comment  string `json:"comment"`
-}
-
-type scoreItineraryInput struct {
-	InterestFit int `json:"interest_fit" jsonschema_description:"0-10, how well the plan matches museums, exhibitions and coffee"`
-	PaceComfort int `json:"pace_comfort" jsonschema_description:"0-10, how relaxed the schedule is"`
-	BudgetFit   int `json:"budget_fit" jsonschema_description:"0-10, how well the plan fits the budget"`
-	QueueRisk   int `json:"queue_risk" jsonschema_description:"0-10, higher means more queueing risk"`
-}
-
-type scoreItineraryOutput struct {
-	Score         int      `json:"score"`
-	Decision      string   `json:"decision"`
-	TradeOffNotes []string `json:"trade_off_notes"`
-}
-
-func travelTools() ([]tool.BaseTool, error) {
-	profileTool, err := utils.InferTool("lookup_user_profile", "Return the mock traveler profile for this demo.", lookupUserProfile)
-	if err != nil {
-		return nil, err
-	}
-
-	policyTool, err := utils.InferTool("lookup_travel_policy", "Return the mock budget and travel constraints for this demo.", lookupTravelPolicy)
-	if err != nil {
-		return nil, err
-	}
-
-	costTool, err := utils.InferTool("estimate_trip_cost", "Estimate the trip cost from itemized CNY inputs.", estimateTripCost)
-	if err != nil {
-		return nil, err
-	}
-
-	scoreTool, err := utils.InferTool("score_itinerary", "Score a proposed itinerary from fit, comfort, budget, and queue risk.", scoreItinerary)
-	if err != nil {
-		return nil, err
-	}
-
-	return []tool.BaseTool{profileTool, policyTool, costTool, scoreTool}, nil
-}
-
-func lookupUserProfile(_ context.Context, _ *noInput) (*userProfile, error) {
-	return &userProfile{
-		Traveler:       "Mia",
-		City:           "Hangzhou",
-		Days:           2,
-		Interests:      []string{"exhibitions", "museums", "specialty coffee", "quiet walks"},
-		Pace:           "relaxed",
-		WakeUpStyle:    "no early mornings",
-		FoodPreference: "light meals, one good local dinner",
-	}, nil
-}
-
-func lookupTravelPolicy(_ context.Context, _ *noInput) (*travelPolicy, error) {
-	return &travelPolicy{
-		BudgetCNY:   1800,
-		HotelMaxCNY: 650,
-		Transport:   "metro or taxi for short hops",
-		MustAvoid: []string{
-			"starting before 10:00",
-			"long outdoor exposure in bad weather",
-			"more than two high-queue attractions in one day",
+func buildTools(planPath string) ([]tool.BaseTool, error) {
+	lookupProfile, err := utils.InferTool(
+		"lookup_user_profile",
+		"读取本示例中稳定的用户旅行偏好。",
+		func(ctx context.Context, input *lookupUserProfileInput) (string, error) {
+			if input == nil {
+				input = &lookupUserProfileInput{}
+			}
+			destination := input.Destination
+			if destination == "" {
+				destination = "杭州"
+			}
+			return mustJSON(map[string]any{
+				"destination":        destination,
+				"interests":          []string{"展览", "博物馆", "精品咖啡", "轻松的湖边散步"},
+				"pace":               "节奏放松，留足休息时间，不做赶场式清单",
+				"walking_preference": "喜欢舒服的步行，但雨天或高温时避免过长步行",
+				"budget_cny":         demoBudgetCNY,
+				"food_preference":    "偏好轻食和咖啡馆，避免把行程排得过满",
+			})
 		},
-		PreferredTimeSlots: []string{"late morning", "early afternoon", "coffee break", "early evening"},
-	}, nil
-}
-
-func estimateTripCost(_ context.Context, in *estimateTripCostInput) (*estimateTripCostOutput, error) {
-	total := in.HotelCNY + in.TransportCNY + in.TicketsCNY + in.MealsCNY + in.CoffeeCNY + in.ContingencyCNY
-	return &estimateTripCostOutput{
-		TotalCNY: total,
-		Within:   total <= 1800,
-		Comment:  fmt.Sprintf("estimated total is %d CNY against the 1800 CNY demo budget", total),
-	}, nil
-}
-
-func scoreItinerary(_ context.Context, in *scoreItineraryInput) (*scoreItineraryOutput, error) {
-	score := in.InterestFit*35 + in.PaceComfort*30 + in.BudgetFit*25 - in.QueueRisk*10
-	score = score / 9
-	if score < 0 {
-		score = 0
-	}
-	if score > 100 {
-		score = 100
+	)
+	if err != nil {
+		return nil, err
 	}
 
-	decision := "revise"
-	if score >= 80 {
-		decision = "recommend"
-	} else if score >= 65 {
-		decision = "acceptable with backup"
-	}
-
-	return &scoreItineraryOutput{
-		Score:    score,
-		Decision: decision,
-		TradeOffNotes: []string{
-			"favor fewer stops over maximum coverage",
-			"keep a nearby coffee backup for weather or queue changes",
-			"reserve ticketed exhibitions when possible",
+	lookupConstraints, err := utils.InferTool(
+		"lookup_travel_constraints",
+		"读取本示例中的行程硬约束和策略约束。",
+		func(ctx context.Context, input *lookupTravelConstraintsInput) (string, error) {
+			if input == nil {
+				input = &lookupTravelConstraintsInput{}
+			}
+			tripLength := input.TripLength
+			if tripLength == "" {
+				tripLength = "两天"
+			}
+			return mustJSON(map[string]any{
+				"trip_length":            tripLength,
+				"trip_dates":             "这个周末",
+				"must_verify_with_web":   []string{"天气", "开放状态", "当前展览", "会影响路线的实时信息"},
+				"route_expectation":      "基于核验后的地点信息安排紧凑路线，减少不必要的折返。",
+				"booking_policy":         fmt.Sprintf("Agent 可以评估候选体验，但不得自动付款；单项自动推荐预算上限为 %.0f 元。", maxAutoBookingOptionCNY),
+				"auto_booking_limit_cny": maxAutoBookingOptionCNY,
+				"final_file_path":        planPath,
+			})
 		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	evaluateBookingOption, err := utils.InferTool(
+		"evaluate_booking_option",
+		"评估一个旅行候选项是否适合进入计划。middleware 会拒绝超出预算上限或试图自动付款的动作。",
+		func(ctx context.Context, input *bookingOptionInput) (string, error) {
+			if input == nil {
+				input = &bookingOptionInput{}
+			}
+			return mustJSON(map[string]any{
+				"status":             "option_recorded",
+				"name":               input.Name,
+				"category":           input.Category,
+				"date":               input.Date,
+				"action":             input.Action,
+				"estimated_cost_cny": input.EstimatedCostCNY,
+				"message":            "候选项已记录为可推荐选项，没有发生真实预约、付款或下单。",
+			})
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return []tool.BaseTool{
+		lookupProfile,
+		lookupConstraints,
+		evaluateBookingOption,
 	}, nil
+}
+
+func mustJSON(v any) (string, error) {
+	bs, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return "", err
+	}
+	return string(bs), nil
 }
