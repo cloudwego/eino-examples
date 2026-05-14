@@ -4,19 +4,15 @@
 
 ## Why AgenticMessage ✨
 
-As model providers add native reasoning, built-in tools, MCP-style tool use, and richer response metadata, model output is no longer just "one text answer". A single turn can become an ordered agentic timeline: think, call a server-side tool, continue reasoning, call a local function, read the result, and then answer.
-
-`schema.Message` is still a good fit for classic chat: role, text content, multimodal parts, and local function tool calls. `schema.AgenticMessage` is better when you need to preserve that richer timeline. Its `ContentBlocks` keep reasoning, user input, assistant generated content, function tool calls/results, server tool calls/results, and MCP-related items as dedicated block types. `AgenticResponseMeta` carries token usage and provider extensions, while block `Extra` and extension fields can preserve provider-specific details such as item IDs or statuses.
-
-In Eino, `AgenticMessage` is the shared message shape behind `AgenticModel`, `AgenticChatTemplate`, and `AgenticToolsNode`. This example uses the ADK path: a typed agent runs an `AgenticModel`, uses server-side `web_search`, executes local Eino tools through the agent loop, applies typed middleware, and streams structured events. With `AgenticMessage`, the output shows what happened during the agent run directly and structurally, which is better for UI display, logs, tracing, and debugging.
+In a single model call, the model may return multiple ordered structured events, such as reasoning, calling a server tool, continuing reasoning, and then calling a function tool. `AgenticMessage` uses `ContentBlock`s to store these ordered structured events.
 
 ## Project ✨
 
 This example shows how to build and run a compact Eino ADK agent with `schema.AgenticMessage`.
 
-The agent prepares an evidence-backed research report for an engineering team. It combines an `AgenticModel`, server-side `web_search`, local function tools, typed middleware, and streaming ADK events in one runnable flow.
+The agent prepares an evidence-backed research report for an engineering team. It combines an `AgenticModel`, server-side `web_search`, local function tools, Eino's native filesystem middleware, and streaming ADK events in one runnable flow.
 
-The console output prints Eino's built-in `AgenticMessage.String()` representation, so you can see an agent turn as structured blocks instead of plain text.
+The console output prints Eino's built-in `AgenticMessage.String()` representation.
 
 ## Run 🚀
 
@@ -35,7 +31,7 @@ export ARK_BASE_URL="your-ark-base-url"
 
 ## Output 👀
 
-The terminal prints each materialized `AgenticMessage`. The exact output depends on the model and search results, but the ordered `content_blocks` can show an agentic sequence such as reasoning, server-side search, more reasoning, and then a local function call:
+The terminal prints each materialized `AgenticMessage`. The exact output depends on the model and search results, but the ordered `content_blocks` can show an agentic sequence such as reasoning, server-side search, more reasoning, and then local function calls:
 
 ```text
 --- AgenticMessage #2 ---
@@ -63,12 +59,6 @@ content_blocks:
       name: score_evidence
       content: (1 blocks)
         [0] text: ...
-```
-
-When `save_research_report` is invoked, the middleware also prints:
-
-```text
-[middleware] evidence_gate running before save_research_report
 ```
 
 The generated report is written to:

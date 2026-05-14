@@ -20,7 +20,9 @@ import (
 	"context"
 	"fmt"
 
+	localbackend "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
+	fsmiddleware "github.com/cloudwego/eino/adk/middlewares/filesystem"
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 )
@@ -36,9 +38,21 @@ func newResearchAssistant(ctx context.Context, reportPath string) (adk.TypedAgen
 		return nil, fmt.Errorf("build tools: %w", err)
 	}
 
+	fsBackend, err := localbackend.NewBackend(ctx, &localbackend.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("create filesystem backend: %w", err)
+	}
+
+	fsMiddleware, err := fsmiddleware.NewTyped[*schema.AgenticMessage](ctx, &fsmiddleware.MiddlewareConfig{
+		Backend: fsBackend,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("create filesystem middleware: %w", err)
+	}
+
 	agent, err := adk.NewTypedChatModelAgent[*schema.AgenticMessage](ctx, &adk.TypedChatModelAgentConfig[*schema.AgenticMessage]{
 		Name:        "AgenticResearchAssistant",
-		Description: "Creates an evidence-backed research report with server search, local tools, and middleware.",
+		Description: "Creates an evidence-backed research report with server search, local tools, and filesystem middleware.",
 		Instruction: agentInstruction(reportPath),
 		Model:       agenticModel,
 		ToolsConfig: adk.ToolsConfig{
@@ -47,7 +61,7 @@ func newResearchAssistant(ctx context.Context, reportPath string) (adk.TypedAgen
 			},
 		},
 		Handlers: []adk.TypedChatModelAgentMiddleware[*schema.AgenticMessage]{
-			newEvidenceGateMiddleware(),
+			fsMiddleware,
 		},
 		MaxIterations: 8,
 	})

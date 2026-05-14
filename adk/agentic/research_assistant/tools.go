@@ -20,8 +20,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/components/tool/utils"
@@ -35,10 +33,6 @@ type scoreEvidenceInput struct {
 	Claim     string `json:"claim" jsonschema_description:"The concrete claim or signal being scored."`
 	SourceURL string `json:"source_url" jsonschema_description:"Source URL for the claim."`
 	Notes     string `json:"notes,omitempty" jsonschema_description:"Short notes about why this evidence matters."`
-}
-
-type saveResearchReportInput struct {
-	Markdown string `json:"markdown" jsonschema_description:"The complete Markdown report to save."`
 }
 
 func buildTools(reportPath string) ([]tool.BaseTool, error) {
@@ -101,35 +95,9 @@ func buildTools(reportPath string) ([]tool.BaseTool, error) {
 		return nil, err
 	}
 
-	saveReport, err := utils.InferTool(
-		"save_research_report",
-		"Save the final Markdown research report to the example workspace.",
-		func(ctx context.Context, input *saveResearchReportInput) (string, error) {
-			if input == nil || input.Markdown == "" {
-				return "", fmt.Errorf("markdown content is required")
-			}
-			if err := os.MkdirAll(filepath.Dir(reportPath), 0o755); err != nil {
-				return "", fmt.Errorf("create report directory: %w", err)
-			}
-			if err := os.WriteFile(reportPath, []byte(input.Markdown), 0o644); err != nil {
-				return "", fmt.Errorf("write report: %w", err)
-			}
-
-			return mustJSON(map[string]any{
-				"status": "saved",
-				"path":   reportPath,
-				"bytes":  len(input.Markdown),
-			})
-		},
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	return []tool.BaseTool{
 		loadBrief,
 		scoreEvidence,
-		saveReport,
 	}, nil
 }
 

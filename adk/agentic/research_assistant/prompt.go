@@ -27,9 +27,8 @@ Work as an agent:
 1. Call load_research_brief to get the audience, required report shape, and scoring criteria.
 2. Use server-side web_search to verify current public information. Keep searches focused.
 3. Call score_evidence for at least two concrete pieces of evidence.
-4. Write a Markdown report and call save_research_report with the full markdown content.
-5. If save_research_report returns blocked_by_evidence_gate, revise the report and call save_research_report again.
-6. After the report is saved, stop calling tools and reply briefly.
+4. Write a Markdown report and call the filesystem middleware tool write_file with the full markdown content.
+5. After write_file succeeds, stop calling tools and reply briefly.
 
 The report must be saved to:
 %s
@@ -51,9 +50,9 @@ func userRequest(reportPath string) string {
 Focus on:
 - tool calling
 - server-side tools
-- middleware or policy gates
+- filesystem middleware
 - observability of agent runs
 
-Use current public information where useful, score the strongest evidence, and save the final report to:
+Use current public information where useful, score the strongest evidence, and use write_file to save the final report to:
 %s`, reportPath)
 }
