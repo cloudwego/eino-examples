@@ -1,6 +1,6 @@
 # Ralph Loop
 
-This example demonstrates the **Ralph Loop** pattern using the ADK's `TurnLoop` API, wrapped in a reusable `RalphLoop` abstraction.
+This example demonstrates the **Ralph Loop** pattern using the ADK's `Runner` API, wrapped in a reusable `RalphLoop` abstraction.
 
 ## What is a Ralph Loop?
 
@@ -15,7 +15,7 @@ The Ralph Loop (originated by [Geoffrey Huntley](https://github.com/snarktank/ra
 
 ## The `RalphLoop` Abstraction
 
-The example provides a `RalphLoop` type that encapsulates the pattern, hiding the raw `TurnLoop` mechanics:
+The example provides a `RalphLoop` type that encapsulates the pattern. The turn loop is driven externally via a simple `for` loop — each turn uses `Runner` to execute the agent once:
 
 ```go
 agent, _ := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
@@ -60,7 +60,6 @@ fmt.Printf("Complete: %v, Turns: %d/%d\n", result.Complete, result.Turns, result
 | `CompletionPromise` | String the agent must output to signal completion. Defaults to `<COMPLETE/>`. |
 | `VerifyCompletion` | Called when the promise is detected. Return `nil` to accept, `error` to reject and continue. Optional. |
 | `OnEvent` | Called for each agent event during a turn (observability). Optional. |
-| `IdleTimeout` | Safety net — auto-stop if the loop is idle for this long. Defaults to 30s. |
 
 ### `RalphLoopResult`
 
@@ -72,41 +71,28 @@ fmt.Printf("Complete: %v, Turns: %d/%d\n", result.Complete, result.Turns, result
 | `StopCause` | Reason the loop stopped (e.g. `"completion promise accepted"`, `"max turns reached"`). |
 | `Err` | Non-nil if the loop exited due to an error. |
 
-## How It Maps to TurnLoop
-
-| Ralph Concept | TurnLoop Implementation (inside `RalphLoop`) |
-|---|---|
-| Task prompt | Internal item pushed into the loop |
-| Same prompt each turn | `GenInput` always re-injects the prompt; `OnAgentEvents` re-pushes the item if incomplete |
-| Completion detection | `OnAgentEvents` inspects output for `CompletionPromise` |
-| Verification gate | `VerifyCompletion` callback — caller decides what "done" means |
-| External state as memory | Shared `InMemoryBackend` — file writes persist across turns |
-| Fresh context per turn | `PrepareAgent` returns the same agent; TurnLoop feeds fresh input each turn |
-| Max turns | Counter in `GenInput`; calls `Stop()` when exceeded |
-
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│                   RalphLoop.Run()                    │
+│                   RalphLoop.Run()                     │
 │                                                      │
-│  ┌──────────┐    ┌──────────────┐    ┌────────────┐  │
-│  │ GenInput  │───▶│PrepareAgent  │───▶│   Agent    │  │
-│  │(same      │    │(returns the  │    │ (runs turn,│  │
-│  │ prompt)   │    │ shared agent)│    │  uses fs   │  │
-│  └──────────┘    └──────────────┘    │  tools)    │  │
-│       ▲                              └─────┬──────┘  │
-│       │          ┌─────────────────┐       │         │
-│       │          │ OnAgentEvents   │◀──────┘         │
-│       │          └──┬──────────────┘                 │
-│       │             │                                │
-│       │   CompletionPromise detected?                │
-│       │     YES ─▶ VerifyCompletion()                │
-│       │              ├─ error → REJECT, re-push      │
-│       │              └─ nil   → ACCEPT, Stop()       │
-│       │     NO  ─▶ re-push ───────────────────┐      │
-│       │                                       │      │
-│       └───────────────────────────────────────┘      │
+│  for turn := 1; turn <= MaxTurns; turn++ {           │
+│                                                      │
+│    ┌──────────────────────────────────────────────┐  │
+│    │  Runner.Run(prompt)                          │  │
+│    │    → Agent executes one turn using fs tools  │  │
+│    │    → Collects text output                    │  │
+│    └──────────────────────┬───────────────────────┘  │
+│                           │                          │
+│    CompletionPromise in output?                       │
+│      YES → VerifyCompletion()                        │
+│              ├─ error → REJECT, continue loop        │
+│              └─ nil   → ACCEPT, return result        │
+│      NO  → continue loop                            │
+│                                                      │
+│  }                                                   │
+│  → max turns reached, return result                  │
 │                                                      │
 │  ┌────────────────────────────────────────────────┐  │
 │  │          InMemoryBackend (shared)              │  │
@@ -153,7 +139,7 @@ export ARK_BASE_URL="..."
 
 ```bash
 cd examples
-go run ./adk/turn-loop/ralph-loop/
+go run ./adk/agent/ralph-loop/
 ```
 
 ## Expected Behavior
@@ -161,6 +147,6 @@ go run ./adk/turn-loop/ralph-loop/
 1. Turn 1: Agent reads all files, finds 15 `BUG:` markers, fixes 2-3 in store.go
 2. Turn 2-4: Agent continues fixing handler.go, handler_test.go, main.go, README.md
 3. When agent outputs `<COMPLETE/>`, the verification gate greps for remaining BUG markers
-4. If markers remain → promise rejected, task re-pushed for another turn
+4. If markers remain → promise rejected, loop continues with another turn
 5. When all markers are resolved → promise accepted, loop exits
 6. Final summary shows stop cause, turn count, and all files in the filesystem
