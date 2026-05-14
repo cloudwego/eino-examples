@@ -83,7 +83,7 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 | `SESSION_DIR` | `./data/sessions` | `message` 会话目录 |
 | `SESSION_DIR_AGENTIC` | `./data/sessions_agentic` | `agentic` 会话目录 |
 
-两种消息类型分开存储，不做自动转换。详细说明见 [Message Kind：同时支持 Message 与 AgenticMessage](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/message_kind.md)。
+两种消息类型分开存储，不做自动转换。
 
 ## 学习路线（章节导航）
 
@@ -99,7 +99,6 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 | 第八章 | Graph Tool（复杂工作流） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch08_graph_tool.md |
 | 第九章 | Skill（Console） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch09_skill.md |
 | 最终章 | A2UI（Web） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch10_a2ui.md |
-| 附录 | Message Kind（Message / AgenticMessage） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/message_kind.md |
 
 ## 最终交付：一个可扩展的端到端 Agent 应用骨架
 
