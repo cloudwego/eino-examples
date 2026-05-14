@@ -24,11 +24,31 @@ import (
 	"time"
 
 	"github.com/cloudwego/eino-ext/components/model/agenticark"
+	"github.com/cloudwego/eino-ext/components/model/agenticopenai"
 	einoModel "github.com/cloudwego/eino/components/model"
+	openaiResponses "github.com/openai/openai-go/v3/responses"
 	arkResponses "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model/responses"
 )
 
+const (
+	providerARK    = "ark"
+	providerOpenAI = "openai"
+)
+
 func newAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) {
+	provider := selectedAgenticProvider()
+	switch provider {
+	case providerARK:
+		return newARKAgenticModel(ctx)
+	case providerOpenAI:
+		return newOpenAIAgenticModel(ctx)
+	default:
+		return nil, fmt.Errorf("unsupported AGENTIC_MODEL_PROVIDER %q, expected %q or %q",
+			provider, providerARK, providerOpenAI)
+	}
+}
+
+func newARKAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) {
 	timeout := 3 * time.Minute
 
 	apiKey, err := requiredEnv("ARK_API_KEY")
@@ -48,8 +68,42 @@ func newAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) {
 	})
 }
 
+func newOpenAIAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) {
+	timeout := 3 * time.Minute
+
+	apiKey, err := requiredEnv("OPENAI_API_KEY")
+	if err != nil {
+		return nil, err
+	}
+	model, err := requiredEnv("OPENAI_MODEL_ID")
+	if err != nil {
+		return nil, err
+	}
+
+	return agenticopenai.New(ctx, &agenticopenai.Config{
+		APIKey:  apiKey,
+		Model:   model,
+		BaseURL: os.Getenv("OPENAI_BASE_URL"),
+		Timeout: &timeout,
+		Include: []openaiResponses.ResponseIncludable{
+			openaiResponses.ResponseIncludableWebSearchCallActionSources,
+			openaiResponses.ResponseIncludableReasoningEncryptedContent,
+		},
+	})
+}
+
 func agenticRunOptions() []einoModel.Option {
+	switch selectedAgenticProvider() {
+	case providerOpenAI:
+		return openAIRunOptions()
+	default:
+		return arkRunOptions()
+	}
+}
+
+func arkRunOptions() []einoModel.Option {
 	return []einoModel.Option{
+		einoModel.WithMaxTokens(8192),
 		agenticark.WithThinking(&arkResponses.ResponsesThinking{
 			Type: arkResponses.ThinkingType_enabled.Enum(),
 		}),
@@ -72,6 +126,33 @@ func agenticRunOptions() []einoModel.Option {
 			},
 		}),
 	}
+}
+
+func openAIRunOptions() []einoModel.Option {
+	return []einoModel.Option{
+		einoModel.WithMaxTokens(8192),
+		agenticopenai.WithReasoning(&openaiResponses.ReasoningParam{
+			Effort:  openaiResponses.ReasoningEffortLow,
+			Summary: openaiResponses.ReasoningSummaryDetailed,
+		}),
+		agenticopenai.WithMaxToolCalls(6),
+		agenticopenai.WithParallelToolCalls(false),
+		agenticopenai.WithServerTools([]*agenticopenai.ServerToolConfig{
+			{
+				WebSearch: &openaiResponses.WebSearchToolParam{
+					Type: openaiResponses.WebSearchToolTypeWebSearch,
+				},
+			},
+		}),
+	}
+}
+
+func selectedAgenticProvider() string {
+	provider := strings.TrimSpace(strings.ToLower(os.Getenv("AGENTIC_MODEL_PROVIDER")))
+	if provider == "" {
+		return providerARK
+	}
+	return provider
 }
 
 func requiredEnv(name string) (string, error) {

@@ -10,28 +10,49 @@ In a single model call, the model may return multiple ordered structured events,
 
 This example shows how to build and run a compact Eino ADK agent with `schema.AgenticMessage`.
 
-The agent prepares an evidence-backed research report for an engineering team. It combines an `AgenticModel`, server-side `web_search`, local function tools, Eino's native filesystem middleware, and streaming ADK events in one runnable flow.
+The agent prepares an evidence-backed research report for an engineering team. It combines an ARK or OpenAI `AgenticModel`, server-side `web_search`, local function tools, Eino's native filesystem middleware, and streaming ADK events in one runnable flow.
 
 The console output prints Eino's built-in `AgenticMessage.String()` representation.
 
 ## Run 🚀
 
+ARK is the default provider:
+
 ```bash
+export AGENTIC_MODEL_PROVIDER="ark"
 export ARK_API_KEY="your-ark-api-key"
 export ARK_MODEL_ID="your-ark-model-id"
 
 go run ./adk/agentic/research_assistant
 ```
 
-Optional:
+ARK optional:
 
 ```bash
 export ARK_BASE_URL="your-ark-base-url"
 ```
 
+OpenAI:
+
+```bash
+export AGENTIC_MODEL_PROVIDER="openai"
+export OPENAI_API_KEY="your-openai-api-key"
+export OPENAI_MODEL_ID="your-openai-model-id"
+
+go run ./adk/agentic/research_assistant
+```
+
+OpenAI optional:
+
+```bash
+export OPENAI_BASE_URL="your-openai-base-url"
+```
+
+Use an OpenAI Responses API model that supports reasoning and the hosted `web_search` tool.
+
 ## Output 👀
 
-The terminal prints each materialized `AgenticMessage`. The exact output depends on the model and search results, but the ordered `content_blocks` can show an agentic sequence such as reasoning, server-side search, more reasoning, and then local function calls:
+The terminal prints each materialized `AgenticMessage`. The exact output depends on the model and search results, but the ordered `content_blocks` can show an agentic sequence such as reasoning, server-side search, more reasoning, local function calls, and the filesystem middleware write:
 
 ```text
 --- AgenticMessage #2 ---

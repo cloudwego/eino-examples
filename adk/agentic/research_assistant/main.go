@@ -38,7 +38,9 @@ func main() {
 	}
 
 	reportPath := filepath.Join(workspaceDir, "research_report.md")
-	_ = os.Remove(reportPath)
+	if err := os.Remove(reportPath); err != nil && !os.IsNotExist(err) {
+		log.Fatal(fmt.Errorf("remove previous research report: %w", err))
+	}
 
 	agent, err := newResearchAssistant(ctx, reportPath)
 	if err != nil {
@@ -53,6 +55,7 @@ func main() {
 	input := schema.UserAgenticMessage(userRequest(reportPath))
 
 	fmt.Println("Running Agentic Research Assistant...")
+	fmt.Printf("provider: %s\n", selectedAgenticProvider())
 	fmt.Printf("workspace: %s\n", workspaceDir)
 	printAgenticMessage(1, input)
 

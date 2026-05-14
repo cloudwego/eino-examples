@@ -27,7 +27,7 @@ Work as an agent:
 1. Call load_research_brief to get the audience, required report shape, and scoring criteria.
 2. Use server-side web_search to verify current public information. Keep searches focused.
 3. Call score_evidence for at least two concrete pieces of evidence.
-4. Write a Markdown report and call the filesystem middleware tool write_file with the full markdown content.
+4. Do not directly read the report file. If you need to inspect it, check whether it exists first. Otherwise write the final Markdown report directly with the filesystem middleware tool write_file.
 5. After write_file succeeds, stop calling tools and reply briefly.
 
 The report must be saved to:
@@ -41,6 +41,8 @@ The Markdown report must include these sections exactly:
 ## Next Steps
 ## Sources
 
+Keep the report compact: no more than 900 words total, no more than three evidence items, and no more than three source URLs.
+
 Do not claim that you performed purchases, registrations, deployments, or external changes.`, reportPath)
 }
 
@@ -53,6 +55,6 @@ Focus on:
 - filesystem middleware
 - observability of agent runs
 
-Use current public information where useful, score the strongest evidence, and use write_file to save the final report to:
+Use current public information where useful, score the strongest evidence, keep the report under 900 words, do not directly read the report file unless you have checked that it exists, and use write_file to save the final report to:
 %s`, reportPath)
 }
