@@ -51,7 +51,12 @@
 ### TurnLoop (推送式事件循环)
 | 目录 | 名称 | 说明 |
 |------|------|------|
-| [adk/turn-loop/ralph-loop](https://github.com/cloudwego/eino-examples/tree/main/adk/turn-loop/ralph-loop) | Ralph Loop | 基于 TurnLoop 的自主迭代模式：相同 Prompt 反复推送，Agent 通过文件系统感知先前工作，验证门控检查 BUG 标记后才接受完成承诺 |
+| [adk/agent/ralph-loop](https://github.com/cloudwego/eino-examples/tree/main/adk/agent/ralph-loop) | Ralph Loop | 自主迭代模式：外部 `for` 循环配合 `Runner.Run` 实现单轮迭代，Agent 通过文件系统感知先前工作，验证门控检查 BUG 标记后才接受完成承诺 |
+
+### Cancel (优雅退出)
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [adk/cancel/graceful-exit](https://github.com/cloudwego/eino-examples/tree/main/adk/cancel/graceful-exit) | Graceful Exit | 演示 Agent Cancel + Resume：捕获 Ctrl-C 信号后以 `CancelAfterChatModel` 模式优雅取消，等待安全点保存 Checkpoint，然后从 Checkpoint 恢复继续执行 |
 
 ### Middlewares (中间件)
 | 目录 | 名称 | 说明 |
