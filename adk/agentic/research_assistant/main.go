@@ -29,11 +29,6 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-const (
-	demoBudgetCNY           = 1200.0
-	maxAutoBookingOptionCNY = 300.0
-)
-
 func main() {
 	ctx := context.Background()
 
@@ -42,10 +37,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	planPath := filepath.Join(workspaceDir, "travel_plan.md")
-	_ = os.Remove(planPath)
+	reportPath := filepath.Join(workspaceDir, "research_report.md")
+	_ = os.Remove(reportPath)
 
-	agent, err := newTravelPlannerAgent(ctx, planPath)
+	agent, err := newResearchAssistant(ctx, reportPath)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -55,20 +50,48 @@ func main() {
 		EnableStreaming: true,
 	})
 
-	fmt.Println("正在运行 Agentic 旅行规划示例...")
-	fmt.Printf("workspace: %s\n", workspaceDir)
+	input := schema.UserAgenticMessage(userRequest(reportPath))
 
-	iter := runner.Run(ctx, []*schema.AgenticMessage{userRequest(planPath)},
+	fmt.Println("Running Agentic Research Assistant...")
+	fmt.Printf("workspace: %s\n", workspaceDir)
+	printAgenticMessage(1, input)
+
+	iter := runner.Run(ctx, []*schema.AgenticMessage{input},
 		adk.WithChatModelOptions(agenticRunOptions()),
 	)
-	if err := printEvents(iter); err != nil {
-		log.Fatal(err)
+	messageIndex := 1
+	for {
+		event, ok := iter.Next()
+		if !ok {
+			break
+		}
+		if event.Err != nil {
+			log.Fatal(event.Err)
+		}
+
+		msg, _, err := adk.TypedGetMessage(event)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if msg != nil {
+			messageIndex++
+			printAgenticMessage(messageIndex, msg)
+		}
 	}
-	if err := validateTravelPlan(planPath); err != nil {
+
+	if err := validateResearchReport(reportPath); err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("\n完成。旅行计划路径: %s\n", planPath)
+	fmt.Printf("\nDone. Research report: %s\n", reportPath)
+}
+
+func printAgenticMessage(index int, msg *schema.AgenticMessage) {
+	if msg == nil {
+		return
+	}
+	fmt.Printf("\n--- AgenticMessage #%d ---\n", index)
+	fmt.Print(msg.String())
 }
 
 func prepareWorkspace() (string, error) {
@@ -84,22 +107,13 @@ func prepareWorkspace() (string, error) {
 	return workspaceDir, nil
 }
 
-func validateTravelPlan(planPath string) error {
-	info, err := os.Stat(planPath)
+func validateResearchReport(reportPath string) error {
+	content, err := os.ReadFile(reportPath)
 	if err != nil {
-		return fmt.Errorf("travel plan was not generated: %w", err)
-	}
-	if info.IsDir() {
-		return fmt.Errorf("travel plan path is a directory: %s", planPath)
-	}
-
-	content, err := os.ReadFile(planPath)
-	if err != nil {
-		return fmt.Errorf("read generated travel plan: %w", err)
+		return fmt.Errorf("research report was not generated: %w", err)
 	}
 	if strings.TrimSpace(string(content)) == "" {
-		return fmt.Errorf("generated travel plan is empty: %s", planPath)
+		return fmt.Errorf("research report is empty: %s", reportPath)
 	}
-
 	return nil
 }

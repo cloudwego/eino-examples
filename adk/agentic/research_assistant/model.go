@@ -39,20 +39,13 @@ func newAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return agenticark.New(ctx, &agenticark.Config{
 		APIKey:  apiKey,
 		Model:   model,
 		BaseURL: os.Getenv("ARK_BASE_URL"),
 		Timeout: &timeout,
 	})
-}
-
-func requiredEnv(name string) (string, error) {
-	value := strings.TrimSpace(os.Getenv(name))
-	if value == "" {
-		return "", fmt.Errorf("%s is required", name)
-	}
-	return value, nil
 }
 
 func agenticRunOptions() []einoModel.Option {
@@ -63,29 +56,30 @@ func agenticRunOptions() []einoModel.Option {
 		agenticark.WithReasoning(&arkResponses.ResponsesReasoning{
 			Effort: arkResponses.ReasoningEffort_high,
 		}),
-		agenticark.WithMaxToolCalls(5),
+		agenticark.WithMaxToolCalls(6),
 		agenticark.WithParallelToolCalls(false),
 		agenticark.WithServerTools([]*agenticark.ServerToolConfig{
 			{
 				WebSearch: &arkResponses.ToolWebSearch{
 					Type:       arkResponses.ToolType_web_search,
-					Limit:      ptrOf[int64](8),
+					Limit:      ptrOf[int64](6),
 					MaxKeyword: ptrOf[int32](3),
 					Sources: []arkResponses.SourceType_Enum{
 						arkResponses.SourceType_search_engine,
-						arkResponses.SourceType_moji,
 						arkResponses.SourceType_toutiao,
-					},
-					UserLocation: &arkResponses.UserLocation{
-						Type:    arkResponses.UserLocationType_approximate,
-						Country: ptrOf("China"),
-						Region:  ptrOf("Zhejiang"),
-						City:    ptrOf("Hangzhou"),
 					},
 				},
 			},
 		}),
 	}
+}
+
+func requiredEnv(name string) (string, error) {
+	value := strings.TrimSpace(os.Getenv(name))
+	if value == "" {
+		return "", fmt.Errorf("%s is required", name)
+	}
+	return value, nil
 }
 
 func ptrOf[T any](v T) *T {

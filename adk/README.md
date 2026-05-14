@@ -16,7 +16,7 @@ This directory provides examples for Eino ADK:
     - `layered-supervisor`: another example of supervisor agent, which set a supervisor agent as sub-agent of another supervisor agent.
     - `integration-project-manager`: another example of using supervisor agent.
   - `agentic`
-    - `travel_planner`: example of using `agenticark.AgenticModel` with ADK agent loop, server-side web search, local tools, filesystem middleware, and custom policy middleware.
+    - `research_assistant`: example of using `AgenticModel` with ADK typed agent, server-side search, local tools, typed middleware, streaming events, and `AgenticMessage` output.
   - `common`: utils. 
 
 
