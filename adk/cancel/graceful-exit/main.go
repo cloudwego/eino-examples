@@ -24,47 +24,63 @@
 // cancel automatically persists a checkpoint. A new Runner can later resume from
 // that checkpoint, continuing exactly where the agent was interrupted.
 //
-// The agent is configured with tools so it makes multiple ChatModel → ToolCall
-// rounds. This is essential: CancelAfterChatModel fires BETWEEN rounds (after a
-// ChatModel call finishes), meaning the resume has remaining work to continue.
-// Without tools, a single-round agent finishes entirely in one ChatModel call,
-// leaving nothing to resume.
+// The agent is configured with tools AND a nested AgentTool so it makes
+// multiple ChatModel → ToolCall rounds across agent layers. This is essential:
+// CancelAfterChatModel fires BETWEEN rounds (after a ChatModel call finishes),
+// and WithRecursive propagates the cancel to the nested agent inside the
+// AgentTool, so whichever layer's ChatModel finishes first triggers the cancel.
+// This speeds up the graceful exit because the inner agent can reach its own
+// safe-point independently of the outer agent.
 //
 // This example runs in two phases:
 //
-//  1. Run + Cancel — An agent starts a multi-step research task (using tools).
-//     When the user presses Ctrl-C (SIGINT/SIGTERM), the cancel function fires
-//     with CancelAfterChatModel mode and a 30-second timeout. The cancel waits
-//     for the current ChatModel call to finish (the graceful safe-point), then
-//     saves the checkpoint. If it doesn't finish within 30 seconds, the cancel
-//     escalates to CancelImmediate.
+//  1. Run + Cancel — A root agent starts a multi-step research task, delegating
+//     analysis to a nested sub-agent via AgentTool. When the user presses
+//     Ctrl-C (SIGINT/SIGTERM), the cancel function fires with CancelAfterChatModel
+//     mode, WithRecursive, and a 30-second timeout. WithRecursive propagates the
+//     cancel into the nested agent — whichever layer's ChatModel finishes first
+//     triggers the safe-point, speeding up the graceful exit. The checkpoint is
+//     saved automatically. If no safe-point is reached within 30 seconds, the
+//     cancel escalates to CancelImmediate.
 //
 //  2. Resume — A new Runner resumes from the saved checkpoint. The agent
-//     continues its remaining tool calls and final response.
+//     continues from whatever layer was interrupted and completes the task.
 //
 // # Key ADK APIs Demonstrated
 //
 //   - adk.WithCancel() — creates a cancel option + cancel function pair
 //   - adk.WithCheckPointID(id) — associates a checkpoint ID with the run
 //   - adk.WithAgentCancelMode(adk.CancelAfterChatModel) — waits for ChatModel safe-point
+//   - adk.WithRecursive() — propagates cancel to nested AgentTools for faster safe-point
 //   - adk.WithAgentCancelTimeout(d) — escalates to CancelImmediate after timeout
 //   - adk.CancelError — the error surfaced via AgentEvent.Err on cancellation
+//   - adk.NewAgentTool — wraps an Agent as a tool for nested agent topology
 //   - Runner.Resume(ctx, checkpointID) — resumes from saved checkpoint
 //
 // # How to Run
 //
-// Set the model environment variables (see adk/common/model for details):
+// Set the model environment variables (see adk/common/model for details).
+//
+// Option A — OpenAI:
 //
 //	export OPENAI_API_KEY=sk-...
 //	export OPENAI_MODEL=gpt-4o
 //	export OPENAI_BASE_URL=https://api.openai.com/v1
 //
+// Option B — Ark (Volcengine):
+//
+//	export MODEL_TYPE=ark
+//	export ARK_API_KEY=...
+//	export ARK_MODEL=...
+//	export ARK_BASE_URL=...
+//
 // Then run:
 //
 //	go run ./adk/cancel/graceful-exit/
 //
-// Press Ctrl-C while the agent is working to trigger the cancel. The program
-// will print the cancel info, then automatically resume and complete the task.
+// Press Ctrl-C while the agent is working to trigger the cancel. WithRecursive
+// ensures the cancel reaches whichever agent layer is active. The program will
+// print the cancel info, then automatically resume and complete the task.
 package main
 
 import (
@@ -109,9 +125,11 @@ func sysMsgf(color, format string, args ...any) {
 
 const checkpointID = "graceful-exit-demo"
 
-// --- Mock tools that simulate a multi-step research workflow ---
-// The agent will call these tools across multiple rounds, giving us a window
-// between ChatModel calls where CancelAfterChatModel can fire.
+// --- Mock tools for the nested agent topology ---
+// The root agent uses search_web, then delegates to the analyst AgentTool.
+// The analyst sub-agent uses analyze_data and summarize_findings.
+// This creates multiple ChatModel calls across two agent layers, giving
+// WithRecursive a window to propagate CancelAfterChatModel inward.
 
 type searchInput struct {
 	Query string `json:"query" jsonschema:"description=The search query"`
@@ -172,23 +190,53 @@ func main() {
 		log.Fatalf("create summarize tool: %v", err)
 	}
 
-	// Create an agent with tools. The instruction encourages using ALL tools
-	// in sequence, creating multiple ChatModel rounds (ChatModel → ToolCalls → ChatModel → ...).
-	agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
-		Name:        "researcher",
-		Description: "A research assistant that searches, analyzes, and summarizes",
-		Instruction: "You are a research assistant. When given a research topic, " +
-			"you MUST follow this workflow step by step:\n" +
-			"1. Use search_web to find information.\n" +
-			"2. Use analyze_data to analyze the search results.\n" +
-			"3. Use summarize_findings to create a final summary.\n" +
-			"4. Present the summary to the user with your commentary.\n" +
-			"Always use ALL three tools in order before giving your final answer.",
+	// --- Sub-agent: "analyst" ---
+	// This agent owns the analyze + summarize tools. It is wrapped as an AgentTool
+	// so the outer agent delegates analysis work to it. This creates a nested agent
+	// topology where WithRecursive can propagate the cancel inward.
+	analyst, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+		Name:        "analyst",
+		Description: "Analyzes search results and produces a summary report",
+		Instruction: "You are a data analyst. When given search results:\n" +
+			"1. Use analyze_data to analyze the content.\n" +
+			"2. Use summarize_findings to produce a final summary.\n" +
+			"Always use BOTH tools before giving your answer.",
 		Model: chatModel,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: []einotool.BaseTool{searchTool, analyzeTool, summarizeTool},
+				Tools: []einotool.BaseTool{analyzeTool, summarizeTool},
 			},
+		},
+	})
+	if err != nil {
+		log.Fatalf("create analyst agent: %v", err)
+	}
+
+	// Wrap the analyst as an AgentTool. The outer agent can call it like any tool.
+	analystTool := adk.NewAgentTool(ctx, analyst)
+
+	// --- Root agent: "researcher" ---
+	// Uses search_web directly and delegates analysis to the analyst AgentTool.
+	// This creates the topology:
+	//   researcher (ChatModel → search_web / analyst_tool)
+	//     └── analyst (ChatModel → analyze_data / summarize_findings)
+	agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+		Name:        "researcher",
+		Description: "A research assistant that searches and delegates analysis",
+		Instruction: "You are a research assistant. When given a research topic, " +
+			"you MUST follow this workflow:\n" +
+			"1. Use search_web to find information.\n" +
+			"2. Use the analyst tool to analyze and summarize the results.\n" +
+			"3. Present the final summary to the user with your commentary.\n" +
+			"Always use search_web first, then delegate to the analyst.",
+		Model: chatModel,
+		ToolsConfig: adk.ToolsConfig{
+			ToolsNodeConfig: compose.ToolsNodeConfig{
+				Tools: []einotool.BaseTool{searchTool, analystTool},
+			},
+			// EmitInternalEvents surfaces the nested analyst agent's events
+			// in the top-level AsyncIterator, so we can see it working in real-time.
+			EmitInternalEvents: true,
 		},
 	})
 	if err != nil {
@@ -230,13 +278,14 @@ func main() {
 		sysMsgf(colorYellow, "⚡ Received signal: %v — requesting cancel...", sig)
 
 		// CancelAfterChatModel: wait for the current ChatModel call to finish
-		// before canceling. Since the agent uses tools, there are multiple
-		// ChatModel calls. The cancel fires at the NEXT safe-point (end of a
-		// ChatModel call), preserving all completed tool results in the checkpoint.
-		// WithAgentCancelTimeout: if the safe-point is not reached within 30s,
+		// before canceling. WithRecursive propagates the cancel to the nested
+		// analyst AgentTool — whichever layer's ChatModel finishes first triggers
+		// the cancel, speeding up the graceful exit.
+		// WithAgentCancelTimeout: if no safe-point is reached within 30s,
 		// escalate to CancelImmediate as a last resort.
 		handle, contributed := cancelFn(
 			adk.WithAgentCancelMode(adk.CancelAfterChatModel),
+			adk.WithRecursive(),
 			adk.WithAgentCancelTimeout(30*time.Second),
 		)
 		sysMsgf(colorYellow, "⚡ Cancel contributed: %v", contributed)
@@ -279,7 +328,7 @@ func main() {
 	})
 
 	// Resume picks up from the checkpoint saved during cancellation.
-	// The agent continues from wherever it was interrupted in the tool workflow.
+	// The agent continues from whatever layer (root or nested) was interrupted.
 	resumeIter, err := resumeRunner.Resume(ctx, checkpointID)
 	if err != nil {
 		log.Fatalf("resume failed: %v", err)
@@ -293,6 +342,7 @@ func main() {
 
 // drainEvents consumes all events from the iterator, printing output and
 // detecting CancelError. Returns true if a CancelError was encountered.
+// Events are prefixed with the agent name to distinguish top-level vs nested output.
 func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
 	for {
 		event, ok := iter.Next()
@@ -314,9 +364,13 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
 			return false
 		}
 
-		// Print streamed/non-streamed message content in cyan.
+		// Determine display prefix based on which agent emitted the event.
+		prefix := fmt.Sprintf("[%s] ", event.AgentName)
+
+		// Print streamed/non-streamed message content.
 		if event.Output != nil && event.Output.MessageOutput != nil {
 			if s := event.Output.MessageOutput.MessageStream; s != nil {
+				first := true
 				for {
 					chunk, recvErr := s.Recv()
 					if recvErr != nil {
@@ -326,19 +380,26 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
 						// StreamCanceledError is expected when CancelImmediate fires.
 						break
 					}
-					fmt.Print(colorCyan + chunk.Content + colorReset)
+					if first {
+						fmt.Print(colorDim + prefix + colorReset + colorCyan)
+						first = false
+					}
+					fmt.Print(chunk.Content)
+				}
+				if !first {
+					fmt.Print(colorReset + "\n")
 				}
 			} else if m := event.Output.MessageOutput.Message; m != nil {
 				if m.Content != "" {
-					fmt.Print(colorCyan + m.Content + colorReset)
+					fmt.Printf("%s%s%s%s%s%s\n", colorDim, prefix, colorReset, colorCyan, m.Content, colorReset)
 				}
 				// Show tool call invocations for visibility.
 				for _, tc := range m.ToolCalls {
-					sysMsgf(colorDim, "  → tool call: %s(%s)", tc.Function.Name, tc.Function.Arguments)
+					sysMsgf(colorDim, "%s  → tool call: %s(%s)", prefix, tc.Function.Name, tc.Function.Arguments)
 				}
 				// Show tool results.
 				if m.Role == schema.Tool {
-					sysMsgf(colorDim, "  ← tool result: %.100s...", m.Content)
+					sysMsgf(colorDim, "%s  ← tool result: %.100s...", prefix, m.Content)
 				}
 			}
 		}
