@@ -48,15 +48,15 @@
 | [adk/multiagent/deep](https://github.com/cloudwego/eino-examples/tree/main/adk/multiagent/deep) | Deep Agents (Excel Agent) | 智能 Excel 助手，分步骤理解和处理 Excel 文件，支持 Python 代码执行 |
 | [adk/multiagent/integration-excel-agent](https://github.com/cloudwego/eino-examples/tree/main/adk/multiagent/integration-excel-agent) | Excel Agent (ADK 集成版) | ADK 集成版 Excel Agent，包含 Planner、Executor、Replanner、Reporter |
 
-### TurnLoop (推送式事件循环)
+### Agent
 | 目录 | 名称 | 说明 |
 |------|------|------|
 | [adk/agent/ralph-loop](https://github.com/cloudwego/eino-examples/tree/main/adk/agent/ralph-loop) | Ralph Loop | 自主迭代模式：外部 `for` 循环配合 `Runner.Run` 实现单轮迭代，Agent 通过文件系统感知先前工作，验证门控检查 BUG 标记后才接受完成承诺 |
 
-### Cancel (优雅退出)
+### Cancel (取消)
 | 目录 | 名称 | 说明 |
 |------|------|------|
-| [adk/cancel/graceful-exit](https://github.com/cloudwego/eino-examples/tree/main/adk/cancel/graceful-exit) | Graceful Exit | 演示 Agent Cancel + Resume：捕获 Ctrl-C 信号后以 `CancelAfterChatModel` 模式优雅取消，等待安全点保存 Checkpoint，然后从 Checkpoint 恢复继续执行 |
+| [adk/cancel/graceful-exit](https://github.com/cloudwego/eino-examples/tree/main/adk/cancel/graceful-exit) | Graceful Exit | 演示 Agent Cancel + Resume：捕获终端信号后以 `CancelAfterChatModel` + `WithRecursive` 模式取消嵌套 Agent，等待安全点保存 Checkpoint，然后恢复继续执行 |
 
 ### Middlewares (中间件)
 | 目录 | 名称 | 说明 |
