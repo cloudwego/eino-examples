@@ -5,7 +5,7 @@ go 1.24
 toolchain go1.24.1
 
 require (
-	github.com/cloudwego/eino v0.9.0-alpha.18
+	github.com/cloudwego/eino v0.9.0-alpha.24
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.4
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250415073426-726b929afbc2
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250422100419-a2ef28c59573
