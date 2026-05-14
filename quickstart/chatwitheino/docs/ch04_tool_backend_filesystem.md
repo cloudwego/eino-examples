@@ -199,6 +199,11 @@ export PROJECT_ROOT=/path/to/eino
 # 验证路径是否正确（应该能看到 adk、components、compose 等目录）
 ls $PROJECT_ROOT
 
+# 默认使用 Message
+go run ./cmd/ch04
+
+# 使用 AgenticMessage
+export MESSAGE_KIND=agentic
 go run ./cmd/ch04
 ```
 
@@ -206,6 +211,12 @@ go run ./cmd/ch04
 
 - **不设置时**：`PROJECT_ROOT` 默认为当前工作目录（`chatwitheino` 所在目录），Agent 只能访问本示例项目的文件。这对于快速试验已足够。
 - **设置后**：指向 Eino 核心库根目录，Agent 可以检索 Eino 框架的完整代码库（核心库、扩展库、示例库）。这是 ChatWithEino 的完整使用场景。
+
+**`MESSAGE_KIND` 说明：**
+
+- 默认使用 `message`，即 `*schema.Message`
+- 设置 `export MESSAGE_KIND=agentic` 后使用 `*schema.AgenticMessage`
+- 两种消息类型的会话分开存储，不做自动转换；使用 `--session` 恢复会话时，请保持 `MESSAGE_KIND` 与创建该会话时一致
 
 **推荐的三仓库目录结构（如要完整体验）：**
 
