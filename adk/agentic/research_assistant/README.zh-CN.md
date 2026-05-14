@@ -65,6 +65,12 @@ content_blocks:
         [0] text: ...
 ```
 
+当 `save_research_report` 被调用时，middleware 还会打印：
+
+```text
+[middleware] evidence_gate running before save_research_report
+```
+
 生成的报告会写入：
 
 ```text

@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -49,6 +50,8 @@ func (m *evidenceGateMiddleware) WrapInvokableToolCall(
 	}
 
 	return func(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+		fmt.Println("[middleware] evidence_gate running before save_research_report")
+
 		var input saveResearchReportInput
 		if err := json.Unmarshal([]byte(argumentsInJSON), &input); err != nil {
 			return "", err

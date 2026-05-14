@@ -65,6 +65,12 @@ content_blocks:
         [0] text: ...
 ```
 
+When `save_research_report` is invoked, the middleware also prints:
+
+```text
+[middleware] evidence_gate running before save_research_report
+```
+
 The generated report is written to:
 
 ```text
