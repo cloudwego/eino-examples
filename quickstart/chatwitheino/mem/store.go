@@ -26,7 +26,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cloudwego/eino/schema"
+	"github.com/cloudwego/eino/adk"
+
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 // SessionMeta provides summary info for the session list.
@@ -37,47 +39,47 @@ type SessionMeta struct {
 }
 
 // Session holds the in-memory state for a single conversation.
-type Session struct {
+type Session[M adk.MessageType] struct {
 	ID        string
 	CreatedAt time.Time
 
 	filePath           string
 	mu                 sync.Mutex
-	messages           []*schema.Message
+	messages           []M
 	pendingInterruptID string // non-empty while the agent is paused awaiting human approval
 	msgIdx             int    // A2UI component slot index at the point of last interrupt
 }
 
 // SetPendingInterruptID saves the interrupt ID so the approve endpoint can resume it.
-func (s *Session) SetPendingInterruptID(id string) {
+func (s *Session[M]) SetPendingInterruptID(id string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.pendingInterruptID = id
 }
 
 // GetPendingInterruptID returns the stored interrupt ID, or "" if none is pending.
-func (s *Session) GetPendingInterruptID() string {
+func (s *Session[M]) GetPendingInterruptID() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.pendingInterruptID
 }
 
 // SetMsgIdx stores the A2UI component slot counter so a resume can continue from it.
-func (s *Session) SetMsgIdx(idx int) {
+func (s *Session[M]) SetMsgIdx(idx int) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.msgIdx = idx
 }
 
 // GetMsgIdx returns the stored component slot counter.
-func (s *Session) GetMsgIdx() int {
+func (s *Session[M]) GetMsgIdx() int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	return s.msgIdx
 }
 
 // Append adds a message to memory and persists it to disk.
-func (s *Session) Append(msg *schema.Message) error {
+func (s *Session[M]) Append(msg M) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -99,23 +101,23 @@ func (s *Session) Append(msg *schema.Message) error {
 }
 
 // GetMessages returns a snapshot of all messages.
-func (s *Session) GetMessages() []*schema.Message {
+func (s *Session[M]) GetMessages() []M {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result := make([]*schema.Message, len(s.messages))
+	result := make([]M, len(s.messages))
 	copy(result, s.messages)
 	return result
 }
 
 // Title derives a display title from the first user message.
-func (s *Session) Title() string {
+func (s *Session[M]) Title() string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	for _, msg := range s.messages {
-		if msg.Role == schema.User && msg.Content != "" {
-			title := msg.Content
+		if text := msgops.UserText(msg); text != "" {
+			title := text
 			if len([]rune(title)) > 60 {
 				title = string([]rune(title)[:60]) + "..."
 			}
@@ -129,27 +131,29 @@ func (s *Session) Title() string {
 //
 // File format:
 //
-//	{"type":"session","id":"...","created_at":"..."}   ← header (line 1)
-//	{"role":"user","content":"..."}                    ← message (lines 2+)
-type Store struct {
+//	{"type":"session","id":"...","created_at":"...","message_kind":"message"}   ← header (line 1)
+//	{"role":"user","content":"..."}                                             ← message (lines 2+)
+type Store[M adk.MessageType] struct {
 	dir   string
+	kind  msgops.Kind
 	mu    sync.Mutex
-	cache map[string]*Session
+	cache map[string]*Session[M]
 }
 
 // NewStore creates a new Store backed by the given directory (created if absent).
-func NewStore(dir string) (*Store, error) {
+func NewStore[M adk.MessageType](dir string) (*Store[M], error) {
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("failed to create session dir: %w", err)
 	}
-	return &Store{
+	return &Store[M]{
 		dir:   dir,
-		cache: make(map[string]*Session),
+		kind:  msgops.KindOf[M](),
+		cache: make(map[string]*Session[M]),
 	}, nil
 }
 
 // GetOrCreate returns the session for id, creating it if it does not exist.
-func (s *Store) GetOrCreate(id string) (*Session, error) {
+func (s *Store[M]) GetOrCreate(id string) (*Session[M], error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -160,13 +164,13 @@ func (s *Store) GetOrCreate(id string) (*Session, error) {
 	filePath := filepath.Join(s.dir, id+".jsonl")
 
 	var (
-		sess *Session
+		sess *Session[M]
 		err  error
 	)
 	if _, statErr := os.Stat(filePath); os.IsNotExist(statErr) {
-		sess, err = createSession(id, filePath)
+		sess, err = createSession[M](id, filePath)
 	} else {
-		sess, err = loadSession(filePath)
+		sess, err = loadSession[M](filePath)
 	}
 	if err != nil {
 		return nil, err
@@ -177,7 +181,7 @@ func (s *Store) GetOrCreate(id string) (*Session, error) {
 }
 
 // List returns metadata for all known sessions.
-func (s *Store) List() ([]SessionMeta, error) {
+func (s *Store[M]) List() ([]SessionMeta, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -198,7 +202,7 @@ func (s *Store) List() ([]SessionMeta, error) {
 			continue
 		}
 
-		sess, loadErr := loadSession(filepath.Join(s.dir, e.Name()))
+		sess, loadErr := loadSession[M](filepath.Join(s.dir, e.Name()))
 		if loadErr != nil {
 			continue
 		}
@@ -208,7 +212,7 @@ func (s *Store) List() ([]SessionMeta, error) {
 }
 
 // Delete removes the session file and evicts it from the cache.
-func (s *Store) Delete(id string) error {
+func (s *Store[M]) Delete(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -222,16 +226,18 @@ func (s *Store) Delete(id string) error {
 
 // sessionHeader is the first JSONL line in every session file.
 type sessionHeader struct {
-	Type      string    `json:"type"`
-	ID        string    `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
+	Type        string      `json:"type"`
+	ID          string      `json:"id"`
+	CreatedAt   time.Time   `json:"created_at"`
+	MessageKind msgops.Kind `json:"message_kind,omitempty"`
 }
 
-func createSession(id, filePath string) (*Session, error) {
+func createSession[M adk.MessageType](id, filePath string) (*Session[M], error) {
 	header := sessionHeader{
-		Type:      "session",
-		ID:        id,
-		CreatedAt: time.Now().UTC(),
+		Type:        "session",
+		ID:          id,
+		CreatedAt:   time.Now().UTC(),
+		MessageKind: msgops.KindOf[M](),
 	}
 	data, err := json.Marshal(header)
 	if err != nil {
@@ -240,15 +246,15 @@ func createSession(id, filePath string) (*Session, error) {
 	if err := os.WriteFile(filePath, append(data, '\n'), 0o644); err != nil {
 		return nil, err
 	}
-	return &Session{
+	return &Session[M]{
 		ID:        id,
 		CreatedAt: header.CreatedAt,
 		filePath:  filePath,
-		messages:  make([]*schema.Message, 0),
+		messages:  make([]M, 0),
 	}, nil
 }
 
-func loadSession(filePath string) (*Session, error) {
+func loadSession[M adk.MessageType](filePath string) (*Session[M], error) {
 	f, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -265,12 +271,15 @@ func loadSession(filePath string) (*Session, error) {
 	if err := json.Unmarshal(scanner.Bytes(), &header); err != nil {
 		return nil, fmt.Errorf("bad session header in %s: %w", filePath, err)
 	}
+	if err := msgops.ValidateKind(header.MessageKind, msgops.KindOf[M](), true); err != nil {
+		return nil, fmt.Errorf("cannot load session %s: %w", filePath, err)
+	}
 
-	sess := &Session{
+	sess := &Session[M]{
 		ID:        header.ID,
 		CreatedAt: header.CreatedAt,
 		filePath:  filePath,
-		messages:  make([]*schema.Message, 0),
+		messages:  make([]M, 0),
 	}
 
 	// Remaining lines: messages
@@ -279,11 +288,11 @@ func loadSession(filePath string) (*Session, error) {
 		if line == "" {
 			continue
 		}
-		var msg schema.Message
-		if err := json.Unmarshal([]byte(line), &msg); err != nil {
+		msg, err := msgops.UnmarshalMessage[M]([]byte(line))
+		if err != nil {
 			continue // skip malformed lines
 		}
-		sess.messages = append(sess.messages, &msg)
+		sess.messages = append(sess.messages, msg)
 	}
 
 	return sess, scanner.Err()

@@ -38,13 +38,13 @@ import (
 type mockAgent struct {
 	name string
 	// onRun is called for each Run(); must send events to gen and Close it.
-	onRun func(ctx context.Context, input *adk.AgentInput, gen *adk.AsyncGenerator[*adk.AgentEvent])
+	onRun func(ctx context.Context, input *adk.TypedAgentInput[*schema.Message], gen *adk.AsyncGenerator[*adk.TypedAgentEvent[*schema.Message]])
 }
 
 func (m *mockAgent) Name(context.Context) string        { return m.name }
 func (m *mockAgent) Description(context.Context) string { return "mock" }
-func (m *mockAgent) Run(ctx context.Context, input *adk.AgentInput, _ ...adk.AgentRunOption) *adk.AsyncIterator[*adk.AgentEvent] {
-	iter, gen := adk.NewAsyncIteratorPair[*adk.AgentEvent]()
+func (m *mockAgent) Run(ctx context.Context, input *adk.TypedAgentInput[*schema.Message], _ ...adk.AgentRunOption) *adk.AsyncIterator[*adk.TypedAgentEvent[*schema.Message]] {
+	iter, gen := adk.NewAsyncIteratorPair[*adk.TypedAgentEvent[*schema.Message]]()
 	go m.onRun(ctx, input, gen)
 	return iter
 }
@@ -53,17 +53,17 @@ func (m *mockAgent) Run(ctx context.Context, input *adk.AgentInput, _ ...adk.Age
 func simpleReplyAgent(reply string) *mockAgent {
 	return &mockAgent{
 		name: "test-agent",
-		onRun: func(ctx context.Context, _ *adk.AgentInput, gen *adk.AsyncGenerator[*adk.AgentEvent]) {
+		onRun: func(ctx context.Context, _ *adk.TypedAgentInput[*schema.Message], gen *adk.AsyncGenerator[*adk.TypedAgentEvent[*schema.Message]]) {
 			defer gen.Close()
-			gen.Send(&adk.AgentEvent{
-				Output: &adk.AgentOutput{
-					MessageOutput: &adk.MessageVariant{
+			gen.Send(&adk.TypedAgentEvent[*schema.Message]{
+				Output: &adk.TypedAgentOutput[*schema.Message]{
+					MessageOutput: &adk.TypedMessageVariant[*schema.Message]{
 						Message: schema.AssistantMessage(reply, nil),
 						Role:    schema.Assistant,
 					},
 				},
 			})
-			gen.Send(&adk.AgentEvent{Action: adk.NewExitAction()})
+			gen.Send(&adk.TypedAgentEvent[*schema.Message]{Action: adk.NewExitAction()})
 		},
 	}
 }
@@ -72,23 +72,23 @@ func simpleReplyAgent(reply string) *mockAgent {
 func slowAgent(delay time.Duration, reply string) *mockAgent {
 	return &mockAgent{
 		name: "slow-agent",
-		onRun: func(ctx context.Context, _ *adk.AgentInput, gen *adk.AsyncGenerator[*adk.AgentEvent]) {
+		onRun: func(ctx context.Context, _ *adk.TypedAgentInput[*schema.Message], gen *adk.AsyncGenerator[*adk.TypedAgentEvent[*schema.Message]]) {
 			defer gen.Close()
 			select {
 			case <-time.After(delay):
 			case <-ctx.Done():
-				gen.Send(&adk.AgentEvent{Err: ctx.Err()})
+				gen.Send(&adk.TypedAgentEvent[*schema.Message]{Err: ctx.Err()})
 				return
 			}
-			gen.Send(&adk.AgentEvent{
-				Output: &adk.AgentOutput{
-					MessageOutput: &adk.MessageVariant{
+			gen.Send(&adk.TypedAgentEvent[*schema.Message]{
+				Output: &adk.TypedAgentOutput[*schema.Message]{
+					MessageOutput: &adk.TypedMessageVariant[*schema.Message]{
 						Message: schema.AssistantMessage(reply, nil),
 						Role:    schema.Assistant,
 					},
 				},
 			})
-			gen.Send(&adk.AgentEvent{Action: adk.NewExitAction()})
+			gen.Send(&adk.TypedAgentEvent[*schema.Message]{Action: adk.NewExitAction()})
 		},
 	}
 }
@@ -97,15 +97,15 @@ func slowAgent(delay time.Duration, reply string) *mockAgent {
 // helper: setup test server + HTTP client
 // ---------------------------------------------------------------------------
 
-func newTestServer(t *testing.T, agent adk.Agent) (*Server, string, func()) {
+func newTestServer(t *testing.T, agent adk.TypedAgent[*schema.Message]) (*Server[*schema.Message], string, func()) {
 	t.Helper()
 	tmpDir := t.TempDir()
-	store, err := mem.NewStore(tmpDir)
+	store, err := mem.NewStore[*schema.Message](tmpDir)
 	if err != nil {
 		t.Fatalf("mem.NewStore: %v", err)
 	}
 
-	srv := New(Config{
+	srv := New(Config[*schema.Message]{
 		Agent:           agent,
 		CheckPointStore: adkstore.NewInMemoryStore(),
 		Store:           store,
@@ -119,7 +119,7 @@ func newTestServer(t *testing.T, agent adk.Agent) (*Server, string, func()) {
 }
 
 // createSession creates a session via the Store directly.
-func createSession(t *testing.T, srv *Server) string {
+func createSession(t *testing.T, srv *Server[*schema.Message]) string {
 	t.Helper()
 	sess, err := srv.cfg.Store.GetOrCreate("test-" + time.Now().Format("150405.000"))
 	if err != nil {
@@ -166,8 +166,8 @@ func TestChatNormalFlow(t *testing.T) {
 	ts.mu.Lock()
 	loop := srv.newLoop(sess, sessionID, false)
 	ts.loop = loop
-	ts.iterReady = make(chan iterEnvelope, 1)
-	ts.iterDone = make(chan iterResult, 1)
+	ts.iterReady = make(chan iterEnvelope[*schema.Message], 1)
+	ts.iterDone = make(chan iterResult[*schema.Message], 1)
 	ts.mu.Unlock()
 
 	item := &ChatItem{Query: "hello"}
@@ -178,7 +178,7 @@ func TestChatNormalFlow(t *testing.T) {
 	loop.Run(context.Background())
 
 	// Wait for the iterator.
-	var envelope iterEnvelope
+	var envelope iterEnvelope[*schema.Message]
 	select {
 	case envelope = <-ts.iterReady:
 	case <-time.After(5 * time.Second):
@@ -204,7 +204,7 @@ func TestChatNormalFlow(t *testing.T) {
 	}
 
 	// Signal done to OnAgentEvents.
-	envelope.done <- iterResult{
+	envelope.done <- iterResult[*schema.Message]{
 		lastContent:   content,
 		intermediates: []*schema.Message{schema.AssistantMessage(content, nil)},
 	}
@@ -250,8 +250,8 @@ func TestAbortStopsLoop(t *testing.T) {
 	ts.mu.Lock()
 	loop := srv.newLoop(sess, sessionID, false)
 	ts.loop = loop
-	ts.iterReady = make(chan iterEnvelope, 1)
-	ts.iterDone = make(chan iterResult, 1)
+	ts.iterReady = make(chan iterEnvelope[*schema.Message], 1)
+	ts.iterDone = make(chan iterResult[*schema.Message], 1)
 	ts.mu.Unlock()
 
 	if err := sess.Append(schema.UserMessage("hello")); err != nil {
@@ -271,7 +271,7 @@ func TestAbortStopsLoop(t *testing.T) {
 					break
 				}
 			}
-			envelope.done <- iterResult{err: context.Canceled}
+			envelope.done <- iterResult[*schema.Message]{err: context.Canceled}
 		}()
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout waiting for iterReady")
@@ -336,8 +336,8 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 	ts := srv.getTurnState(sessionID)
 	ts.mu.Lock()
 	ts.loop = loop
-	ts.iterReady = make(chan iterEnvelope, 1)
-	ts.iterDone = make(chan iterResult, 1)
+	ts.iterReady = make(chan iterEnvelope[*schema.Message], 1)
+	ts.iterDone = make(chan iterResult[*schema.Message], 1)
 	ts.mu.Unlock()
 
 	// Push first query and run.
@@ -356,7 +356,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 				break
 			}
 		}
-		envelope.done <- iterResult{lastContent: "reply"}
+		envelope.done <- iterResult[*schema.Message]{lastContent: "reply"}
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout on first turn")
 	}
@@ -370,8 +370,8 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 
 	// Recreate bridge channels for the second turn.
 	ts.mu.Lock()
-	ts.iterReady = make(chan iterEnvelope, 1)
-	ts.iterDone = make(chan iterResult, 1)
+	ts.iterReady = make(chan iterEnvelope[*schema.Message], 1)
+	ts.iterDone = make(chan iterResult[*schema.Message], 1)
 	ts.mu.Unlock()
 
 	loop.Push(&ChatItem{Query: "second"}, adk.WithPreempt[*ChatItem, *schema.Message](adk.AfterToolCalls))
@@ -385,7 +385,7 @@ func TestPreemptQueuesNewItem(t *testing.T) {
 				break
 			}
 		}
-		envelope.done <- iterResult{lastContent: "reply"}
+		envelope.done <- iterResult[*schema.Message]{lastContent: "reply"}
 	case <-time.After(5 * time.Second):
 		t.Fatal("timeout on second turn")
 	}

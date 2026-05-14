@@ -56,33 +56,40 @@ import (
 	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
 	adkstore "github.com/cloudwego/eino-examples/adk/common/store"
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/rag"
 )
 
 func main() {
 	ctx := context.Background()
 
-	agent, err := buildAgent(ctx)
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx)
+	default:
+		runTyped[*schema.Message](ctx)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context) {
+	agent, err := buildAgentTyped[M](ctx)
 	if err != nil {
 		log.Fatalf("build agent: %v", err)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
-		EnableStreaming:  true,
+		EnableStreaming: true,
 		CheckPointStore: adkstore.NewInMemoryStore(),
 	})
 
-	sessionDir := os.Getenv("SESSION_DIR")
-	if sessionDir == "" {
-		sessionDir = "./data/sessions"
-	}
-	store, err := mem.NewStore(sessionDir)
+	sessionDir := msgops.DefaultSessionDir(msgops.KindOf[M]())
+	store, err := mem.NewStore[M](sessionDir)
 	if err != nil {
 		log.Fatalf("create store: %v", err)
 	}
@@ -122,7 +129,7 @@ func main() {
 		port = "8080"
 	}
 
-	srv := &server{
+	srv := &server[M]{
 		runner:       runner,
 		store:        store,
 		workspaceDir: workspaceDir,
@@ -197,9 +204,9 @@ func main() {
 }
 
 // server holds shared state for all handlers.
-type server struct {
-	runner       *adk.Runner
-	store        *mem.Store
+type server[M adk.MessageType] struct {
+	runner       *adk.TypedRunner[M]
+	store        *mem.Store[M]
 	workspaceDir string
 	projectRoot  string
 	examplesDir  string
@@ -216,7 +223,7 @@ type approveRequest struct {
 	Reason   string `json:"reason,omitempty"`
 }
 
-func (s *server) handleChat(ctx context.Context, c *app.RequestContext) {
+func (s *server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	body, _ := c.Body()
@@ -234,7 +241,7 @@ func (s *server) handleChat(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	userMsg := schema.UserMessage(req.Message)
+	userMsg := msgops.NewUser[M](req.Message)
 	if err := sess.Append(userMsg); err != nil {
 		log.Printf("warn: failed to persist user message: %v", err)
 	}
@@ -266,7 +273,7 @@ func (s *server) handleChat(ctx context.Context, c *app.RequestContext) {
 	}
 }
 
-func (s *server) handleRender(c *app.RequestContext) {
+func (s *server[M]) handleRender(c *app.RequestContext) {
 	id := c.Param("id")
 	sess, err := s.store.GetOrCreate(id)
 	if err != nil {
@@ -281,7 +288,7 @@ func (s *server) handleRender(c *app.RequestContext) {
 	c.Data(consts.StatusOK, "application/x-ndjson", buf.Bytes())
 }
 
-func (s *server) handleApprove(ctx context.Context, c *app.RequestContext) {
+func (s *server[M]) handleApprove(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	sess, err := s.store.GetOrCreate(id)
@@ -342,7 +349,7 @@ func (s *server) handleApprove(ctx context.Context, c *app.RequestContext) {
 	}
 }
 
-func (s *server) handleUpload(c *app.RequestContext) {
+func (s *server[M]) handleUpload(c *app.RequestContext) {
 	id := c.Param("id")
 
 	absWorkDir, err := filepath.Abs(filepath.Join(s.workspaceDir, id))
@@ -375,7 +382,7 @@ func (s *server) handleUpload(c *app.RequestContext) {
 
 // buildRunMessages prepends a context message so the agent knows about the
 // project root and the session workspace. This message is never stored in history.
-func (s *server) buildRunMessages(sessionID string, history []*schema.Message) []*schema.Message {
+func (s *server[M]) buildRunMessages(sessionID string, history []M) []M {
 	var lines []string
 	lines = append(lines, "[Context]")
 	lines = append(lines,
@@ -440,8 +447,8 @@ func (s *server) buildRunMessages(sessionID string, history []*schema.Message) [
 	}
 
 	ctx := strings.Join(lines, "\n")
-	runMessages := make([]*schema.Message, 0, len(history)+1)
-	runMessages = append(runMessages, schema.UserMessage(ctx))
+	runMessages := make([]M, 0, len(history)+1)
+	runMessages = append(runMessages, msgops.NewUser[M](ctx))
 	runMessages = append(runMessages, history...)
 	return runMessages
 }
@@ -480,22 +487,28 @@ func (w *sseLineWriter) Write(p []byte) (int, error) {
 
 // --- Agent construction ---
 
-func buildAgent(ctx context.Context) (adk.Agent, error) {
-	cm := examplemodel.NewChatModel()
+func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumableAgent[M], error) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		return nil, err
+	}
 
 	backend, err := localbk.NewBackend(ctx, &localbk.Config{})
 	if err != nil {
 		return nil, err
 	}
 
-	ragTool, err := rag.BuildTool(ctx, cm)
+	ragTool, err := rag.BuildTool[M](ctx, cm)
 	if err != nil {
 		return nil, fmt.Errorf("build rag tool: %w", err)
 	}
 
-	handlers := []adk.ChatModelAgentMiddleware{&approvalMiddleware{}, &safeToolMiddleware{}}
+	handlers := []adk.TypedChatModelAgentMiddleware[M]{
+		newApprovalMiddleware[M](),
+		newSafeToolMiddleware[M](),
+	}
 
-	return deep.New(ctx, &deep.Config{
+	cfg := &deep.TypedConfig[M]{
 		Name:           "ChatWithEinoAgent",
 		Description:    "An agent that reads and answers questions about documents.",
 		ChatModel:      cm,
@@ -508,24 +521,39 @@ func buildAgent(ctx context.Context) (adk.Agent, error) {
 				Tools: []tool.BaseTool{ragTool},
 			},
 		},
-		ModelRetryConfig: &adk.ModelRetryConfig{
+	}
+	if msgops.KindOf[M]() == msgops.KindMessage {
+		cfg.ModelRetryConfig = &adk.TypedModelRetryConfig[M]{
 			MaxRetries: 5,
 			IsRetryAble: func(_ context.Context, err error) bool {
 				return strings.Contains(err.Error(), "429") ||
 					strings.Contains(err.Error(), "Too Many Requests") ||
 					strings.Contains(err.Error(), "qpm limit")
 			},
-		},
-	})
+		}
+	}
+	return deep.NewTyped[M](ctx, cfg)
 }
 
 // --- Middlewares ---
 
-type approvalMiddleware struct {
-	*adk.BaseChatModelAgentMiddleware
+type approvalMiddleware[M adk.MessageType] struct {
+	*adk.TypedBaseChatModelAgentMiddleware[M]
 }
 
-func (m *approvalMiddleware) WrapInvokableToolCall(
+func newApprovalMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
+	return &approvalMiddleware[M]{
+		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
+	}
+}
+
+func newSafeToolMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
+	return &safeToolMiddleware[M]{
+		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
+	}
+}
+
+func (m *approvalMiddleware[M]) WrapInvokableToolCall(
 	_ context.Context,
 	endpoint adk.InvokableToolCallEndpoint,
 	tCtx *adk.ToolContext,
@@ -565,11 +593,11 @@ func (m *approvalMiddleware) WrapInvokableToolCall(
 	}, nil
 }
 
-type safeToolMiddleware struct {
-	*adk.BaseChatModelAgentMiddleware
+type safeToolMiddleware[M adk.MessageType] struct {
+	*adk.TypedBaseChatModelAgentMiddleware[M]
 }
 
-func (m *safeToolMiddleware) WrapInvokableToolCall(
+func (m *safeToolMiddleware[M]) WrapInvokableToolCall(
 	_ context.Context,
 	endpoint adk.InvokableToolCallEndpoint,
 	_ *adk.ToolContext,
@@ -586,7 +614,7 @@ func (m *safeToolMiddleware) WrapInvokableToolCall(
 	}, nil
 }
 
-func (m *safeToolMiddleware) WrapStreamableToolCall(
+func (m *safeToolMiddleware[M]) WrapStreamableToolCall(
 	_ context.Context,
 	endpoint adk.StreamableToolCallEndpoint,
 	_ *adk.ToolContext,

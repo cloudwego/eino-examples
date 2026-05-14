@@ -41,6 +41,7 @@ import (
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func init() {
@@ -61,10 +62,10 @@ type ChatItem struct {
 var errInterrupted = errors.New("agent interrupted for approval")
 
 // Config holds all dependencies for the HTTP server.
-type Config struct {
-	Agent           adk.Agent
+type Config[M adk.MessageType] struct {
+	Agent           adk.TypedAgent[M]
 	CheckPointStore adk.CheckPointStore
-	Store           *mem.Store
+	Store           *mem.Store[M]
 	WorkspaceDir    string
 	ProjectRoot     string // root of the codebase the agent can explore
 	ExamplesDir     string // root of the eino-examples repo (for example searches)
@@ -72,53 +73,53 @@ type Config struct {
 }
 
 // Server wraps a Hertz HTTP server with the chat-with-doc routes.
-type Server struct {
-	cfg        Config
+type Server[M adk.MessageType] struct {
+	cfg        Config[M]
 	turnStates sync.Map // sessionID → *sessionTurnState
 }
 
 // New creates a Server from the given config.
-func New(cfg Config) *Server {
-	return &Server{cfg: cfg}
+func New[M adk.MessageType](cfg Config[M]) *Server[M] {
+	return &Server[M]{cfg: cfg}
 }
 
 // iterEnvelope carries the event iterator from OnAgentEvents to the HTTP handler.
 // The done channel is included so the handler always sends results back to the
 // correct OnAgentEvents invocation, even if a preempt replaces the session channels.
-type iterEnvelope struct {
-	events  *adk.AsyncIterator[*adk.AgentEvent]
-	history []*schema.Message
-	done    chan iterResult
+type iterEnvelope[M adk.MessageType] struct {
+	events  *adk.AsyncIterator[*adk.TypedAgentEvent[M]]
+	history []M
+	done    chan iterResult[M]
 }
 
 // iterResult carries the outcome from the HTTP handler back to OnAgentEvents.
-type iterResult struct {
+type iterResult[M adk.MessageType] struct {
 	lastContent   string
-	intermediates []*schema.Message // tool call + tool result messages to persist
+	intermediates []M // tool call + tool result messages to persist
 	interruptID   string
 	msgIdx        int
 	err           error
 }
 
 // sessionTurnState holds the TurnLoop and event bridge channels for a session.
-type sessionTurnState struct {
+type sessionTurnState[M adk.MessageType] struct {
 	mu          sync.Mutex
-	loop        *adk.TurnLoop[*ChatItem, *schema.Message]
-	iterReady   chan iterEnvelope // OnAgentEvents → HTTP handler
-	iterDone    chan iterResult   // HTTP handler → OnAgentEvents
-	handlerDone chan struct{}     // closed to tell a prev handler to bail on preempt
+	loop        *adk.TurnLoop[*ChatItem, M]
+	iterReady   chan iterEnvelope[M] // OnAgentEvents → HTTP handler
+	iterDone    chan iterResult[M]   // HTTP handler → OnAgentEvents
+	handlerDone chan struct{}        // closed to tell a prev handler to bail on preempt
 }
 
-func (s *Server) getTurnState(sessionID string) *sessionTurnState {
-	val, _ := s.turnStates.LoadOrStore(sessionID, &sessionTurnState{})
-	return val.(*sessionTurnState)
+func (s *Server[M]) getTurnState(sessionID string) *sessionTurnState[M] {
+	val, _ := s.turnStates.LoadOrStore(sessionID, &sessionTurnState[M]{})
+	return val.(*sessionTurnState[M])
 }
 
 // startLoopCleanup spawns a goroutine that waits for the loop to exit
 // (e.g. due to an error or all items consumed) and nils out ts.loop so
 // the next handleChat creates a fresh loop instead of trying to preempt
 // a dead one.
-func (s *Server) startLoopCleanup(ts *sessionTurnState, loop *adk.TurnLoop[*ChatItem, *schema.Message], sessionID string) {
+func (s *Server[M]) startLoopCleanup(ts *sessionTurnState[M], loop *adk.TurnLoop[*ChatItem, M], sessionID string) {
 	go func() {
 		result := loop.Wait()
 		ts.mu.Lock()
@@ -135,7 +136,7 @@ func (s *Server) startLoopCleanup(ts *sessionTurnState, loop *adk.TurnLoop[*Chat
 }
 
 // Spin starts the HTTP server (blocking).
-func (s *Server) Spin() {
+func (s *Server[M]) Spin() {
 	h := hserver.Default(hserver.WithHostPorts(":" + s.cfg.Port))
 
 	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
@@ -219,7 +220,7 @@ type approveRequest struct {
 	Reason   string `json:"reason,omitempty"`
 }
 
-func (s *Server) handleRender(_ context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleRender(_ context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 	sess, err := s.cfg.Store.GetOrCreate(id)
 	if err != nil {
@@ -236,7 +237,7 @@ func (s *Server) handleRender(_ context.Context, c *app.RequestContext) {
 
 // handleChat handles a new chat message. It creates or reuses a TurnLoop for the session.
 // If a loop is already running (busy), it pushes with preempt to cancel the current turn.
-func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	body, _ := c.Body()
@@ -261,7 +262,7 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 	// Each handler gets its own local iterReady channel reference and a
 	// handlerDone channel. This avoids races when multiple preempts replace
 	// the channels on ts concurrently.
-	var localIterReady chan iterEnvelope
+	var localIterReady chan iterEnvelope[M]
 	var localHandlerDone chan struct{}
 
 	ts.mu.Lock()
@@ -273,21 +274,21 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 		if ts.handlerDone != nil {
 			close(ts.handlerDone)
 		}
-		ts.iterReady = make(chan iterEnvelope, 1)
-		ts.iterDone = make(chan iterResult, 1)
+		ts.iterReady = make(chan iterEnvelope[M], 1)
+		ts.iterDone = make(chan iterResult[M], 1)
 		ts.handlerDone = make(chan struct{})
 		localIterReady = ts.iterReady
 		localHandlerDone = ts.handlerDone
 		ts.mu.Unlock()
-		ok, _ := loop.Push(item, adk.WithPreempt[*ChatItem, *schema.Message](adk.AfterToolCalls))
+		ok, _ := loop.Push(item, adk.WithPreempt[*ChatItem, M](adk.AfterToolCalls))
 		if !ok {
 			// Loop already stopped (e.g. error on previous turn) — create new one.
 			log.Printf("[chat] session=%s loop was dead, creating new loop", id)
 			ts.mu.Lock()
 			loop = s.newLoop(sess, id, false)
 			ts.loop = loop
-			ts.iterReady = make(chan iterEnvelope, 1)
-			ts.iterDone = make(chan iterResult, 1)
+			ts.iterReady = make(chan iterEnvelope[M], 1)
+			ts.iterDone = make(chan iterResult[M], 1)
 			ts.handlerDone = make(chan struct{})
 			localIterReady = ts.iterReady
 			localHandlerDone = ts.handlerDone
@@ -300,8 +301,8 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 		// No loop — create a new one.
 		loop := s.newLoop(sess, id, false)
 		ts.loop = loop
-		ts.iterReady = make(chan iterEnvelope, 1)
-		ts.iterDone = make(chan iterResult, 1)
+		ts.iterReady = make(chan iterEnvelope[M], 1)
+		ts.iterDone = make(chan iterResult[M], 1)
 		ts.handlerDone = make(chan struct{})
 		localIterReady = ts.iterReady
 		localHandlerDone = ts.handlerDone
@@ -339,7 +340,7 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 	// Wait for OnAgentEvents to send us the iterator. Use local channel
 	// references so a concurrent preempt replacing ts.iterReady doesn't
 	// orphan us on a stale channel.
-	var envelope iterEnvelope
+	var envelope iterEnvelope[M]
 	select {
 	case envelope = <-localIterReady:
 	case <-localHandlerDone:
@@ -361,7 +362,7 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 	close(kaStop)
 
 	// Send result back to the SAME OnAgentEvents that sent us this envelope.
-	envelope.done <- iterResult{
+	envelope.done <- iterResult[M]{
 		lastContent:   lastContent,
 		intermediates: intermediates,
 		interruptID:   interruptID,
@@ -380,7 +381,7 @@ func (s *Server) handleChat(ctx context.Context, c *app.RequestContext) {
 
 // handleApprove resumes an interrupted agent run with the user's approval decision.
 // Creates a new TurnLoop with checkpoint/resume to continue from the interrupt.
-func (s *Server) handleApprove(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleApprove(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	sess, err := s.cfg.Store.GetOrCreate(id)
@@ -426,8 +427,8 @@ func (s *Server) handleApprove(ctx context.Context, c *app.RequestContext) {
 	}
 	loop := s.newLoop(sess, id, true)
 	ts.loop = loop
-	ts.iterReady = make(chan iterEnvelope, 1)
-	ts.iterDone = make(chan iterResult, 1)
+	ts.iterReady = make(chan iterEnvelope[M], 1)
+	ts.iterDone = make(chan iterResult[M], 1)
 	ts.handlerDone = make(chan struct{})
 	localIterReady := ts.iterReady
 	localHandlerDone := ts.handlerDone
@@ -460,7 +461,7 @@ func (s *Server) handleApprove(ctx context.Context, c *app.RequestContext) {
 	}()
 
 	// Wait for OnAgentEvents to send us the iterator.
-	var envelope iterEnvelope
+	var envelope iterEnvelope[M]
 	select {
 	case envelope = <-localIterReady:
 	case <-localHandlerDone:
@@ -481,7 +482,7 @@ func (s *Server) handleApprove(ctx context.Context, c *app.RequestContext) {
 	close(kaStop)
 
 	// Send result back to the SAME OnAgentEvents that sent us this envelope.
-	envelope.done <- iterResult{
+	envelope.done <- iterResult[M]{
 		lastContent: lastContent,
 		interruptID: newInterruptID,
 		msgIdx:      finalMsgIdx,
@@ -498,7 +499,7 @@ func (s *Server) handleApprove(ctx context.Context, c *app.RequestContext) {
 }
 
 // handleAbort immediately stops the current TurnLoop for a session.
-func (s *Server) handleAbort(_ context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleAbort(_ context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	ts := s.getTurnState(id)
@@ -522,8 +523,8 @@ func (s *Server) handleAbort(_ context.Context, c *app.RequestContext) {
 
 // newLoop creates a new TurnLoop for the session. If withResume is true,
 // the loop is configured with a checkpoint store and GenResume for interrupt resume.
-func (s *Server) newLoop(sess *mem.Session, sessionID string, withResume bool) *adk.TurnLoop[*ChatItem, *schema.Message] {
-	cfg := adk.TurnLoopConfig[*ChatItem, *schema.Message]{
+func (s *Server[M]) newLoop(sess *mem.Session[M], sessionID string, withResume bool) *adk.TurnLoop[*ChatItem, M] {
+	cfg := adk.TurnLoopConfig[*ChatItem, M]{
 		GenInput:      s.makeGenInput(sess, sessionID),
 		PrepareAgent:  s.makePrepareAgent(),
 		OnAgentEvents: s.makeOnAgentEvents(sess, sessionID),
@@ -538,8 +539,8 @@ func (s *Server) newLoop(sess *mem.Session, sessionID string, withResume bool) *
 
 // makeGenInput returns the GenInput callback. It builds agent messages from
 // session history + workspace context.
-func (s *Server) makeGenInput(sess *mem.Session, sessionID string) func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], items []*ChatItem) (*adk.GenInputResult[*ChatItem, *schema.Message], error) {
-	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], items []*ChatItem) (*adk.GenInputResult[*ChatItem, *schema.Message], error) {
+func (s *Server[M]) makeGenInput(sess *mem.Session[M], sessionID string) func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], items []*ChatItem) (*adk.GenInputResult[*ChatItem, M], error) {
+	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], items []*ChatItem) (*adk.GenInputResult[*ChatItem, M], error) {
 		// Find the first item with a query.
 		var consumed []*ChatItem
 		var remaining []*ChatItem
@@ -555,8 +556,8 @@ func (s *Server) makeGenInput(sess *mem.Session, sessionID string) func(ctx cont
 		if queryItem == nil {
 			// No query items — stop the loop.
 			loop.Stop(adk.WithStopCause("no query items"))
-			return &adk.GenInputResult[*ChatItem, *schema.Message]{
-				Input:     &adk.AgentInput{Messages: []adk.Message{schema.UserMessage("done")}},
+			return &adk.GenInputResult[*ChatItem, M]{
+				Input:     &adk.TypedAgentInput[M]{Messages: []M{msgops.NewUser[M]("done")}},
 				Remaining: items,
 			}, nil
 		}
@@ -564,7 +565,7 @@ func (s *Server) makeGenInput(sess *mem.Session, sessionID string) func(ctx cont
 		// Persist the user message NOW — GenInput fires only after any previous
 		// turn's OnAgentEvents has finished persisting its intermediates, so the
 		// session history order is guaranteed correct.
-		userMsg := schema.UserMessage(queryItem.Query)
+		userMsg := msgops.NewUser[M](queryItem.Query)
 		if appendErr := sess.Append(userMsg); appendErr != nil {
 			log.Printf("warn: failed to persist user message: %v", appendErr)
 		}
@@ -574,8 +575,8 @@ func (s *Server) makeGenInput(sess *mem.Session, sessionID string) func(ctx cont
 
 		log.Printf("[genInput] session=%s query=%q messages=%d", sessionID, queryItem.Query, len(runMessages))
 
-		return &adk.GenInputResult[*ChatItem, *schema.Message]{
-			Input: &adk.AgentInput{
+		return &adk.GenInputResult[*ChatItem, M]{
+			Input: &adk.TypedAgentInput[M]{
 				Messages:        runMessages,
 				EnableStreaming: true,
 			},
@@ -586,16 +587,16 @@ func (s *Server) makeGenInput(sess *mem.Session, sessionID string) func(ctx cont
 }
 
 // makePrepareAgent returns the PrepareAgent callback — returns the same agent.
-func (s *Server) makePrepareAgent() func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], consumed []*ChatItem) (adk.Agent, error) {
-	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], consumed []*ChatItem) (adk.Agent, error) {
+func (s *Server[M]) makePrepareAgent() func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], consumed []*ChatItem) (adk.TypedAgent[M], error) {
+	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], consumed []*ChatItem) (adk.TypedAgent[M], error) {
 		return s.cfg.Agent, nil
 	}
 }
 
 // makeOnAgentEvents returns the OnAgentEvents callback — the bridge between
 // the TurnLoop and the HTTP handler.
-func (s *Server) makeOnAgentEvents(sess *mem.Session, sessionID string) func(ctx context.Context, tc *adk.TurnContext[*ChatItem, *schema.Message], events *adk.AsyncIterator[*adk.AgentEvent]) error {
-	return func(ctx context.Context, tc *adk.TurnContext[*ChatItem, *schema.Message], events *adk.AsyncIterator[*adk.AgentEvent]) error {
+func (s *Server[M]) makeOnAgentEvents(sess *mem.Session[M], sessionID string) func(ctx context.Context, tc *adk.TurnContext[*ChatItem, M], events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) error {
+	return func(ctx context.Context, tc *adk.TurnContext[*ChatItem, M], events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) error {
 		ts := s.getTurnState(sessionID)
 
 		history := sess.GetMessages()
@@ -610,7 +611,7 @@ func (s *Server) makeOnAgentEvents(sess *mem.Session, sessionID string) func(ctx
 		// Send the iterator to the HTTP handler. Include the done channel
 		// so the handler replies to THIS invocation, not a future one.
 		select {
-		case ready <- iterEnvelope{events: events, history: history, done: done}:
+		case ready <- iterEnvelope[M]{events: events, history: history, done: done}:
 		case <-ctx.Done():
 			return ctx.Err()
 		}
@@ -618,7 +619,7 @@ func (s *Server) makeOnAgentEvents(sess *mem.Session, sessionID string) func(ctx
 		// Wait for the HTTP handler to finish draining. Also select on ctx.Done
 		// to avoid hanging when a preempt supersedes the handler — in that case
 		// the old handler bails via handlerDone and nobody sends to our done channel.
-		var result iterResult
+		var result iterResult[M]
 		select {
 		case result = <-done:
 		case <-ctx.Done():
@@ -643,8 +644,8 @@ func (s *Server) makeOnAgentEvents(sess *mem.Session, sessionID string) func(ctx
 }
 
 // makeGenResume returns the GenResume callback for interrupt/resume.
-func (s *Server) makeGenResume() func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], canceledItems, unhandledItems, newItems []*ChatItem) (*adk.GenResumeResult[*ChatItem, *schema.Message], error) {
-	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], canceledItems, unhandledItems, newItems []*ChatItem) (*adk.GenResumeResult[*ChatItem, *schema.Message], error) {
+func (s *Server[M]) makeGenResume() func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], canceledItems, unhandledItems, newItems []*ChatItem) (*adk.GenResumeResult[*ChatItem, M], error) {
+	return func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], canceledItems, unhandledItems, newItems []*ChatItem) (*adk.GenResumeResult[*ChatItem, M], error) {
 		// Find the approval item in newItems.
 		var approvalItem *ChatItem
 		for _, item := range newItems {
@@ -657,7 +658,7 @@ func (s *Server) makeGenResume() func(ctx context.Context, loop *adk.TurnLoop[*C
 			return nil, errors.New("no approval item found for resume")
 		}
 
-		return &adk.GenResumeResult[*ChatItem, *schema.Message]{
+		return &adk.GenResumeResult[*ChatItem, M]{
 			ResumeParams: &adk.ResumeParams{
 				Targets: map[string]any{approvalItem.InterruptID: approvalItem.ApprovalResult},
 			},
@@ -669,7 +670,7 @@ func (s *Server) makeGenResume() func(ctx context.Context, loop *adk.TurnLoop[*C
 
 // buildRunMessages prepends a context message so the agent knows about the
 // project root and the session workspace. This message is never stored in history.
-func (s *Server) buildRunMessages(sessionID string, history []*schema.Message) []*schema.Message {
+func (s *Server[M]) buildRunMessages(sessionID string, history []M) []M {
 	var lines []string
 	lines = append(lines, "[Context]")
 	lines = append(lines,
@@ -734,13 +735,13 @@ func (s *Server) buildRunMessages(sessionID string, history []*schema.Message) [
 	}
 
 	ctx := strings.Join(lines, "\n")
-	runMessages := make([]*schema.Message, 0, len(history)+1)
-	runMessages = append(runMessages, schema.UserMessage(ctx))
+	runMessages := make([]M, 0, len(history)+1)
+	runMessages = append(runMessages, msgops.NewUser[M](ctx))
 	runMessages = append(runMessages, history...)
 	return runMessages
 }
 
-func (s *Server) handleUpload(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleUpload(ctx context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	absWorkDir, err := filepath.Abs(filepath.Join(s.cfg.WorkspaceDir, id))

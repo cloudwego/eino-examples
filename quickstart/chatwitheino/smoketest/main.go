@@ -32,8 +32,9 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/schema"
 
-	"github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -44,31 +45,46 @@ func main() {
 
 	ctx := context.Background()
 
-	agent, err := func() (adk.Agent, error) {
-		backend, err := localbk.NewBackend(ctx, &localbk.Config{})
-		if err != nil {
-			return nil, err
-		}
-		return deep.New(ctx, &deep.Config{
-			Name:           "ChatWithDocAgent",
-			Description:    "An agent that reads and answers questions about documents.",
-			ChatModel:      model.NewChatModel(),
-			Backend:        backend,
-			StreamingShell: backend,
-			MaxIteration:   10,
-		})
-	}()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, query)
+	default:
+		runTyped[*schema.Message](ctx, query)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context, query string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "build model: %v\n", err)
+		os.Exit(1)
+	}
+
+	backend, err := localbk.NewBackend(ctx, &localbk.Config{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "build backend: %v\n", err)
+		os.Exit(1)
+	}
+
+	agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
+		Name:           "ChatWithDocAgent",
+		Description:    "An agent that reads and answers questions about documents.",
+		ChatModel:      cm,
+		Backend:        backend,
+		StreamingShell: backend,
+		MaxIteration:   10,
+	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "buildAgent: %v\n", err)
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
 
-	messages := []*schema.Message{schema.UserMessage(query)}
+	messages := []M{msgops.NewUser[M](query)}
 
 	fmt.Printf("→ user: %s\n\n", query)
 

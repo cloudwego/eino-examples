@@ -243,7 +243,7 @@ type CheckPointStore interface {
 ### 1. 配置 Runner 使用 CheckPointStore
 
 ```go
-runner := adk.NewRunner(ctx, adk.RunnerConfig{
+runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
     Agent:           agent,
     EnableStreaming: true,
     CheckPointStore: adkstore.NewInMemoryStore(),  // 内存存储
@@ -253,11 +253,11 @@ runner := adk.NewRunner(ctx, adk.RunnerConfig{
 ### 2. 配置 Agent 使用 ApprovalMiddleware
 
 ```go
-agent, err := deep.New(ctx, &deep.Config{
+agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
     // ... 其他配置
-    Handlers: []adk.ChatModelAgentMiddleware{
-        &approvalMiddleware{},  // 添加审批中间件
-        &safeToolMiddleware{},  // 将 Tool 错误转换为字符串（中断类错误会继续向上抛出）
+    Handlers: []adk.TypedChatModelAgentMiddleware[M]{
+        newApprovalMiddleware[M](),  // 添加审批中间件
+        newSafeToolMiddleware[M](),  // 将 Tool 错误转换为字符串（中断类错误会继续向上抛出）
     },
 })
 ```
@@ -282,7 +282,7 @@ if interruptInfo != nil {
     }
 }
 
-_ = session.Append(schema.AssistantMessage(content, nil))
+_ = session.Append(msgops.NewAssistant[M](content, nil))
 ```
 
 ## Interrupt/Resume 执行流程

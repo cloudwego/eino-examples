@@ -36,8 +36,9 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/schema"
 
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -48,7 +49,20 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	cm := examplemodel.NewChatModel()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, sessionID, instruction)
+	default:
+		runTyped[*schema.Message](ctx, sessionID, instruction)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	projectRoot := os.Getenv("PROJECT_ROOT")
 	if projectRoot == "" {
@@ -84,7 +98,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	agent, err := deep.New(ctx, &deep.Config{
+	agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
 		Name:           "Ch04ToolAgent",
 		Description:    "ChatWithDoc agent with filesystem access via LocalBackend.",
 		ChatModel:      cm,
@@ -98,17 +112,14 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
 
-	sessionDir := os.Getenv("SESSION_DIR")
-	if sessionDir == "" {
-		sessionDir = "./data/sessions"
-	}
+	sessionDir := msgops.DefaultSessionDir(msgops.KindOf[M]())
 
-	store, err := mem.NewStore(sessionDir)
+	store, err := mem.NewStore[M](sessionDir)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -142,7 +153,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 			break
 		}
 
-		userMsg := schema.UserMessage(line)
+		userMsg := msgops.NewUser[M](line)
 		if err := session.Append(userMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -150,13 +161,13 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, history)
-		content, err := printAndCollectAssistantFromEvents(events)
+		content, err := printAndCollectAssistantFromEvents[M](events)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		assistantMsg := schema.AssistantMessage(content, nil)
+		assistantMsg := msgops.NewAssistant[M](content, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -172,7 +183,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 	fmt.Printf("Resume with: go run ./cmd/ch04 --session %s\n", sessionID)
 }
 
-func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEvent]) (string, error) {
+func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, error) {
 	var sb strings.Builder
 
 	for {
@@ -186,19 +197,15 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 
 		if event.Output != nil && event.Output.MessageOutput != nil {
 			mv := event.Output.MessageOutput
-			if mv.Role == schema.Tool {
-				content := drainToolResult(mv)
+			if msgops.VariantIsToolResult(mv) {
+				content, _, _ := msgops.DrainToolResult(mv)
 				fmt.Printf("[tool result] %s\n", truncate(content, 200))
-				continue
-			}
-
-			if mv.Role != schema.Assistant && mv.Role != "" {
 				continue
 			}
 
 			if mv.IsStreaming {
 				mv.MessageStream.SetAutomaticClose()
-				var accumulatedToolCalls []schema.ToolCall
+				var accumulatedToolCalls []msgops.ToolCall
 				for {
 					frame, err := mv.MessageStream.Recv()
 					if errors.Is(err, io.EOF) {
@@ -207,61 +214,38 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 					if err != nil {
 						return "", err
 					}
-					if frame != nil {
-						if frame.Content != "" {
-							sb.WriteString(frame.Content)
-							_, _ = fmt.Fprint(os.Stdout, frame.Content)
+					if !msgops.IsNil(frame) {
+						if text := msgops.AssistantDeltaText(frame); text != "" {
+							sb.WriteString(text)
+							_, _ = fmt.Fprint(os.Stdout, text)
 						}
-						// 累积 ToolCalls
-						if len(frame.ToolCalls) > 0 {
-							accumulatedToolCalls = append(accumulatedToolCalls, frame.ToolCalls...)
+						if calls := msgops.ToolCalls(frame); len(calls) > 0 {
+							accumulatedToolCalls = append(accumulatedToolCalls, calls...)
 						}
 					}
 				}
 				// 流结束后打印完整的 ToolCalls
 				for _, tc := range accumulatedToolCalls {
-					if tc.Function.Name != "" && tc.Function.Arguments != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
+					if tc.Name != "" && tc.Args != "" {
+						fmt.Printf("\n[tool call] %s(%s)\n", tc.Name, tc.Args)
 					}
 				}
 				_, _ = fmt.Fprintln(os.Stdout)
 				continue
 			}
 
-			if mv.Message != nil {
-				sb.WriteString(mv.Message.Content)
-				_, _ = fmt.Fprintln(os.Stdout, mv.Message.Content)
-				for _, tc := range mv.Message.ToolCalls {
-					fmt.Printf("[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
+			if !msgops.IsNil(mv.Message) {
+				content := msgops.AssistantText(mv.Message)
+				sb.WriteString(content)
+				_, _ = fmt.Fprintln(os.Stdout, content)
+				for _, tc := range msgops.ToolCalls(mv.Message) {
+					fmt.Printf("[tool call] %s(%s)\n", tc.Name, tc.Args)
 				}
 			}
 		}
 	}
 
 	return sb.String(), nil
-}
-
-func drainToolResult(mo *adk.MessageVariant) string {
-	if mo.IsStreaming && mo.MessageStream != nil {
-		var sb strings.Builder
-		for {
-			chunk, err := mo.MessageStream.Recv()
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			if err != nil {
-				break
-			}
-			if chunk != nil && chunk.Content != "" {
-				sb.WriteString(chunk.Content)
-			}
-		}
-		return sb.String()
-	}
-	if mo.Message != nil {
-		return mo.Message.Content
-	}
-	return ""
 }
 
 func truncate(s string, maxLen int) string {

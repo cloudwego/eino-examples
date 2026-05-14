@@ -8,7 +8,7 @@ title: "第三章：Memory 与 Session（持久化对话）"
 >
 > 本章介绍的 **Memory、Session、Store 是业务层概念**，**不是 Eino 框架的核心组件**。
 >
-> - **Eino 框架层面**：只提供 `adk.Runner` 和 `schema.Message` 等基础抽象，框架本身不关心对话历史的存储方式
+> - **Eino 框架层面**：提供 `adk.Runner`、`adk.NewTypedRunner[M]`、`schema.Message`、`schema.AgenticMessage` 等基础抽象，框架本身不关心对话历史的存储方式
 > - **业务层层面**：Memory/Session/Store 是本示例项目为了实现持久化对话而设计的业务逻辑，通过组装给 `adk.Runner` 的输入来与 Eino 框架交互
 >
 > 换句话说，Eino 框架只负责"如何处理消息"，而"如何存储消息"完全由业务层决定。本章提供的实现只是一个简单的参考示例，你可以根据自己的业务需求选择完全不同的存储方案（数据库、Redis、云存储等）。
@@ -32,6 +32,10 @@ go run ./cmd/ch03
 
 # 恢复已有会话
 go run ./cmd/ch03 --session <session-id>
+
+# 使用 AgenticMessage
+export MESSAGE_KIND=agentic
+go run ./cmd/ch03
 ```
 
 输出示例：
@@ -80,7 +84,7 @@ type Session struct {
     ID        string
     CreatedAt time.Time
 
-    messages []*schema.Message  // 对话历史
+    messages []M  // 对话历史，M 为 *schema.Message 或 *schema.AgenticMessage
     // ...
 }
 ```
@@ -111,12 +115,19 @@ type Store struct {
 每个 Session 存储为一个 `.jsonl` 文件：
 
 ```jsonl
-{"type":"session","id":"083d16da-...","created_at":"2026-03-11T10:00:00Z"}
+{"type":"session","id":"083d16da-...","created_at":"2026-03-11T10:00:00Z","message_kind":"message"}
 {"role":"user","content":"你好，我是谁？"}
 {"role":"assistant","content":"你好！我暂时不知道你是谁..."}
 {"role":"user","content":"我叫张三"}
 {"role":"assistant","content":"好的，张三，很高兴认识你！"}
 ```
+
+`message` 与 `agentic` 使用不同目录，不做自动转换：
+
+- `message`：`SESSION_DIR`，默认 `./data/sessions`
+- `agentic`：`SESSION_DIR_AGENTIC`，默认 `./data/sessions_agentic`
+
+旧的 `message` 文件如果没有 `message_kind` 字段，会按 `message` 兼容读取；类型不一致的文件会被跳过或拒绝加载。
 
 **为什么用 JSONL？**
 - **简单**：每行一个 JSON 对象，易于读写
@@ -151,7 +162,7 @@ if err != nil {
 ### 3. 追加用户消息
 
 ```go
-userMsg := schema.UserMessage("你好")
+userMsg := msgops.NewUser[M]("你好")
 if err := session.Append(userMsg); err != nil {
     log.Fatal(err)
 }
@@ -168,7 +179,7 @@ content := printAndCollectAssistantFromEvents(events)
 ### 5. 追加助手消息
 
 ```go
-assistantMsg := schema.AssistantMessage(content, nil)
+assistantMsg := msgops.NewAssistant[M](content, nil)
 if err := session.Append(assistantMsg); err != nil {
     log.Fatal(err)
 }
@@ -177,6 +188,11 @@ if err := session.Append(assistantMsg); err != nil {
 **关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch03/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch03/main.go)）：
 
 ```go
+store, err := mem.NewStore[M](msgops.DefaultSessionDir(msgops.KindOf[M]()))
+if err != nil {
+    log.Fatal(err)
+}
+
 // 创建或恢复 Session
 session, err := store.GetOrCreate(sessionID)
 if err != nil {
@@ -184,7 +200,7 @@ if err != nil {
 }
 
 // 用户输入
-userMsg := schema.UserMessage(line)
+userMsg := msgops.NewUser[M](line)
 if err := session.Append(userMsg); err != nil {
     log.Fatal(err)
 }
@@ -195,7 +211,7 @@ events := runner.Run(ctx, history)
 content := printAndCollectAssistantFromEvents(events)
 
 // 保存助手回复
-assistantMsg := schema.AssistantMessage(content, nil)
+assistantMsg := msgops.NewAssistant[M](content, nil)
 if err := session.Append(assistantMsg); err != nil {
     log.Fatal(err)
 }
@@ -269,7 +285,7 @@ if err := session.Append(assistantMsg); err != nil {
 ## 本章小结
 
 **框架层 vs 业务层：**
-- **Eino 框架层**：提供 `adk.Runner`、`schema.Message` 等基础抽象，不关心消息如何存储
+- **Eino 框架层**：提供 `adk.Runner`、typed runner、`schema.Message`、`schema.AgenticMessage` 等基础抽象，不关心消息如何存储
 - **业务层（本章实现）**：Memory/Session/Store 是业务层概念，用于管理对话历史的存储
 
 **业务层概念：**

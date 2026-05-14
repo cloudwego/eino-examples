@@ -29,7 +29,8 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -38,9 +39,22 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	cm := examplemodel.NewChatModel()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, instruction)
+	default:
+		runTyped[*schema.Message](ctx, instruction)
+	}
+}
 
-	agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+func runTyped[M adk.MessageType](ctx context.Context, instruction string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	agent, err := adk.NewTypedChatModelAgent[M](ctx, &adk.TypedChatModelAgentConfig[M]{
 		Name:        "Ch02ChatModelAgent",
 		Description: "A minimal ChatModelAgent with in-memory multi-turn history.",
 		Instruction: instruction,
@@ -51,12 +65,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
 
-	history := make([]*schema.Message, 0, 16)
+	history := make([]M, 0, 16)
 	scanner := bufio.NewScanner(os.Stdin)
 	for {
 		_, _ = fmt.Fprint(os.Stdout, "you> ")
@@ -67,15 +81,15 @@ func main() {
 		if line == "" {
 			break
 		}
-		history = append(history, schema.UserMessage(line))
+		history = append(history, msgops.NewUser[M](line))
 
 		events := runner.Run(ctx, history)
-		content, err := printAndCollectAssistantFromEvents(events)
+		content, err := printAndCollectAssistantFromEvents[M](events)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		history = append(history, schema.AssistantMessage(content, nil))
+		history = append(history, msgops.NewAssistant[M](content, nil))
 	}
 	if err := scanner.Err(); err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
@@ -83,7 +97,7 @@ func main() {
 	}
 }
 
-func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEvent]) (string, error) {
+func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, error) {
 	var sb strings.Builder
 
 	for {
@@ -99,7 +113,8 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 		}
 
 		mv := event.Output.MessageOutput
-		if mv.Role != schema.Assistant {
+		if msgops.VariantIsToolResult(mv) {
+			msgops.DrainToolResult(mv)
 			continue
 		}
 
@@ -113,18 +128,22 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 				if err != nil {
 					return "", err
 				}
-				if frame != nil && frame.Content != "" {
-					sb.WriteString(frame.Content)
-					_, _ = fmt.Fprint(os.Stdout, frame.Content)
+				if !msgops.IsNil(frame) {
+					text := msgops.AssistantDeltaText(frame)
+					if text != "" {
+						sb.WriteString(text)
+						_, _ = fmt.Fprint(os.Stdout, text)
+					}
 				}
 			}
 			_, _ = fmt.Fprintln(os.Stdout)
 			continue
 		}
 
-		if mv.Message != nil {
-			sb.WriteString(mv.Message.Content)
-			_, _ = fmt.Fprintln(os.Stdout, mv.Message.Content)
+		if !msgops.IsNil(mv.Message) {
+			content := msgops.AssistantText(mv.Message)
+			sb.WriteString(content)
+			_, _ = fmt.Fprintln(os.Stdout, content)
 		} else {
 			_, _ = fmt.Fprintln(os.Stdout)
 		}

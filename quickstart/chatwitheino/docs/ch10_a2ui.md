@@ -33,6 +33,10 @@ Eino 更关注“可组合的智能执行与编排能力”，至于“如何呈
 
 ```bash
 go run ./cmd/ch10/
+
+# 使用 AgenticMessage
+export MESSAGE_KIND=agentic
+go run ./cmd/ch10/
 ```
 
 输出示例：
@@ -49,6 +53,8 @@ starting server on http://localhost:8080
 go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/eino-ext -clean
 EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run ./cmd/ch10/
 ```
+
+`message` 会话默认保存在 `./data/sessions`，`agentic` 会话默认保存在 `./data/sessions_agentic`。两种消息类型分开存储，不做自动转换。
 
 ## 从文本到 UI：为什么需要 A2UI
 
@@ -112,7 +118,7 @@ type Message struct {
 
 最终 Web 版的核心链路是：
 
-- 后端运行 Agent，得到 `*adk.AsyncIterator[*adk.AgentEvent]`
+- 后端运行 Agent，得到 `*adk.AsyncIterator[*adk.TypedAgentEvent[M]]`
 - 把事件流转换为 A2UI JSONL/SSE 流输出给浏览器（见 [a2ui/streamer.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/a2ui/streamer.go)）
 - 前端解析 SSE 的 `data:` 行并渲染组件树（见 [static/index.html](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/static/index.html)）
 
@@ -127,7 +133,7 @@ type Message struct {
 
 ### 事件流转换（高层）
 
-服务端把 `Runner.Run(...)` 的事件流交给 `a2ui.StreamToWriter(...)`，后者负责：
+服务端把 `Runner.Run(...)` 的事件流交给 `a2ui.StreamToWriter[M](...)`，后者负责：
 
 - 对 user/assistant/tool 的输出做拆分
 - 把 tool call / tool result 渲染成 “chip 卡片”

@@ -37,6 +37,13 @@ export OPENAI_MODEL="gpt-4.1-mini"
 go run ./cmd/ch01 -- "用一句话解释 Eino 的 Component 设计解决了什么问题？"
 ```
 
+默认运行时使用 `*schema.Message`。如需使用 `*schema.AgenticMessage`，加上：
+
+```bash
+export MESSAGE_KIND=agentic
+go run ./cmd/ch01 -- "用一句话解释 Eino 的 Component 设计解决了什么问题？"
+```
+
 ### 2) 最终 Web（A2UI）
 
 ```bash
@@ -44,6 +51,13 @@ go run .
 ```
 
 启动后访问输出里的地址（默认 `http://localhost:8080`）。
+
+最终 Web 版也支持同样的运行时开关：
+
+```bash
+export MESSAGE_KIND=agentic
+go run .
+```
 
 ### 3) （可选）开启 skills（第九章能力复用）
 
@@ -59,6 +73,18 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 - `./skills/` 目录默认被 `.gitignore` 忽略，避免把同步出来的 skills 误提交
 - 如需验证 Skill 是否生效，可运行 [第九章示例](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)
 
+## Message Kind
+
+本 Quickstart 的所有章节都已泛型化：同一份示例代码可以在运行时选择 `message` 或 `agentic` 两种消息类型。
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MESSAGE_KIND` | `message` | 可设为 `message` 或 `agentic` |
+| `SESSION_DIR` | `./data/sessions` | `message` 会话目录 |
+| `SESSION_DIR_AGENTIC` | `./data/sessions_agentic` | `agentic` 会话目录 |
+
+两种消息类型分开存储，不做自动转换。详细说明见 [Message Kind：同时支持 Message 与 AgenticMessage](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/message_kind.md)。
+
 ## 学习路线（章节导航）
 
 | 章节 | 主题 | 入口 |
@@ -73,6 +99,7 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 | 第八章 | Graph Tool（复杂工作流） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch08_graph_tool.md |
 | 第九章 | Skill（Console） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch09_skill.md |
 | 最终章 | A2UI（Web） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch10_a2ui.md |
+| 附录 | Message Kind（Message / AgenticMessage） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/message_kind.md |
 
 ## 最终交付：一个可扩展的端到端 Agent 应用骨架
 

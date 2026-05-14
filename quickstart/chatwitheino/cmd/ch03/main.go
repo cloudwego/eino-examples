@@ -31,8 +31,9 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -43,9 +44,22 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	cm := examplemodel.NewChatModel()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, sessionID, instruction)
+	default:
+		runTyped[*schema.Message](ctx, sessionID, instruction)
+	}
+}
 
-	agent, err := adk.NewChatModelAgent(ctx, &adk.ChatModelAgentConfig{
+func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+
+	agent, err := adk.NewTypedChatModelAgent[M](ctx, &adk.TypedChatModelAgentConfig[M]{
 		Name:        "Ch03MemoryAgent",
 		Description: "ChatModelAgent with JSONL-based persistent session.",
 		Instruction: instruction,
@@ -56,17 +70,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
 
-	sessionDir := os.Getenv("SESSION_DIR")
-	if sessionDir == "" {
-		sessionDir = "./data/sessions"
-	}
+	sessionDir := msgops.DefaultSessionDir(msgops.KindOf[M]())
 
-	store, err := mem.NewStore(sessionDir)
+	store, err := mem.NewStore[M](sessionDir)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -99,7 +110,7 @@ func main() {
 			break
 		}
 
-		userMsg := schema.UserMessage(line)
+		userMsg := msgops.NewUser[M](line)
 		if err := session.Append(userMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -107,13 +118,13 @@ func main() {
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, history)
-		content, err := printAndCollectAssistantFromEvents(events)
+		content, err := printAndCollectAssistantFromEvents[M](events)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		assistantMsg := schema.AssistantMessage(content, nil)
+		assistantMsg := msgops.NewAssistant[M](content, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -129,7 +140,7 @@ func main() {
 	fmt.Printf("Resume with: go run ./cmd/ch03 --session %s\n", sessionID)
 }
 
-func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEvent]) (string, error) {
+func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, error) {
 	var sb strings.Builder
 
 	for {
@@ -145,7 +156,8 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 		}
 
 		mv := event.Output.MessageOutput
-		if mv.Role != schema.Assistant {
+		if msgops.VariantIsToolResult(mv) {
+			msgops.DrainToolResult(mv)
 			continue
 		}
 
@@ -159,18 +171,22 @@ func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEven
 				if err != nil {
 					return "", err
 				}
-				if frame != nil && frame.Content != "" {
-					sb.WriteString(frame.Content)
-					_, _ = fmt.Fprint(os.Stdout, frame.Content)
+				if !msgops.IsNil(frame) {
+					text := msgops.AssistantDeltaText(frame)
+					if text != "" {
+						sb.WriteString(text)
+						_, _ = fmt.Fprint(os.Stdout, text)
+					}
 				}
 			}
 			_, _ = fmt.Fprintln(os.Stdout)
 			continue
 		}
 
-		if mv.Message != nil {
-			sb.WriteString(mv.Message.Content)
-			_, _ = fmt.Fprintln(os.Stdout, mv.Message.Content)
+		if !msgops.IsNil(mv.Message) {
+			content := msgops.AssistantText(mv.Message)
+			sb.WriteString(content)
+			_, _ = fmt.Fprintln(os.Stdout, content)
 		} else {
 			_, _ = fmt.Fprintln(os.Stdout)
 		}
