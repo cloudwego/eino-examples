@@ -80,7 +80,50 @@ type Server[M adk.MessageType] struct {
 
 // New creates a Server from the given config.
 func New[M adk.MessageType](cfg Config[M]) *Server[M] {
+	cfg.CheckPointStore = withDeleteCheckpointStore(cfg.CheckPointStore)
 	return &Server[M]{cfg: cfg}
+}
+
+type deleteCheckpointStore struct {
+	mu         sync.Mutex
+	inner      adk.CheckPointStore
+	tombstones map[string]struct{}
+}
+
+func withDeleteCheckpointStore(store adk.CheckPointStore) adk.CheckPointStore {
+	if store == nil {
+		return nil
+	}
+	return &deleteCheckpointStore{
+		inner:      store,
+		tombstones: map[string]struct{}{},
+	}
+}
+
+func (s *deleteCheckpointStore) Get(ctx context.Context, checkPointID string) ([]byte, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, deleted := s.tombstones[checkPointID]; deleted {
+		return nil, false, nil
+	}
+	return s.inner.Get(ctx, checkPointID)
+}
+
+func (s *deleteCheckpointStore) Set(ctx context.Context, checkPointID string, checkPoint []byte) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.tombstones, checkPointID)
+	return s.inner.Set(ctx, checkPointID, checkPoint)
+}
+
+func (s *deleteCheckpointStore) Delete(ctx context.Context, checkPointID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if deleter, ok := s.inner.(adk.CheckPointDeleter); ok {
+		return deleter.Delete(ctx, checkPointID)
+	}
+	s.tombstones[checkPointID] = struct{}{}
+	return nil
 }
 
 // iterEnvelope carries the event iterator from OnAgentEvents to the HTTP handler.
@@ -521,15 +564,17 @@ func (s *Server[M]) handleAbort(_ context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, map[string]string{"status": "aborted"})
 }
 
-// newLoop creates a new TurnLoop for the session. If withResume is true,
-// the loop is configured with a checkpoint store and GenResume for interrupt resume.
+// newLoop creates a new TurnLoop for the session. Every loop uses the checkpoint
+// store when one is configured so the first /chat interrupt can be persisted
+// and the later /approve loop can resume it.
 func (s *Server[M]) newLoop(sess *mem.Session[M], sessionID string, withResume bool) *adk.TurnLoop[*ChatItem, M] {
+	_ = withResume
 	cfg := adk.TurnLoopConfig[*ChatItem, M]{
 		GenInput:      s.makeGenInput(sess, sessionID),
 		PrepareAgent:  s.makePrepareAgent(),
 		OnAgentEvents: s.makeOnAgentEvents(sess, sessionID),
 	}
-	if withResume {
+	if s.cfg.CheckPointStore != nil {
 		cfg.Store = s.cfg.CheckPointStore
 		cfg.CheckpointID = sessionID
 		cfg.GenResume = s.makeGenResume()

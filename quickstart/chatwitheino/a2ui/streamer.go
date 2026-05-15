@@ -25,6 +25,7 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
@@ -109,6 +110,13 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 		}
 
 		if event.Err != nil {
+			if helpers.IsModelRetryInProgress(event.Err) {
+				log.Printf("[a2ui] model retry: %v", event.Err)
+				if !writerBroken {
+					_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "retrying", event.Err.Error())
+				}
+				continue
+			}
 			log.Printf("[a2ui] event error: %v", event.Err)
 			if !writerBroken {
 				_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "error", event.Err.Error())
@@ -187,6 +195,7 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 			var shellEmitted bool
 			var accContent strings.Builder
 			var chunks []M
+			streamWillRetry := false
 
 			for {
 				chunk, recvErr := mo.MessageStream.Recv()
@@ -194,6 +203,14 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 					break
 				}
 				if recvErr != nil {
+					if helpers.IsModelRetryInProgress(recvErr) {
+						streamWillRetry = true
+						log.Printf("[a2ui] stream retry: %v", recvErr)
+						if !writerBroken {
+							_ = emitToolChip(w, surfaceID, rootChildren, msgIdx, "retrying", recvErr.Error())
+						}
+						break
+					}
 					log.Printf("[a2ui] stream recv error: %v", recvErr)
 					break
 				}
@@ -243,6 +260,9 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 						writerBroken = true
 					}
 				}
+			}
+			if streamWillRetry {
+				continue
 			}
 
 			var toolCalls []msgops.ToolCall

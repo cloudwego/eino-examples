@@ -381,6 +381,9 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 			break
 		}
 		if event.Err != nil {
+			if helpers.LogModelRetry(os.Stderr, event.Err) {
+				continue
+			}
 			return "", nil, event.Err
 		}
 
@@ -400,12 +403,21 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 			if mv.IsStreaming {
 				mv.MessageStream.SetAutomaticClose()
 				var accumulatedToolCalls []msgops.ToolCall
+				streamPrefix := sb.String()
+				streamWillRetry := false
 				for {
 					frame, err := mv.MessageStream.Recv()
 					if errors.Is(err, io.EOF) {
 						break
 					}
 					if err != nil {
+						if helpers.LogModelRetry(os.Stderr, err) {
+							sb.Reset()
+							sb.WriteString(streamPrefix)
+							accumulatedToolCalls = nil
+							streamWillRetry = true
+							break
+						}
 						return "", nil, err
 					}
 					if !msgops.IsNil(frame) {
@@ -417,6 +429,9 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 							accumulatedToolCalls = append(accumulatedToolCalls, calls...)
 						}
 					}
+				}
+				if streamWillRetry {
+					continue
 				}
 				for _, tc := range accumulatedToolCalls {
 					if tc.Name != "" && tc.Args != "" {

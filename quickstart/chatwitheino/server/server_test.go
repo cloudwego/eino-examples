@@ -18,6 +18,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -89,6 +90,16 @@ func slowAgent(delay time.Duration, reply string) *mockAgent {
 				},
 			})
 			gen.Send(&adk.TypedAgentEvent[*schema.Message]{Action: adk.NewExitAction()})
+		},
+	}
+}
+
+func interruptingAgent() *mockAgent {
+	return &mockAgent{
+		name: "interrupting-agent",
+		onRun: func(ctx context.Context, _ *adk.TypedAgentInput[*schema.Message], gen *adk.AsyncGenerator[*adk.TypedAgentEvent[*schema.Message]]) {
+			defer gen.Close()
+			gen.Send(adk.TypedStatefulInterrupt[*schema.Message](ctx, "approval required", "checkpoint state"))
 		},
 	}
 }
@@ -231,6 +242,107 @@ func TestChatNormalFlow(t *testing.T) {
 	}
 	if !found {
 		t.Error("assistant message not found in session history")
+	}
+}
+
+func TestInitialLoopPersistsCheckpointForApprovalResume(t *testing.T) {
+	agent := interruptingAgent()
+	srv, _, cleanup := newTestServer(t, agent)
+	defer cleanup()
+
+	sessionID := createSession(t, srv)
+	sess, _ := srv.cfg.Store.GetOrCreate(sessionID)
+
+	ts := srv.getTurnState(sessionID)
+	ts.mu.Lock()
+	loop := srv.newLoop(sess, sessionID, false)
+	ts.loop = loop
+	ts.iterReady = make(chan iterEnvelope[*schema.Message], 1)
+	ts.iterDone = make(chan iterResult[*schema.Message], 1)
+	ts.mu.Unlock()
+
+	loop.Push(&ChatItem{Query: "needs approval"})
+	loop.Run(context.Background())
+
+	var envelope iterEnvelope[*schema.Message]
+	select {
+	case envelope = <-ts.iterReady:
+	case <-time.After(5 * time.Second):
+		t.Fatal("timeout waiting for iterReady")
+	}
+
+	var interruptID string
+	for {
+		event, ok := envelope.events.Next()
+		if !ok {
+			break
+		}
+		if event.Action != nil && event.Action.Interrupted != nil {
+			for _, ic := range event.Action.Interrupted.InterruptContexts {
+				if ic.IsRootCause {
+					interruptID = ic.ID
+					break
+				}
+			}
+			if interruptID == "" && len(event.Action.Interrupted.InterruptContexts) > 0 {
+				interruptID = event.Action.Interrupted.InterruptContexts[0].ID
+			}
+		}
+	}
+	if interruptID == "" {
+		t.Fatal("expected interrupt ID")
+	}
+
+	envelope.done <- iterResult[*schema.Message]{
+		interruptID: interruptID,
+		msgIdx:      1,
+	}
+
+	result := loop.Wait()
+	if !errors.Is(result.ExitReason, errInterrupted) {
+		t.Fatalf("expected errInterrupted, got %v", result.ExitReason)
+	}
+
+	if _, existed, err := srv.cfg.CheckPointStore.Get(context.Background(), sessionID); err != nil {
+		t.Fatalf("checkpoint get: %v", err)
+	} else if !existed {
+		t.Fatal("expected initial /chat loop to persist checkpoint")
+	}
+}
+
+func TestCheckpointStoreDeleteHidesCheckpoint(t *testing.T) {
+	ctx := context.Background()
+	store := withDeleteCheckpointStore(adkstore.NewInMemoryStore())
+
+	if err := store.Set(ctx, "session-1", []byte("checkpoint")); err != nil {
+		t.Fatalf("set checkpoint: %v", err)
+	}
+	if _, existed, err := store.Get(ctx, "session-1"); err != nil {
+		t.Fatalf("get checkpoint: %v", err)
+	} else if !existed {
+		t.Fatal("expected checkpoint before delete")
+	}
+
+	deleter, ok := store.(adk.CheckPointDeleter)
+	if !ok {
+		t.Fatal("wrapped store should implement CheckPointDeleter")
+	}
+	if err := deleter.Delete(ctx, "session-1"); err != nil {
+		t.Fatalf("delete checkpoint: %v", err)
+	}
+	if _, existed, err := store.Get(ctx, "session-1"); err != nil {
+		t.Fatalf("get after delete: %v", err)
+	} else if existed {
+		t.Fatal("expected deleted checkpoint to be hidden")
+	}
+
+	if err := store.Set(ctx, "session-1", []byte("new checkpoint")); err != nil {
+		t.Fatalf("set replacement checkpoint: %v", err)
+	}
+	if _, existed, err := store.Get(ctx, "session-1"); err != nil {
+		t.Fatalf("get replacement checkpoint: %v", err)
+	} else if !existed {
+		t.Fatal("expected Set to clear delete tombstone")
 	}
 }
 

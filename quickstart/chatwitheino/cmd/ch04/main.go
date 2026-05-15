@@ -37,6 +37,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
@@ -192,6 +193,9 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 			break
 		}
 		if event.Err != nil {
+			if helpers.LogModelRetry(os.Stderr, event.Err) {
+				continue
+			}
 			return "", event.Err
 		}
 
@@ -206,12 +210,21 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 			if mv.IsStreaming {
 				mv.MessageStream.SetAutomaticClose()
 				var accumulatedToolCalls []msgops.ToolCall
+				streamPrefix := sb.String()
+				streamWillRetry := false
 				for {
 					frame, err := mv.MessageStream.Recv()
 					if errors.Is(err, io.EOF) {
 						break
 					}
 					if err != nil {
+						if helpers.LogModelRetry(os.Stderr, err) {
+							sb.Reset()
+							sb.WriteString(streamPrefix)
+							accumulatedToolCalls = nil
+							streamWillRetry = true
+							break
+						}
 						return "", err
 					}
 					if !msgops.IsNil(frame) {
@@ -223,6 +236,9 @@ func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIter
 							accumulatedToolCalls = append(accumulatedToolCalls, calls...)
 						}
 					}
+				}
+				if streamWillRetry {
+					continue
 				}
 				// 流结束后打印完整的 ToolCalls
 				for _, tc := range accumulatedToolCalls {
