@@ -80,7 +80,6 @@ type Server[M adk.MessageType] struct {
 
 // New creates a Server from the given config.
 func New[M adk.MessageType](cfg Config[M]) *Server[M] {
-	cfg.CheckPointStore = withDeleteCheckpointStore(cfg.CheckPointStore)
 	return &Server[M]{cfg: cfg}
 }
 
@@ -109,56 +108,6 @@ type sessionTurnState[M adk.MessageType] struct {
 	iterReady   chan iterEnvelope[M] // OnAgentEvents → HTTP handler
 	iterDone    chan iterResult[M]   // HTTP handler → OnAgentEvents
 	handlerDone chan struct{}        // closed to tell a prev handler to bail on preempt
-}
-
-type deleteCheckpointStore struct {
-	mu      sync.Mutex
-	base    adk.CheckPointStore
-	deleted map[string]struct{}
-}
-
-func withDeleteCheckpointStore(store adk.CheckPointStore) adk.CheckPointStore {
-	if store == nil {
-		return nil
-	}
-	if _, ok := store.(*deleteCheckpointStore); ok {
-		return store
-	}
-	return &deleteCheckpointStore{
-		base:    store,
-		deleted: make(map[string]struct{}),
-	}
-}
-
-func (s *deleteCheckpointStore) Set(ctx context.Context, key string, value []byte) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if err := s.base.Set(ctx, key, value); err != nil {
-		return err
-	}
-	delete(s.deleted, key)
-	return nil
-}
-
-func (s *deleteCheckpointStore) Get(ctx context.Context, key string) ([]byte, bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if _, ok := s.deleted[key]; ok {
-		return nil, false, nil
-	}
-	return s.base.Get(ctx, key)
-}
-
-func (s *deleteCheckpointStore) Delete(ctx context.Context, key string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if deleter, ok := s.base.(adk.CheckPointDeleter); ok {
-		if err := deleter.Delete(ctx, key); err != nil {
-			return err
-		}
-	}
-	s.deleted[key] = struct{}{}
-	return nil
 }
 
 func (s *Server[M]) getTurnState(sessionID string) *sessionTurnState[M] {
@@ -371,10 +320,22 @@ func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 	// During a preempt the old turn may take tens of seconds to drain; if we
 	// don't write anything the browser/TCP stack may consider the connection
 	// dead, causing all subsequent writes to fail silently.
-	stream := newSSEPublisher(c)
-	defer func() { _ = stream.Flush() }()
-	stopKeepAlive := startSSEKeepAlive(stream)
-	defer stopKeepAlive()
+	stream := sse.NewStream(c)
+	defer func() { _ = c.Flush() }()
+
+	kaStop := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-kaStop:
+				return
+			case <-ticker.C:
+				_ = stream.Publish(&sse.Event{Data: []byte{}})
+			}
+		}
+	}()
 
 	// Wait for OnAgentEvents to send us the iterator. Use local channel
 	// references so a concurrent preempt replacing ts.iterReady doesn't
@@ -384,10 +345,12 @@ func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 	case envelope = <-localIterReady:
 	case <-localHandlerDone:
 		// Another preempt took over — our turn was superseded.
+		close(kaStop)
 		log.Printf("[chat] session=%s handler superseded by newer preempt", id)
 		_ = stream.Publish(&sse.Event{Data: []byte(`{"event":"preempted"}`)})
 		return
 	case <-time.After(60 * time.Second):
+		close(kaStop)
 		// Stream is already open; send an error event instead of JSON.
 		_ = stream.Publish(&sse.Event{Data: []byte(`{"error":"agent did not start in time"}`)})
 		return
@@ -396,7 +359,7 @@ func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 	lastContent, intermediates, interruptID, finalMsgIdx, streamErr := a2ui.StreamToWriter(
 		&sseLineWriter{stream: stream}, id, envelope.history, envelope.events,
 	)
-	stopKeepAlive()
+	close(kaStop)
 
 	// Send result back to the SAME OnAgentEvents that sent us this envelope.
 	envelope.done <- iterResult[M]{
@@ -480,20 +443,34 @@ func (s *Server[M]) handleApprove(ctx context.Context, c *app.RequestContext) {
 	s.startLoopCleanup(ts, loop, id)
 
 	// Open SSE stream and start keepalives before waiting.
-	stream := newSSEPublisher(c)
-	defer func() { _ = stream.Flush() }()
-	stopKeepAlive := startSSEKeepAlive(stream)
-	defer stopKeepAlive()
+	stream := sse.NewStream(c)
+	defer func() { _ = c.Flush() }()
+
+	kaStop := make(chan struct{})
+	go func() {
+		ticker := time.NewTicker(5 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-kaStop:
+				return
+			case <-ticker.C:
+				_ = stream.Publish(&sse.Event{Data: []byte{}})
+			}
+		}
+	}()
 
 	// Wait for OnAgentEvents to send us the iterator.
 	var envelope iterEnvelope[M]
 	select {
 	case envelope = <-localIterReady:
 	case <-localHandlerDone:
+		close(kaStop)
 		log.Printf("[approve] session=%s handler superseded by newer request", id)
 		_ = stream.Publish(&sse.Event{Data: []byte(`{"event":"preempted"}`)})
 		return
 	case <-time.After(60 * time.Second):
+		close(kaStop)
 		_ = stream.Publish(&sse.Event{Data: []byte(`{"error":"agent did not start in time"}`)})
 		return
 	}
@@ -502,7 +479,7 @@ func (s *Server[M]) handleApprove(ctx context.Context, c *app.RequestContext) {
 	lastContent, newInterruptID, finalMsgIdx, streamErr := a2ui.StreamContinue(
 		&sseLineWriter{stream: stream}, id, sess.GetMsgIdx(), envelope.events,
 	)
-	stopKeepAlive()
+	close(kaStop)
 
 	// Send result back to the SAME OnAgentEvents that sent us this envelope.
 	envelope.done <- iterResult[M]{
@@ -544,16 +521,15 @@ func (s *Server[M]) handleAbort(_ context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, map[string]string{"status": "aborted"})
 }
 
-// newLoop creates a new TurnLoop for the session. Checkpointing is enabled
-// whenever a checkpoint store is configured, so the initial interrupted run can
-// persist the state later used by approval resume.
-func (s *Server[M]) newLoop(sess *mem.Session[M], sessionID string, _ bool) *adk.TurnLoop[*ChatItem, M] {
+// newLoop creates a new TurnLoop for the session. If withResume is true,
+// the loop is configured with a checkpoint store and GenResume for interrupt resume.
+func (s *Server[M]) newLoop(sess *mem.Session[M], sessionID string, withResume bool) *adk.TurnLoop[*ChatItem, M] {
 	cfg := adk.TurnLoopConfig[*ChatItem, M]{
 		GenInput:      s.makeGenInput(sess, sessionID),
 		PrepareAgent:  s.makePrepareAgent(),
 		OnAgentEvents: s.makeOnAgentEvents(sess, sessionID),
 	}
-	if s.cfg.CheckPointStore != nil {
+	if withResume {
 		cfg.Store = s.cfg.CheckPointStore
 		cfg.CheckpointID = sessionID
 		cfg.GenResume = s.makeGenResume()
@@ -796,62 +772,10 @@ func (s *Server[M]) handleUpload(ctx context.Context, c *app.RequestContext) {
 	})
 }
 
-type ssePublisher struct {
-	mu     sync.Mutex
-	ctx    *app.RequestContext
-	stream *sse.Stream
-}
-
-func newSSEPublisher(c *app.RequestContext) *ssePublisher {
-	return &ssePublisher{
-		ctx:    c,
-		stream: sse.NewStream(c),
-	}
-}
-
-func (p *ssePublisher) Publish(event *sse.Event) error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.stream.Publish(event)
-}
-
-func (p *ssePublisher) Flush() error {
-	p.mu.Lock()
-	defer p.mu.Unlock()
-	return p.ctx.Flush()
-}
-
-func startSSEKeepAlive(stream *ssePublisher) func() {
-	stop := make(chan struct{})
-	done := make(chan struct{})
-	var once sync.Once
-
-	go func() {
-		defer close(done)
-		ticker := time.NewTicker(5 * time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-stop:
-				return
-			case <-ticker.C:
-				_ = stream.Publish(&sse.Event{Data: []byte{}})
-			}
-		}
-	}()
-
-	return func() {
-		once.Do(func() {
-			close(stop)
-			<-done
-		})
-	}
-}
-
 // sseLineWriter implements io.Writer, buffering until a newline is found,
 // then publishing each complete line as an SSE event (without the trailing newline).
 type sseLineWriter struct {
-	stream *ssePublisher
+	stream *sse.Stream
 	buf    []byte
 }
 

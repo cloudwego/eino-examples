@@ -49,7 +49,6 @@ CLAUDE.md
 quickstart/chatwithdoc/data/sessions/
 quickstart/chatwithdoc/data/workspace/
 quickstart/chatwitheino/skills/
-quickstart/chatwitheino/data/middleware/
 
 *.jsonl
 *.txt

@@ -19,9 +19,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
 	"github.com/cloudwego/eino/adk"
+	"github.com/cloudwego/eino/adk/middlewares/skill"
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -48,11 +52,23 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		return nil, fmt.Errorf("build rag tool: %w", err)
 	}
 
-	middlewareStack, err := buildMiddlewareStack(ctx, cm, backend, ragTool)
-	if err != nil {
-		return nil, err
+	var handlers []adk.TypedChatModelAgentMiddleware[M]
+	if skillsDir, ok := resolveSkillsDir(); ok {
+		skillBackend, sbErr := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesystemConfig{
+			Backend: backend,
+			BaseDir: skillsDir,
+		})
+		if sbErr != nil {
+			return nil, sbErr
+		}
+		skillMiddleware, smErr := skill.NewTyped[M](ctx, &skill.TypedConfig[M]{
+			Backend: skillBackend,
+		})
+		if smErr != nil {
+			return nil, smErr
+		}
+		handlers = append(handlers, skillMiddleware)
 	}
-	handlers := middlewareStack.Handlers
 	handlers = append(handlers, newApprovalMiddleware[M](), helpers.NewSafeToolMiddleware[M]())
 
 	cfg := &deep.TypedConfig[M]{
@@ -65,12 +81,27 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		Handlers:       handlers,
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: middlewareStack.Tools,
+				Tools: []tool.BaseTool{ragTool},
 			},
 		},
 	}
 	helpers.ApplyMessageModelRetry(cfg)
 	return deep.NewTyped[M](ctx, cfg)
+}
+
+func resolveSkillsDir() (string, bool) {
+	skillsDir := strings.TrimSpace(os.Getenv("EINO_EXT_SKILLS_DIR"))
+	if skillsDir == "" {
+		return "", false
+	}
+	if absSkillsDir, absErr := filepath.Abs(skillsDir); absErr == nil {
+		skillsDir = absSkillsDir
+	}
+	fi, err := os.Stat(skillsDir)
+	if err != nil || !fi.IsDir() {
+		return "", false
+	}
+	return skillsDir, true
 }
 
 // approvalMiddleware intercepts calls to the answer_from_document tool and
