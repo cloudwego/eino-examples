@@ -73,6 +73,39 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 - `./skills/` 目录默认被 `.gitignore` 忽略，避免把同步出来的 skills 误提交
 - 如需验证 Skill 是否生效，可运行 [第九章示例](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)
 
+### 4) 测试最终版 middleware 栈
+
+最终 Web 版默认启用一组 ADK middleware，便于本地联调：
+
+```bash
+go run .
+```
+
+默认栈包含 `patchtoolcalls`、`reduction`、`summarization`、`plantask`、`agentsmd`、`skill`、`toolsearch`。其中 `skill` 需要额外设置 `EINO_EXT_SKILLS_DIR`；filesystem middleware 由 DeepAgent 在配置 `Backend`/`StreamingShell` 后自动注入。
+
+可以用 `CHATWITHEINO_MIDDLEWARES` 选择要测试的 middleware：
+
+```bash
+CHATWITHEINO_MIDDLEWARES=none go run .
+CHATWITHEINO_MIDDLEWARES=patchtoolcalls,reduction,summarization go run .
+CHATWITHEINO_MIDDLEWARES=all CHATWITHEINO_SUMMARY_MESSAGES=4 go run .
+```
+
+常用测试变量：
+
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `CHATWITHEINO_MIDDLEWARES` | `all` | 可设为 `all`、`none` 或逗号分隔列表 |
+| `CHATWITHEINO_SUMMARY_TOKENS` | `160000` | summary 按 token 触发的阈值 |
+| `CHATWITHEINO_SUMMARY_MESSAGES` | `0` | summary 按消息数触发的阈值；设小一些更容易本地触发 |
+| `CHATWITHEINO_SUMMARY_EVENTS` | `false` | 是否发出 summarization 内部事件 |
+| `CHATWITHEINO_REDUCTION_MAX_CHARS` | `50000` | 单个 tool result 截断阈值 |
+| `CHATWITHEINO_REDUCTION_MAX_TOKENS` | `160000` | 历史 tool result 清理阈值 |
+| `CHATWITHEINO_REDUCTION_DIR` | `./data/middleware/reduction` | reduction offload 文件目录 |
+| `CHATWITHEINO_PLANTASK_DIR` | `./data/middleware/tasks` | plantask 任务文件目录 |
+| `CHATWITHEINO_AGENTS_MD_FILES` | `./AGENTS.md` | agentsmd 注入文件，多个文件用逗号分隔 |
+| `CHATWITHEINO_AGENTS_MD_MAX_BYTES` | `262144` | agentsmd 累计读取上限 |
+
 ## Message Kind
 
 本 Quickstart 的所有章节都已泛型化：同一份示例代码可以在运行时选择 `message` 或 `agentic` 两种消息类型。
