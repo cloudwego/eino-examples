@@ -18,9 +18,7 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,11 +29,10 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
-	"github.com/cloudwego/eino/schema"
 
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
-	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/rag"
 )
 
@@ -72,7 +69,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		}
 		handlers = append(handlers, skillMiddleware)
 	}
-	handlers = append(handlers, newApprovalMiddleware[M](), newSafeToolMiddleware[M]())
+	handlers = append(handlers, newApprovalMiddleware[M](), helpers.NewSafeToolMiddleware[M]())
 
 	cfg := &deep.TypedConfig[M]{
 		Name:           "ChatWithEinoAgent",
@@ -88,16 +85,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 			},
 		},
 	}
-	if msgops.KindOf[M]() == msgops.KindMessage {
-		cfg.ModelRetryConfig = &adk.TypedModelRetryConfig[M]{
-			MaxRetries: 5,
-			IsRetryAble: func(_ context.Context, err error) bool {
-				return strings.Contains(err.Error(), "429") ||
-					strings.Contains(err.Error(), "Too Many Requests") ||
-					strings.Contains(err.Error(), "qpm limit")
-			},
-		}
-	}
+	helpers.ApplyMessageModelRetry(cfg)
 	return deep.NewTyped[M](ctx, cfg)
 }
 
@@ -116,24 +104,11 @@ func resolveSkillsDir() (string, bool) {
 	return skillsDir, true
 }
 
-// safeToolMiddleware converts streaming tool errors into error-message strings
-// so that a non-zero exit code or mid-stream failure is returned to the model
-// as a readable tool result instead of aborting the agent pipeline.
-type safeToolMiddleware[M adk.MessageType] struct {
-	*adk.TypedBaseChatModelAgentMiddleware[M]
-}
-
 // approvalMiddleware intercepts calls to the answer_from_document tool and
 // pauses the agent with a human-approval interrupt before executing the RAG
 // workflow. The runner's CheckPointStore must be configured for this to work.
 type approvalMiddleware[M adk.MessageType] struct {
 	*adk.TypedBaseChatModelAgentMiddleware[M]
-}
-
-func newSafeToolMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
-	return &safeToolMiddleware[M]{
-		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
-	}
 }
 
 func newApprovalMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
@@ -183,68 +158,4 @@ func (m *approvalMiddleware[M]) WrapInvokableToolCall(
 
 		return endpoint(ctx, storedArgs, opts...)
 	}, nil
-}
-
-func (m *safeToolMiddleware[M]) WrapInvokableToolCall(
-	_ context.Context,
-	endpoint adk.InvokableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.InvokableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (string, error) {
-		result, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return "", err
-			}
-			return fmt.Sprintf("[tool error] %v", err), nil
-		}
-		return result, nil
-	}, nil
-}
-
-func (m *safeToolMiddleware[M]) WrapStreamableToolCall(
-	_ context.Context,
-	endpoint adk.StreamableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.StreamableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (*schema.StreamReader[string], error) {
-		sr, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return nil, err
-			}
-			return singleChunkReader(fmt.Sprintf("[tool error] %v", err)), nil
-		}
-		return safeWrapReader(sr), nil
-	}, nil
-}
-
-// singleChunkReader returns a StreamReader that emits one string then EOF.
-func singleChunkReader(msg string) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](1)
-	_ = w.Send(msg, nil)
-	w.Close()
-	return r
-}
-
-// safeWrapReader proxies chunks from sr; on a stream error it emits the error
-// as a final chunk instead of propagating it, so the model sees a complete
-// (if error-annotated) tool result rather than a pipeline failure.
-func safeWrapReader(sr *schema.StreamReader[string]) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](64)
-	go func() {
-		defer w.Close()
-		for {
-			chunk, err := sr.Recv()
-			if errors.Is(err, io.EOF) {
-				return
-			}
-			if err != nil {
-				_ = w.Send(fmt.Sprintf("\n[tool error] %v", err), nil)
-				return
-			}
-			_ = w.Send(chunk, nil)
-		}
-	}()
-	return r
 }

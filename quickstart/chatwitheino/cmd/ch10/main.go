@@ -35,9 +35,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,6 +58,7 @@ import (
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/rag"
@@ -505,7 +504,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 
 	handlers := []adk.TypedChatModelAgentMiddleware[M]{
 		newApprovalMiddleware[M](),
-		newSafeToolMiddleware[M](),
+		helpers.NewSafeToolMiddleware[M](),
 	}
 
 	cfg := &deep.TypedConfig[M]{
@@ -522,16 +521,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 			},
 		},
 	}
-	if msgops.KindOf[M]() == msgops.KindMessage {
-		cfg.ModelRetryConfig = &adk.TypedModelRetryConfig[M]{
-			MaxRetries: 5,
-			IsRetryAble: func(_ context.Context, err error) bool {
-				return strings.Contains(err.Error(), "429") ||
-					strings.Contains(err.Error(), "Too Many Requests") ||
-					strings.Contains(err.Error(), "qpm limit")
-			},
-		}
-	}
+	helpers.ApplyMessageModelRetry(cfg)
 	return deep.NewTyped[M](ctx, cfg)
 }
 
@@ -543,12 +533,6 @@ type approvalMiddleware[M adk.MessageType] struct {
 
 func newApprovalMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
 	return &approvalMiddleware[M]{
-		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
-	}
-}
-
-func newSafeToolMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
-	return &safeToolMiddleware[M]{
 		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
 	}
 }
@@ -591,70 +575,4 @@ func (m *approvalMiddleware[M]) WrapInvokableToolCall(
 
 		return endpoint(ctx, storedArgs, opts...)
 	}, nil
-}
-
-type safeToolMiddleware[M adk.MessageType] struct {
-	*adk.TypedBaseChatModelAgentMiddleware[M]
-}
-
-func (m *safeToolMiddleware[M]) WrapInvokableToolCall(
-	_ context.Context,
-	endpoint adk.InvokableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.InvokableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (string, error) {
-		result, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return "", err
-			}
-			return fmt.Sprintf("[tool error] %v", err), nil
-		}
-		return result, nil
-	}, nil
-}
-
-func (m *safeToolMiddleware[M]) WrapStreamableToolCall(
-	_ context.Context,
-	endpoint adk.StreamableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.StreamableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (*schema.StreamReader[string], error) {
-		sr, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return nil, err
-			}
-			return singleChunkReader(fmt.Sprintf("[tool error] %v", err)), nil
-		}
-		return safeWrapReader(sr), nil
-	}, nil
-}
-
-// --- Stream helpers ---
-
-func singleChunkReader(msg string) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](1)
-	_ = w.Send(msg, nil)
-	w.Close()
-	return r
-}
-
-func safeWrapReader(sr *schema.StreamReader[string]) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](64)
-	go func() {
-		defer w.Close()
-		for {
-			chunk, err := sr.Recv()
-			if errors.Is(err, io.EOF) {
-				return
-			}
-			if err != nil {
-				_ = w.Send(fmt.Sprintf("\n[tool error] %v", err), nil)
-				return
-			}
-			_ = w.Send(chunk, nil)
-		}
-	}()
-	return r
 }

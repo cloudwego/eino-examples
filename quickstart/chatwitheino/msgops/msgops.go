@@ -208,7 +208,11 @@ func AssistantText[M adk.MessageType](msg M) string {
 	}
 }
 
-// AssistantDeltaText returns assistant text from one streaming chunk.
+// AssistantDeltaText returns assistant text from one streaming chunk. It
+// intentionally delegates to AssistantText because schema.Message and
+// AgenticMessage currently expose streamed assistant deltas through the same
+// text-bearing fields; keeping this helper separate makes streaming call sites
+// explicit and leaves room for chunk-specific handling later.
 func AssistantDeltaText[M adk.MessageType](msg M) string {
 	return AssistantText(msg)
 }
