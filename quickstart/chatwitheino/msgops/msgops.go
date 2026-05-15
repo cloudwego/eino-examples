@@ -36,6 +36,14 @@ const (
 	KindAgentic Kind = "agentic"
 )
 
+const (
+	arkItemIDKey        = "ark-item-id"
+	arkItemStatusKey    = "ark-item-status"
+	openAIItemIDKey     = "openai-item-id"
+	openAIItemStatusKey = "openai-item-status"
+	itemStatusCompleted = "completed"
+)
+
 // ToolCall contains the common function-tool-call fields used by the examples.
 type ToolCall struct {
 	ID    string
@@ -113,14 +121,14 @@ func NewAssistant[M adk.MessageType](text string, calls []ToolCall) M {
 	if KindOf[M]() == KindAgentic {
 		blocks := make([]*schema.ContentBlock, 0, len(calls)+1)
 		if text != "" {
-			blocks = append(blocks, schema.NewContentBlock(&schema.AssistantGenText{Text: text}))
+			blocks = append(blocks, normalizeAgenticContentBlock(schema.NewContentBlock(&schema.AssistantGenText{Text: text})))
 		}
 		for _, call := range calls {
-			blocks = append(blocks, schema.NewContentBlock(&schema.FunctionToolCall{
+			blocks = append(blocks, normalizeAgenticContentBlock(schema.NewContentBlock(&schema.FunctionToolCall{
 				CallID:    call.ID,
 				Name:      call.Name,
 				Arguments: call.Args,
-			}))
+			})))
 		}
 		return any(&schema.AgenticMessage{
 			Role:          schema.AgenticRoleTypeAssistant,
@@ -460,12 +468,109 @@ func DrainToolResult[M adk.MessageType](mv *adk.TypedMessageVariant[M]) (content
 func UnmarshalMessage[M adk.MessageType](data []byte) (M, error) {
 	if KindOf[M]() == KindAgentic {
 		var msg schema.AgenticMessage
-		err := json.Unmarshal(data, &msg)
-		return any(&msg).(M), err
+		if err := json.Unmarshal(data, &msg); err != nil {
+			var zero M
+			return zero, err
+		}
+		return NormalizeForSession(any(&msg).(M)), nil
 	}
 	var msg schema.Message
 	err := json.Unmarshal(data, &msg)
 	return any(&msg).(M), err
+}
+
+// NormalizeForSession returns a provider-safe message for chatwitheino's JSONL
+// session store. Agentic model implementations may attach transient Responses
+// API item IDs to content blocks; replaying those IDs after the provider-side
+// item expires can make a later turn fail with "item not found". The examples
+// store semantic history instead: user text, assistant text, function calls,
+// and function results.
+func NormalizeForSession[M adk.MessageType](msg M) M {
+	if KindOf[M]() != KindAgentic {
+		return msg
+	}
+	agenticMsg, ok := any(msg).(*schema.AgenticMessage)
+	if !ok || agenticMsg == nil {
+		return msg
+	}
+	return any(normalizeAgenticMessage(agenticMsg)).(M)
+}
+
+func normalizeAgenticMessage(msg *schema.AgenticMessage) *schema.AgenticMessage {
+	if msg == nil {
+		return nil
+	}
+
+	out := &schema.AgenticMessage{
+		Role:          msg.Role,
+		ContentBlocks: make([]*schema.ContentBlock, 0, len(msg.ContentBlocks)),
+		Extra:         cloneMap(msg.Extra),
+	}
+
+	for _, block := range msg.ContentBlocks {
+		normalized := normalizeAgenticContentBlock(block)
+		if normalized != nil {
+			out.ContentBlocks = append(out.ContentBlocks, normalized)
+		}
+	}
+
+	return out
+}
+
+func normalizeAgenticContentBlock(block *schema.ContentBlock) *schema.ContentBlock {
+	if block == nil {
+		return nil
+	}
+	if block.Type == schema.ContentBlockTypeReasoning {
+		return nil
+	}
+
+	out := *block
+	out.Extra = normalizeAgenticBlockExtra(block.Type, block.Extra)
+	out.StreamingMeta = nil
+	return &out
+}
+
+func normalizeAgenticBlockExtra(blockType schema.ContentBlockType, extra map[string]any) map[string]any {
+	out := make(map[string]any, len(extra)+2)
+	for k, v := range extra {
+		switch k {
+		case arkItemIDKey, openAIItemIDKey:
+			continue
+		default:
+			out[k] = v
+		}
+	}
+
+	if needsCompletedStatus(blockType) {
+		out[arkItemStatusKey] = itemStatusCompleted
+		out[openAIItemStatusKey] = itemStatusCompleted
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+func needsCompletedStatus(blockType schema.ContentBlockType) bool {
+	switch blockType {
+	case schema.ContentBlockTypeAssistantGenText,
+		schema.ContentBlockTypeFunctionToolCall:
+		return true
+	default:
+		return false
+	}
+}
+
+func cloneMap(in map[string]any) map[string]any {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]any, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }
 
 func messageText(msg *schema.Message) string {

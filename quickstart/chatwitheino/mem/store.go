@@ -83,6 +83,7 @@ func (s *Session[M]) Append(msg M) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	msg = msgops.NormalizeForSession(msg)
 	s.messages = append(s.messages, msg)
 
 	data, err := json.Marshal(msg)
@@ -292,7 +293,7 @@ func loadSession[M adk.MessageType](filePath string) (*Session[M], error) {
 		if err != nil {
 			continue // skip malformed lines
 		}
-		sess.messages = append(sess.messages, msg)
+		sess.messages = append(sess.messages, msgops.NormalizeForSession(msg))
 	}
 
 	return sess, scanner.Err()
