@@ -299,8 +299,6 @@ if err := session.Append(assistantMsg); err != nil {
 - 将消息列表规整为模型输入后，传递给框架层的 `runner.Run(ctx, messages)` 进行处理
 - 收集框架层返回的回复，再由业务层保存到存储中
 
-OpenAI AgenticModel 的 reasoning 回放依赖 Responses API 的 `reasoning.encrypted_content`。示例在创建 `agenticopenai.Config` 时开启了该 include，官方 `eino-ext` convertor 会把返回的 encrypted content 写入 `schema.Reasoning.Signature`，再次作为模型 input 时再映射回 OpenAI 的 `encrypted_content` 字段。
-
 > **💡 提示**：本章的实现只是众多存储方案中的一种简单示例。在实际项目中，你可以根据业务需求选择数据库、Redis、云存储等方案，甚至可以实现更复杂的功能如会话过期清理、搜索、分享等。
 
 ## 扩展思考：业务层存储方案的选择
