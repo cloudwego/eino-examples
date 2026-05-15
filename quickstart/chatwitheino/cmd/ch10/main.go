@@ -449,7 +449,7 @@ func (s *server[M]) buildRunMessages(sessionID string, history []M) []M {
 	ctx := strings.Join(lines, "\n")
 	runMessages := make([]M, 0, len(history)+1)
 	runMessages = append(runMessages, msgops.NewUser[M](ctx))
-	runMessages = append(runMessages, history...)
+	runMessages = append(runMessages, msgops.NormalizeMessagesForModelInput(history)...)
 	return runMessages
 }
 

@@ -28,8 +28,8 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 		ContentBlocks: []*schema.ContentBlock{
 			{
 				Type:          schema.ContentBlockTypeReasoning,
-				Reasoning:     &schema.Reasoning{Text: "thinking"},
-				Extra:         map[string]any{arkItemIDKey: "rs_123", arkItemStatusKey: "completed"},
+				Reasoning:     &schema.Reasoning{Text: "thinking", Signature: "encrypted"},
+				Extra:         map[string]any{arkItemIDKey: "rs_123"},
 				StreamingMeta: &schema.StreamingMeta{Index: 0},
 			},
 			{
@@ -64,11 +64,28 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 	if got.ResponseMeta != nil {
 		t.Fatalf("ResponseMeta should not be persisted, got %#v", got.ResponseMeta)
 	}
-	if len(got.ContentBlocks) != 2 {
-		t.Fatalf("reasoning block should be dropped, got %d blocks", len(got.ContentBlocks))
+	if len(got.ContentBlocks) != 3 {
+		t.Fatalf("got %d blocks, want 3", len(got.ContentBlocks))
 	}
 
-	textBlock := got.ContentBlocks[0]
+	reasoningBlock := got.ContentBlocks[0]
+	if reasoningBlock.StreamingMeta != nil {
+		t.Fatalf("reasoning streaming meta should be dropped, got %#v", reasoningBlock.StreamingMeta)
+	}
+	if reasoningBlock.Reasoning == nil || reasoningBlock.Reasoning.Signature != "encrypted" {
+		t.Fatalf("reasoning signature not preserved: %#v", reasoningBlock.Reasoning)
+	}
+	if _, ok := reasoningBlock.Extra[arkItemIDKey]; ok {
+		t.Fatalf("reasoning item id should be dropped: %#v", reasoningBlock.Extra)
+	}
+	if reasoningBlock.Extra[arkItemStatusKey] != itemStatusCompleted {
+		t.Fatalf("reasoning ark status = %v, want %q", reasoningBlock.Extra[arkItemStatusKey], itemStatusCompleted)
+	}
+	if reasoningBlock.Extra[openAIItemStatusKey] != itemStatusCompleted {
+		t.Fatalf("reasoning openai status = %v, want %q", reasoningBlock.Extra[openAIItemStatusKey], itemStatusCompleted)
+	}
+
+	textBlock := got.ContentBlocks[1]
 	if textBlock.StreamingMeta != nil {
 		t.Fatalf("streaming meta should be dropped, got %#v", textBlock.StreamingMeta)
 	}
@@ -85,7 +102,7 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 		t.Fatalf("openai status = %v, want %q", textBlock.Extra[openAIItemStatusKey], itemStatusCompleted)
 	}
 
-	callBlock := got.ContentBlocks[1]
+	callBlock := got.ContentBlocks[2]
 	if callBlock.FunctionToolCall.CallID != "call_123" {
 		t.Fatalf("tool call id = %q", callBlock.FunctionToolCall.CallID)
 	}
@@ -114,5 +131,44 @@ func TestNewAssistantAgenticSetsCompletedStatus(t *testing.T) {
 		if block.Extra[openAIItemStatusKey] != itemStatusCompleted {
 			t.Fatalf("openai status missing for %s: %#v", block.Type, block.Extra)
 		}
+	}
+}
+
+func TestConcatChunksAgenticPreservesReasoning(t *testing.T) {
+	chunks := []*schema.AgenticMessage{
+		{
+			Role: schema.AgenticRoleTypeAssistant,
+			ContentBlocks: []*schema.ContentBlock{
+				{
+					Type:          schema.ContentBlockTypeReasoning,
+					Reasoning:     &schema.Reasoning{Text: "think", Signature: "sig"},
+					StreamingMeta: &schema.StreamingMeta{Index: 0},
+				},
+			},
+		},
+		{
+			Role: schema.AgenticRoleTypeAssistant,
+			ContentBlocks: []*schema.ContentBlock{
+				{
+					Type:             schema.ContentBlockTypeAssistantGenText,
+					AssistantGenText: &schema.AssistantGenText{Text: "answer"},
+					StreamingMeta:    &schema.StreamingMeta{Index: 1},
+				},
+			},
+		},
+	}
+
+	got, err := ConcatChunks[*schema.AgenticMessage](chunks)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(got.ContentBlocks) != 2 {
+		t.Fatalf("got %d blocks, want 2", len(got.ContentBlocks))
+	}
+	if got.ContentBlocks[0].Reasoning == nil || got.ContentBlocks[0].Reasoning.Signature != "sig" {
+		t.Fatalf("reasoning not preserved: %#v", got.ContentBlocks[0])
+	}
+	if got.ContentBlocks[1].AssistantGenText == nil || got.ContentBlocks[1].AssistantGenText.Text != "answer" {
+		t.Fatalf("assistant text not preserved: %#v", got.ContentBlocks[1])
 	}
 }

@@ -212,7 +212,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		}
 
 		history := session.GetMessages()
-		events := runner.Run(ctx, history, adk.WithCheckPointID(checkPointID))
+		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history), adk.WithCheckPointID(checkPointID))
 		content, interruptInfo, err := printAndCollectAssistantFromEvents[M](events)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)

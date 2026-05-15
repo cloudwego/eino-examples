@@ -117,7 +117,7 @@ func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction str
 		}
 
 		history := session.GetMessages()
-		events := runner.Run(ctx, history)
+		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
 		content, err := printAndCollectAssistantFromEvents[M](events)
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)

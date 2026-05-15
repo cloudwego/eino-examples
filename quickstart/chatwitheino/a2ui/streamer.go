@@ -186,6 +186,7 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 
 			var shellEmitted bool
 			var accContent strings.Builder
+			var chunks []M
 
 			for {
 				chunk, recvErr := mo.MessageStream.Recv()
@@ -196,6 +197,7 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 					log.Printf("[a2ui] stream recv error: %v", recvErr)
 					break
 				}
+				chunks = append(chunks, chunk)
 
 				for _, tc := range msgops.ToolCalls(chunk) {
 					idx := tc.Index
@@ -272,8 +274,15 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 				lastContent.Reset()
 				lastContent.WriteString(accContent.String())
 			}
-			if shellEmitted || accContent.Len() > 0 || len(toolCalls) > 0 {
-				intermediates = append(intermediates, msgops.NewAssistant[M](accContent.String(), toolCalls))
+			if shellEmitted || accContent.Len() > 0 || len(toolCalls) > 0 || len(chunks) > 0 {
+				if merged, mergeErr := msgops.ConcatChunks(chunks); mergeErr == nil && msgops.HasContent(merged) {
+					intermediates = append(intermediates, merged)
+				} else if shellEmitted || accContent.Len() > 0 || len(toolCalls) > 0 {
+					if mergeErr != nil {
+						log.Printf("[a2ui] failed to concat stream chunks, falling back to assistant text: %v", mergeErr)
+					}
+					intermediates = append(intermediates, msgops.NewAssistant[M](accContent.String(), toolCalls))
+				}
 			}
 		} else if !msgops.IsNil(mo.Message) {
 			msg := mo.Message
@@ -297,7 +306,7 @@ func streamEvents[M adk.MessageType](w io.Writer, surfaceID string, rootChildren
 				lastContent.Reset()
 				lastContent.WriteString(content)
 			}
-			if content != "" || len(toolCalls) > 0 {
+			if content != "" || len(toolCalls) > 0 || msgops.HasContent(msg) {
 				intermediates = append(intermediates, msg)
 			}
 		} else {

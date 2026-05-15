@@ -213,6 +213,25 @@ func AssistantDeltaText[M adk.MessageType](msg M) string {
 	return AssistantText(msg)
 }
 
+// HasContent reports whether a message carries any content worth persisting.
+func HasContent[M adk.MessageType](msg M) bool {
+	switch m := any(msg).(type) {
+	case *schema.Message:
+		if m == nil {
+			return false
+		}
+		return m.Content != "" ||
+			m.ReasoningContent != "" ||
+			len(m.ToolCalls) > 0 ||
+			len(m.MultiContent) > 0 ||
+			len(m.AssistantGenMultiContent) > 0
+	case *schema.AgenticMessage:
+		return m != nil && len(m.ContentBlocks) > 0
+	default:
+		return false
+	}
+}
+
 // UserText returns text only for user-role messages.
 func UserText[M adk.MessageType](msg M) string {
 	switch m := any(msg).(type) {
@@ -464,6 +483,49 @@ func DrainToolResult[M adk.MessageType](mv *adk.TypedMessageVariant[M]) (content
 	return content, id, name
 }
 
+// ConcatChunks merges streaming message chunks using the official Eino schema
+// helpers. For AgenticMessage this preserves reasoning blocks and reasoning
+// signatures emitted by the model convertors.
+func ConcatChunks[M adk.MessageType](chunks []M) (M, error) {
+	var zero M
+	if len(chunks) == 0 {
+		return zero, fmt.Errorf("no chunks to concat")
+	}
+	if len(chunks) == 1 {
+		return chunks[0], nil
+	}
+
+	if KindOf[M]() == KindAgentic {
+		msgs := make([]*schema.AgenticMessage, 0, len(chunks))
+		for _, chunk := range chunks {
+			msg, ok := any(chunk).(*schema.AgenticMessage)
+			if !ok || msg == nil {
+				return zero, fmt.Errorf("unexpected agentic chunk type %T", chunk)
+			}
+			msgs = append(msgs, msg)
+		}
+		merged, err := schema.ConcatAgenticMessages(msgs)
+		if err != nil {
+			return zero, err
+		}
+		return any(merged).(M), nil
+	}
+
+	msgs := make([]*schema.Message, 0, len(chunks))
+	for _, chunk := range chunks {
+		msg, ok := any(chunk).(*schema.Message)
+		if !ok || msg == nil {
+			return zero, fmt.Errorf("unexpected message chunk type %T", chunk)
+		}
+		msgs = append(msgs, msg)
+	}
+	merged, err := schema.ConcatMessages(msgs)
+	if err != nil {
+		return zero, err
+	}
+	return any(merged).(M), nil
+}
+
 // UnmarshalMessage unmarshals one JSONL message line into M.
 func UnmarshalMessage[M adk.MessageType](data []byte) (M, error) {
 	if KindOf[M]() == KindAgentic {
@@ -483,8 +545,8 @@ func UnmarshalMessage[M adk.MessageType](data []byte) (M, error) {
 // session store. Agentic model implementations may attach transient Responses
 // API item IDs to content blocks; replaying those IDs after the provider-side
 // item expires can make a later turn fail with "item not found". The examples
-// store semantic history instead: user text, assistant text, function calls,
-// and function results.
+// store semantic history instead, while preserving replayable reasoning blocks
+// and signatures supplied by the official model convertors.
 func NormalizeForSession[M adk.MessageType](msg M) M {
 	if KindOf[M]() != KindAgentic {
 		return msg
@@ -494,6 +556,18 @@ func NormalizeForSession[M adk.MessageType](msg M) M {
 		return msg
 	}
 	return any(normalizeAgenticMessage(agenticMsg)).(M)
+}
+
+// NormalizeMessagesForModelInput prepares stored messages before passing them
+// back to Runner/ChatModel. Today this matches NormalizeForSession; keeping the
+// boundary explicit makes provider-specific input rules easy to evolve without
+// changing the session file format.
+func NormalizeMessagesForModelInput[M adk.MessageType](messages []M) []M {
+	out := make([]M, 0, len(messages))
+	for _, msg := range messages {
+		out = append(out, NormalizeForSession(msg))
+	}
+	return out
 }
 
 func normalizeAgenticMessage(msg *schema.AgenticMessage) *schema.AgenticMessage {
@@ -519,9 +593,6 @@ func normalizeAgenticMessage(msg *schema.AgenticMessage) *schema.AgenticMessage 
 
 func normalizeAgenticContentBlock(block *schema.ContentBlock) *schema.ContentBlock {
 	if block == nil {
-		return nil
-	}
-	if block.Type == schema.ContentBlockTypeReasoning {
 		return nil
 	}
 
@@ -554,7 +625,8 @@ func normalizeAgenticBlockExtra(blockType schema.ContentBlockType, extra map[str
 
 func needsCompletedStatus(blockType schema.ContentBlockType) bool {
 	switch blockType {
-	case schema.ContentBlockTypeAssistantGenText,
+	case schema.ContentBlockTypeReasoning,
+		schema.ContentBlockTypeAssistantGenText,
 		schema.ContentBlockTypeFunctionToolCall:
 		return true
 	default:

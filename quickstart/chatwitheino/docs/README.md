@@ -85,6 +85,8 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 
 两种消息类型分开存储，不做自动转换。
 
+`agentic` 会话会持久化 `schema.AgenticMessage` 的 reasoning block。示例会去掉 provider 临时 item id，保留可回放的 reasoning signature，并在传给模型前做一次输入规整；OpenAI agentic 路径会请求 `reasoning.encrypted_content`，以便官方 `eino-ext` convertor 在多轮对话中回传 reasoning。
+
 ## 学习路线（章节导航）
 
 | 章节 | 主题 | 入口 |

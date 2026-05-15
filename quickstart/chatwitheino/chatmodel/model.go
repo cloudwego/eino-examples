@@ -29,6 +29,7 @@ import (
 	"github.com/cloudwego/eino/adk"
 	einomodel "github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/schema"
+	openairesponses "github.com/openai/openai-go/v3/responses"
 	arkModel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 )
 
@@ -92,6 +93,9 @@ func newAgenticModel(ctx context.Context) (einomodel.AgenticModel, error) {
 		BaseURL: os.Getenv("OPENAI_BASE_URL"),
 		ByAzure: os.Getenv("OPENAI_BY_AZURE") == "true",
 		Timeout: &timeout,
+		Include: []openairesponses.ResponseIncludable{
+			openairesponses.ResponseIncludableReasoningEncryptedContent,
+		},
 	})
 }
 

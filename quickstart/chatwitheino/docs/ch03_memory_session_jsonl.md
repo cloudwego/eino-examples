@@ -94,6 +94,8 @@ type Session struct {
 - `GetMessages()`：获取所有消息
 - `Title()`：从第一条用户消息生成会话标题
 
+当 `MESSAGE_KIND=agentic` 时，`Append(msg)` 会先对 `schema.AgenticMessage` 做一次适合 JSONL 会话存储的规整：保留用户输入、助手输出、工具调用、工具结果以及 reasoning block；去掉 provider 返回的临时 item id；为可回放的 assistant/reasoning/tool-call block 补上 `completed` 状态。这样既能把 reasoning 持久化下来，也避免下一轮请求把过期的 Responses API item id 原样传回服务端。
+
 ### Store（业务层概念）
 
 `Store` 管理多个 Session 的持久化存储：
@@ -222,7 +224,7 @@ if err := session.Append(assistantMsg); err != nil {
 **关键理解：**
 - **Session 是业务层概念**：由业务代码实现和管理，负责存储和加载对话历史
 - **Agent（Runner）是框架层概念**：由 Eino 框架提供，负责处理消息并生成回复
-- **两者的交互点**：业务层通过 `session.GetMessages()` 获取消息列表，传递给 `runner.Run(ctx, history)` 进行处理
+- **两者的交互点**：业务层通过 `session.GetMessages()` 获取消息列表，再通过 `msgops.NormalizeMessagesForModelInput(history)` 生成模型输入，最后传递给 `runner.Run(ctx, messages)` 进行处理
 
 **架构分层：**
 
@@ -296,8 +298,10 @@ if err := session.Append(assistantMsg); err != nil {
 
 **业务层与框架层的交互：**
 - 业务层负责存储消息，通过 `session.GetMessages()` 获取消息列表
-- 将消息列表传递给框架层的 `runner.Run(ctx, history)` 进行处理
+- 将消息列表规整为模型输入后，传递给框架层的 `runner.Run(ctx, messages)` 进行处理
 - 收集框架层返回的回复，再由业务层保存到存储中
+
+OpenAI AgenticModel 的 reasoning 回放依赖 Responses API 的 `reasoning.encrypted_content`。示例在创建 `agenticopenai.Config` 时开启了该 include，官方 `eino-ext` convertor 会把返回的 encrypted content 写入 `schema.Reasoning.Signature`，再次作为模型 input 时再映射回 OpenAI 的 `encrypted_content` 字段。
 
 > **💡 提示**：本章的实现只是众多存储方案中的一种简单示例。在实际项目中，你可以根据业务需求选择数据库、Redis、云存储等方案，甚至可以实现更复杂的功能如会话过期清理、搜索、分享等。
 
