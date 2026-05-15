@@ -75,8 +75,8 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 	if reasoningBlock.Reasoning == nil || reasoningBlock.Reasoning.Signature != "encrypted" {
 		t.Fatalf("reasoning signature not preserved: %#v", reasoningBlock.Reasoning)
 	}
-	if _, ok := reasoningBlock.Extra[arkItemIDKey]; ok {
-		t.Fatalf("reasoning item id should be dropped: %#v", reasoningBlock.Extra)
+	if reasoningBlock.Extra[arkItemIDKey] != "rs_123" {
+		t.Fatalf("reasoning item id should be preserved: %#v", reasoningBlock.Extra)
 	}
 	if reasoningBlock.Extra[arkItemStatusKey] != itemStatusCompleted {
 		t.Fatalf("reasoning ark status = %v, want %q", reasoningBlock.Extra[arkItemStatusKey], itemStatusCompleted)
@@ -89,11 +89,11 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 	if textBlock.StreamingMeta != nil {
 		t.Fatalf("streaming meta should be dropped, got %#v", textBlock.StreamingMeta)
 	}
-	if _, ok := textBlock.Extra[arkItemIDKey]; ok {
-		t.Fatalf("ark item id should be dropped: %#v", textBlock.Extra)
+	if textBlock.Extra[arkItemIDKey] != "msg_123" {
+		t.Fatalf("ark item id should be preserved: %#v", textBlock.Extra)
 	}
-	if _, ok := textBlock.Extra[openAIItemIDKey]; ok {
-		t.Fatalf("openai item id should be dropped: %#v", textBlock.Extra)
+	if textBlock.Extra[openAIItemIDKey] != "item_123" {
+		t.Fatalf("openai item id should be preserved: %#v", textBlock.Extra)
 	}
 	if textBlock.Extra[arkItemStatusKey] != itemStatusCompleted {
 		t.Fatalf("ark status = %v, want %q", textBlock.Extra[arkItemStatusKey], itemStatusCompleted)
@@ -106,8 +106,8 @@ func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 	if callBlock.FunctionToolCall.CallID != "call_123" {
 		t.Fatalf("tool call id = %q", callBlock.FunctionToolCall.CallID)
 	}
-	if _, ok := callBlock.Extra[openAIItemIDKey]; ok {
-		t.Fatalf("function tool call item id should be dropped: %#v", callBlock.Extra)
+	if callBlock.Extra[openAIItemIDKey] != "fc_123" {
+		t.Fatalf("function tool call item id should be preserved: %#v", callBlock.Extra)
 	}
 	if callBlock.Extra[arkItemStatusKey] != itemStatusCompleted {
 		t.Fatalf("function tool call status = %v", callBlock.Extra[arkItemStatusKey])

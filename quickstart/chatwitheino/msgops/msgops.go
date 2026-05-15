@@ -546,11 +546,10 @@ func UnmarshalMessage[M adk.MessageType](data []byte) (M, error) {
 }
 
 // NormalizeForSession returns a provider-safe message for chatwitheino's JSONL
-// session store. Agentic model implementations may attach transient Responses
-// API item IDs to content blocks; replaying those IDs after the provider-side
-// item expires can make a later turn fail with "item not found". The examples
-// store semantic history instead, while preserving replayable reasoning blocks
-// and signatures supplied by the official model convertors.
+// session store. Agentic model implementations attach Responses API item IDs to
+// content blocks, and those IDs are required when replaying provider-native
+// output items such as assistant messages, reasoning blocks, and tool calls.
+// The examples persist those IDs while dropping streaming-only metadata.
 func NormalizeForSession[M adk.MessageType](msg M) M {
 	if KindOf[M]() != KindAgentic {
 		return msg
@@ -609,12 +608,7 @@ func normalizeAgenticContentBlock(block *schema.ContentBlock) *schema.ContentBlo
 func normalizeAgenticBlockExtra(blockType schema.ContentBlockType, extra map[string]any) map[string]any {
 	out := make(map[string]any, len(extra)+2)
 	for k, v := range extra {
-		switch k {
-		case arkItemIDKey, openAIItemIDKey:
-			continue
-		default:
-			out[k] = v
-		}
+		out[k] = v
 	}
 
 	if needsCompletedStatus(blockType) {
