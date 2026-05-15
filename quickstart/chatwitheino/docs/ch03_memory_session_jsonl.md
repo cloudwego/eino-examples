@@ -94,8 +94,6 @@ type Session struct {
 - `GetMessages()`：获取所有消息
 - `Title()`：从第一条用户消息生成会话标题
 
-当 `MESSAGE_KIND=agentic` 时，`Append(msg)` 会先对 `schema.AgenticMessage` 做一次适合 JSONL 会话存储的规整：保留用户输入、助手输出、工具调用、工具结果以及 reasoning block；去掉 provider 返回的临时 item id；为可回放的 assistant/reasoning/tool-call block 补上 `completed` 状态。这样既能把 reasoning 持久化下来，也避免下一轮请求把过期的 Responses API item id 原样传回服务端。
-
 ### Store（业务层概念）
 
 `Store` 管理多个 Session 的持久化存储：
