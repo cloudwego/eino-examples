@@ -68,7 +68,8 @@ go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/e
 ### 2) 启动 Chapter 9
 
 ```bash
-EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext go run ./cmd/ch09
+export EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext
+go run ./cmd/ch09
 ```
 
 输出示例（节选）：
@@ -84,7 +85,7 @@ Enter your message (empty line to exit):
 
 1. 用本地 filesystem backend（本章用 `eino-ext/adk/backend/local`）提供文件读取/Glob 能力
 2. 用 `skill.NewBackendFromFilesystem` 把 `EINO_EXT_SKILLS_DIR` 变成一个 Skill Backend
-3. 用 `skill.NewMiddleware` 生成中间件，并把它塞进 DeepAgent 的 `Handlers`
+3. 用 `skill.NewTyped[M]` 生成泛型中间件，并把它塞进 DeepAgent 的 `Handlers`
 
 **关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch09/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)）：**
 
@@ -95,15 +96,15 @@ skillBackend, _ := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesys
     Backend: backend,
     BaseDir: skillsDir, // = $EINO_EXT_SKILLS_DIR
 })
-skillMiddleware, _ := skill.NewMiddleware(ctx, &skill.Config{
+skillMiddleware, _ := skill.NewTyped[M](ctx, &skill.TypedConfig[M]{
     Backend: skillBackend,
 })
 
-agent, _ := deep.New(ctx, &deep.Config{
+agent, _ := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
     ChatModel: cm,
     Backend: backend,
     StreamingShell: backend,
-    Handlers: []adk.ChatModelAgentMiddleware{
+    Handlers: []adk.TypedChatModelAgentMiddleware[M]{
         skillMiddleware,
         // ... 其他中间件，比如 approval/safeTool/retry 等
     },
@@ -133,5 +134,5 @@ Use the skill tool with skill="eino-guide" and tell me what the entry point is f
 - 当模型调用 skill 工具时，控制台会打印：
   - `[tool call] ...`
   - `[tool result] ...`（对结果做了截断展示）
-- 会话保存在 `SESSION_DIR`（默认 `./data/sessions`），支持恢复：
+- 会话默认保存在 `./data/sessions_agentic`，支持恢复：
   - `go run ./cmd/ch09 --session <id>`

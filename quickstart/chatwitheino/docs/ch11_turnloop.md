@@ -106,7 +106,7 @@ loop.Push(&ChatItem{Query: "explain Eino's architecture"})
 当用户在 Agent 回答过程中发送新消息时，业务层只需一行代码触发抢占：
 
 ```go
-loop.Push(item, adk.WithPreempt[*ChatItem, *schema.Message](adk.AfterToolCalls))
+loop.Push(item, adk.WithPreempt[*ChatItem, M](adk.AfterToolCalls))
 ```
 
 TurnLoop 收到这个指令后：
@@ -147,22 +147,22 @@ loop.Wait()                     // 等待完全退出
 创建 TurnLoop 时，通过 `TurnLoopConfig` 指定回调和选项：
 
 ```go
-cfg := adk.TurnLoopConfig[*ChatItem, *schema.Message]{
+cfg := adk.TurnLoopConfig[*ChatItem, M]{
     // GenInput：每轮开始时调用，决定"这一轮 Agent 看到什么"
     // 从队列中选择 items 构建 Agent 输入，返回 Consumed（本轮处理）和 Remaining（留到后续轮次）
-    GenInput: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], items []*ChatItem) (*adk.GenInputResult[*ChatItem, *schema.Message], error) {
+    GenInput: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], items []*ChatItem) (*adk.GenInputResult[*ChatItem, M], error) {
         // ...构建 AgentInput，持久化用户消息...
     },
 
     // PrepareAgent：每轮调用一次，返回本轮使用的 Agent
     // 本示例直接返回同一个 Agent，但你可以根据 items 动态选择不同 Agent
-    PrepareAgent: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message], consumed []*ChatItem) (adk.Agent, error) {
+    PrepareAgent: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M], consumed []*ChatItem) (adk.TypedAgent[M], error) {
         return agent, nil
     },
 
     // OnAgentEvents：接收 Agent 的事件流，负责渲染输出和持久化中间消息
     // 本示例通过 channel 把事件流转交给 HTTP handler 做 SSE 输出
-    OnAgentEvents: func(ctx context.Context, tc *adk.TurnContext[*ChatItem, *schema.Message], events *adk.AsyncIterator[*adk.AgentEvent]) error {
+    OnAgentEvents: func(ctx context.Context, tc *adk.TurnContext[*ChatItem, M], events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) error {
         // ...把 events 交给 HTTP handler，等待消费完成...
     },
 
@@ -197,12 +197,12 @@ loop := adk.NewTurnLoop(cfg)
 `GenResume` 的职责就是从新 Push 进来的 items 中提取审批结果，构建 `ResumeParams`：
 
 ```go
-GenResume: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Message],
+GenResume: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, M],
     canceledItems, unhandledItems, newItems []*ChatItem,
-) (*adk.GenResumeResult[*ChatItem, *schema.Message], error) {
+) (*adk.GenResumeResult[*ChatItem, M], error) {
     // newItems 包含审批恢复时 Push 的 item
     item := newItems[0]
-    return &adk.GenResumeResult[*ChatItem, *schema.Message]{
+    return &adk.GenResumeResult[*ChatItem, M]{
         ResumeParams: &adk.ResumeParams{
             InterruptID: item.InterruptID,
             ApprovalResult: item.ApprovalResult,
