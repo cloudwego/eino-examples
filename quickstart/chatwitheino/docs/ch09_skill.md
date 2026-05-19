@@ -14,7 +14,7 @@ title: "第九章：Skill Middleware"
 - 与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）
 - 准备好 `eino-ext` PR 提供的 skills文档（`eino-guide` / `eino-component` / `eino-compose` / `eino-agent`）
 
-为什么是这四个？
+`skill middleware` 支持各种skills的接入，包括自定义skills。本章以eino相关的四个skills作为示例，演示如何使用`skill middleware`接入skills。为什么是这四个？
 
 ChatWithEino 的定位是“帮用户学习 Eino 框架、并尝试用 AI 辅助写 Eino 代码”。这四个 skills 文档正好覆盖了这个目标所需的关键知识面。
 
