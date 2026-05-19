@@ -163,14 +163,17 @@ if err := session.Append(userMsg); err != nil {
 
 ```go
 history := session.GetMessages()
-events := runner.Run(ctx, history)
-content := printAndCollectAssistantFromEvents(events)
+events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
+result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{})
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ### 5. 追加助手消息
 
 ```go
-assistantMsg := msgops.NewAssistant[M](content, nil)
+assistantMsg := msgops.NewAssistant[M](result.AssistantText, nil)
 if err := session.Append(assistantMsg); err != nil {
     log.Fatal(err)
 }
@@ -198,11 +201,14 @@ if err := session.Append(userMsg); err != nil {
 
 // 调用 Agent
 history := session.GetMessages()
-events := runner.Run(ctx, history)
-content := printAndCollectAssistantFromEvents(events)
+events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
+result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{})
+if err != nil {
+    log.Fatal(err)
+}
 
 // 保存助手回复
-assistantMsg := msgops.NewAssistant[M](content, nil)
+assistantMsg := msgops.NewAssistant[M](result.AssistantText, nil)
 if err := session.Append(assistantMsg); err != nil {
     log.Fatal(err)
 }

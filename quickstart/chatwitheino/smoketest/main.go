@@ -22,9 +22,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
@@ -34,6 +32,7 @@ import (
 
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
@@ -145,7 +144,7 @@ func (p *jsonlPrinter) printLine(line []byte) {
 		for _, c := range msg.SurfaceUpdate.Components {
 			switch {
 			case c.Component.Text != nil && c.Component.Text.Value != "":
-				fmt.Printf("[surfaceUpdate] %s: Text=%q\n", c.ID, truncate(c.Component.Text.Value, 60))
+				fmt.Printf("[surfaceUpdate] %s: Text=%q\n", c.ID, helpers.Truncate(c.Component.Text.Value, 60))
 			case c.Component.Column != nil:
 				fmt.Printf("[surfaceUpdate] %s: Column children=%v\n", c.ID, c.Component.Column.Children)
 			case c.Component.Card != nil:
@@ -154,18 +153,7 @@ func (p *jsonlPrinter) printLine(line []byte) {
 		}
 	case msg.DataModelUpdate != nil:
 		for _, dc := range msg.DataModelUpdate.Contents {
-			fmt.Printf("[dataModelUpdate] %s = %q\n", dc.Key, truncate(dc.ValueString, 80))
+			fmt.Printf("[dataModelUpdate] %s = %q\n", dc.Key, helpers.Truncate(dc.ValueString, 80))
 		}
 	}
 }
-
-func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "…"
-}
-
-// Ensure io.EOF is imported (used by a2ui internally).
-var _ = errors.Is(io.EOF, io.EOF)

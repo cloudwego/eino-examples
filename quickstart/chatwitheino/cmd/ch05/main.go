@@ -18,13 +18,9 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -166,13 +162,16 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
-		content, err := printAndCollectAssistantFromEvents[M](events)
+		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+			ShowToolCalls:   true,
+			ShowToolResults: true,
+		})
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		assistantMsg := msgops.NewAssistant[M](content, nil)
+		assistantMsg := msgops.NewAssistant[M](result.AssistantText, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -186,97 +185,4 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 	fmt.Printf("\nSession saved: %s\n", sessionID)
 	fmt.Printf("Resume with: go run ./cmd/ch05 --session %s\n", sessionID)
-}
-
-func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, error) {
-	var sb strings.Builder
-
-	for {
-		event, ok := events.Next()
-		if !ok {
-			break
-		}
-		if event.Err != nil {
-			if helpers.LogModelRetry(os.Stderr, event.Err) {
-				continue
-			}
-			return "", event.Err
-		}
-
-		if event.Output != nil && event.Output.MessageOutput != nil {
-			mv := event.Output.MessageOutput
-			if msgops.VariantIsToolResult(mv) {
-				content, _, _ := msgops.DrainToolResult(mv)
-				fmt.Printf("[tool result] %s\n", truncate(content, 200))
-				continue
-			}
-
-			if mv.IsStreaming {
-				mv.MessageStream.SetAutomaticClose()
-				var accumulatedToolCalls []msgops.ToolCall
-				streamPrefix := sb.String()
-				streamWillRetry := false
-				for {
-					frame, err := mv.MessageStream.Recv()
-					if errors.Is(err, io.EOF) {
-						break
-					}
-					if err != nil {
-						if helpers.LogModelRetry(os.Stderr, err) {
-							sb.Reset()
-							sb.WriteString(streamPrefix)
-							accumulatedToolCalls = nil
-							streamWillRetry = true
-							break
-						}
-						return "", err
-					}
-					if !msgops.IsNil(frame) {
-						if text := msgops.AssistantDeltaText(frame); text != "" {
-							sb.WriteString(text)
-							_, _ = fmt.Fprint(os.Stdout, text)
-						}
-						if calls := msgops.ToolCalls(frame); len(calls) > 0 {
-							accumulatedToolCalls = append(accumulatedToolCalls, calls...)
-						}
-					}
-				}
-				if streamWillRetry {
-					continue
-				}
-				for _, tc := range accumulatedToolCalls {
-					if tc.Name != "" && tc.Args != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Name, tc.Args)
-					}
-				}
-				_, _ = fmt.Fprintln(os.Stdout)
-				continue
-			}
-
-			if !msgops.IsNil(mv.Message) {
-				content := msgops.AssistantText(mv.Message)
-				sb.WriteString(content)
-				_, _ = fmt.Fprintln(os.Stdout, content)
-				for _, tc := range msgops.ToolCalls(mv.Message) {
-					fmt.Printf("[tool call] %s(%s)\n", tc.Name, tc.Args)
-				}
-			}
-		}
-	}
-
-	return sb.String(), nil
-}
-
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	var result bytes.Buffer
-	if err := json.Compact(&result, []byte(s)); err == nil {
-		s = result.String()
-	}
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
 }

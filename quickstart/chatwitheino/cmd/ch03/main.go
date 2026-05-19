@@ -19,10 +19,8 @@ package main
 import (
 	"bufio"
 	"context"
-	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -119,13 +117,13 @@ func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction str
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
-		content, err := printAndCollectAssistantFromEvents[M](events)
+		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{})
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		assistantMsg := msgops.NewAssistant[M](content, nil)
+		assistantMsg := msgops.NewAssistant[M](result.AssistantText, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -139,73 +137,4 @@ func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction str
 
 	fmt.Printf("\nSession saved: %s\n", sessionID)
 	fmt.Printf("Resume with: go run ./cmd/ch03 --session %s\n", sessionID)
-}
-
-func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, error) {
-	var sb strings.Builder
-
-	for {
-		event, ok := events.Next()
-		if !ok {
-			break
-		}
-		if event.Err != nil {
-			if helpers.LogModelRetry(os.Stderr, event.Err) {
-				continue
-			}
-			return "", event.Err
-		}
-		if event.Output == nil || event.Output.MessageOutput == nil {
-			continue
-		}
-
-		mv := event.Output.MessageOutput
-		if msgops.VariantIsToolResult(mv) {
-			msgops.DrainToolResult(mv)
-			continue
-		}
-
-		if mv.IsStreaming {
-			mv.MessageStream.SetAutomaticClose()
-			streamPrefix := sb.String()
-			streamWillRetry := false
-			for {
-				frame, err := mv.MessageStream.Recv()
-				if errors.Is(err, io.EOF) {
-					break
-				}
-				if err != nil {
-					if helpers.LogModelRetry(os.Stderr, err) {
-						sb.Reset()
-						sb.WriteString(streamPrefix)
-						streamWillRetry = true
-						break
-					}
-					return "", err
-				}
-				if !msgops.IsNil(frame) {
-					text := msgops.AssistantDeltaText(frame)
-					if text != "" {
-						sb.WriteString(text)
-						_, _ = fmt.Fprint(os.Stdout, text)
-					}
-				}
-			}
-			if streamWillRetry {
-				continue
-			}
-			_, _ = fmt.Fprintln(os.Stdout)
-			continue
-		}
-
-		if !msgops.IsNil(mv.Message) {
-			content := msgops.AssistantText(mv.Message)
-			sb.WriteString(content)
-			_, _ = fmt.Fprintln(os.Stdout, content)
-		} else {
-			_, _ = fmt.Fprintln(os.Stdout)
-		}
-	}
-
-	return sb.String(), nil
 }

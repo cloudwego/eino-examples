@@ -18,9 +18,7 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -204,21 +202,26 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history), adk.WithCheckPointID(checkPointID))
-		content, interruptInfo, err := printAndCollectAssistantFromEvents[M](events)
+		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+			ShowToolCalls:    true,
+			ShowToolResults:  true,
+			CaptureInterrupt: true,
+		})
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		if interruptInfo != nil {
-			content, err = handleInterrupt[M](ctx, runner, checkPointID, interruptInfo, reader)
+		assistantText := result.AssistantText
+		if result.InterruptInfo != nil {
+			assistantText, err = handleInterrupt[M](ctx, runner, checkPointID, result.InterruptInfo, reader)
 			if err != nil {
 				_, _ = fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 		}
 
-		assistantMsg := msgops.NewAssistant[M](content, nil)
+		assistantMsg := msgops.NewAssistant[M](assistantText, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -319,105 +322,6 @@ func (m *approvalMiddleware[M]) WrapStreamableToolCall(
 	}, nil
 }
 
-func printAndCollectAssistantFromEvents[M adk.MessageType](events *adk.AsyncIterator[*adk.TypedAgentEvent[M]]) (string, *adk.InterruptInfo, error) {
-	var sb strings.Builder
-	var interruptInfo *adk.InterruptInfo
-
-	for {
-		event, ok := events.Next()
-		if !ok {
-			break
-		}
-		if event.Err != nil {
-			if helpers.LogModelRetry(os.Stderr, event.Err) {
-				continue
-			}
-			return "", nil, event.Err
-		}
-
-		if event.Action != nil && event.Action.Interrupted != nil {
-			interruptInfo = event.Action.Interrupted
-			continue
-		}
-
-		if event.Output != nil && event.Output.MessageOutput != nil {
-			mv := event.Output.MessageOutput
-			if msgops.VariantIsToolResult(mv) {
-				content, _, _ := msgops.DrainToolResult(mv)
-				fmt.Printf("[tool result] %s\n", truncate(content, 200))
-				continue
-			}
-
-			if mv.IsStreaming {
-				mv.MessageStream.SetAutomaticClose()
-				var accumulatedToolCalls []msgops.ToolCall
-				streamPrefix := sb.String()
-				streamWillRetry := false
-				for {
-					frame, err := mv.MessageStream.Recv()
-					if errors.Is(err, io.EOF) {
-						break
-					}
-					if err != nil {
-						if helpers.LogModelRetry(os.Stderr, err) {
-							sb.Reset()
-							sb.WriteString(streamPrefix)
-							accumulatedToolCalls = nil
-							streamWillRetry = true
-							break
-						}
-						return "", nil, err
-					}
-					if !msgops.IsNil(frame) {
-						if text := msgops.AssistantDeltaText(frame); text != "" {
-							sb.WriteString(text)
-							_, _ = fmt.Fprint(os.Stdout, text)
-						}
-						if calls := msgops.ToolCalls(frame); len(calls) > 0 {
-							accumulatedToolCalls = append(accumulatedToolCalls, calls...)
-						}
-					}
-				}
-				if streamWillRetry {
-					continue
-				}
-				for _, tc := range accumulatedToolCalls {
-					if tc.Name != "" && tc.Args != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Name, tc.Args)
-					}
-				}
-				_, _ = fmt.Fprintln(os.Stdout)
-				continue
-			}
-
-			if !msgops.IsNil(mv.Message) {
-				content := msgops.AssistantText(mv.Message)
-				sb.WriteString(content)
-				_, _ = fmt.Fprintln(os.Stdout, content)
-				for _, tc := range msgops.ToolCalls(mv.Message) {
-					fmt.Printf("[tool call] %s(%s)\n", tc.Name, tc.Args)
-				}
-			}
-		}
-	}
-
-	return sb.String(), interruptInfo, nil
-}
-
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	var result bytes.Buffer
-	if err := json.Compact(&result, []byte(s)); err == nil {
-		s = result.String()
-	}
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
-}
-
 func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRunner[M], checkPointID string, interruptInfo *adk.InterruptInfo, reader *bufio.Reader) (string, error) {
 	for _, ic := range interruptInfo.InterruptContexts {
 		if !ic.IsRootCause {
@@ -458,16 +362,20 @@ func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRu
 			return "", fmt.Errorf("failed to resume: %w", err)
 		}
 
-		content, newInterruptInfo, err := printAndCollectAssistantFromEvents[M](events)
+		resumeResult, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+			ShowToolCalls:    true,
+			ShowToolResults:  true,
+			CaptureInterrupt: true,
+		})
 		if err != nil {
 			return "", err
 		}
 
-		if newInterruptInfo != nil {
-			return handleInterrupt[M](ctx, runner, checkPointID, newInterruptInfo, reader)
+		if resumeResult.InterruptInfo != nil {
+			return handleInterrupt[M](ctx, runner, checkPointID, resumeResult.InterruptInfo, reader)
 		}
 
-		return content, nil
+		return resumeResult.AssistantText, nil
 	}
 
 	return "", fmt.Errorf("no root cause interrupt context found")

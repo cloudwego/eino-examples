@@ -267,22 +267,27 @@ agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
 ```go
 checkPointID := sessionID
 
-events := runner.Run(ctx, history, adk.WithCheckPointID(checkPointID))
-content, interruptInfo, err := printAndCollectAssistantFromEvents(events)
+events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history), adk.WithCheckPointID(checkPointID))
+result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+    ShowToolCalls:    true,
+    ShowToolResults:  true,
+    CaptureInterrupt: true,
+})
 if err != nil {
     return err
 }
 
-if interruptInfo != nil {
+assistantText := result.AssistantText
+if result.InterruptInfo != nil {
     // 注意：建议使用同一个 stdin reader 同时读取「用户输入」与「审批 y/n」
     // 避免审批输入被当成下一轮 you> 的消息
-    content, err = handleInterrupt(ctx, runner, checkPointID, interruptInfo, reader)
+    assistantText, err = handleInterrupt[M](ctx, runner, checkPointID, result.InterruptInfo, reader)
     if err != nil {
         return err
     }
 }
 
-_ = session.Append(msgops.NewAssistant[M](content, nil))
+_ = session.Append(msgops.NewAssistant[M](assistantText, nil))
 ```
 
 ## Interrupt/Resume 执行流程

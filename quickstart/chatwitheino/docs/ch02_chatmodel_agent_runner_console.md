@@ -228,7 +228,7 @@ for {
 
 1. 用 `history []M` 保存累计对话，本示例默认 `M` 为 `*schema.AgenticMessage`
 2. 每次用户输入：通过 `msgops.NewUser[M]` 追加到 history
-3. 调用 `runner.Run(ctx, history)` 得到事件流，消费得到 assistant 文本
+3. 调用 `runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))` 得到事件流，消费得到 assistant 文本
 4. 通过 `msgops.NewAssistant[M]` 把本轮 assistant 文本追加回 history，进入下一轮
 
 **关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch02/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch02/main.go)）：
@@ -258,9 +258,12 @@ func runTyped[M adk.MessageType](ctx context.Context, instruction string) {
         }
 
         history = append(history, msgops.NewUser[M](line))
-        events := runner.Run(ctx, history)
-        content := printAndCollectAssistantFromEvents[M](events)
-        history = append(history, msgops.NewAssistant[M](content, nil))
+        events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
+        result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{})
+        if err != nil {
+            log.Fatal(err)
+        }
+        history = append(history, msgops.NewAssistant[M](result.AssistantText, nil))
     }
 }
 ```
