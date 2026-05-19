@@ -101,7 +101,7 @@ type AgenticModel = BaseModel[*schema.AgenticMessage]
 
 `AgenticMessage` 是本 Quickstart 使用的对话数据结构：
 
-相比只用一段字符串表示模型输出，`AgenticMessage` 更适合表达 Agent 场景里的结构化过程。在一次模型调用中，模型可能会返回多个有序事件，例如先输出 `reasoning`，再调用 server tool，随后继续 `reasoning`，接着调用 function tool，最后生成文本回复。`AgenticMessage` 会用 `ContentBlock` 按顺序保存这些结构化事件，让后续的工具调用、流式输出、历史持久化和恢复都能保留原始语义。
+在一次模型调用中，模型可能会返回多个有序事件，例如先输出 `reasoning`，再调用 server tool，随后继续 `reasoning`，接着调用 function tool。`AgenticMessage` 会用 `ContentBlock` 按顺序保存这些结构化事件。
 
 ```go
 type AgenticMessage struct {
