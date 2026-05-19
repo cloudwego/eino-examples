@@ -8,11 +8,11 @@ require (
 	github.com/chromedp/chromedp v0.9.5
 	github.com/cloudwego/eino v0.8.13
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.3
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
-	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.5
+	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.6
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
 	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5
