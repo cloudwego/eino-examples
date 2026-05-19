@@ -18,9 +18,7 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -39,14 +37,15 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/callbacks"
 	"github.com/cloudwego/eino/components/tool"
-	"github.com/cloudwego/eino/compose"
 	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
 
-	examplemodel "github.com/cloudwego/eino-examples/adk/common/model"
 	adkstore "github.com/cloudwego/eino-examples/adk/common/store"
 	commontool "github.com/cloudwego/eino-examples/adk/common/tool"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -79,7 +78,20 @@ func main() {
 		log.Println("CozeLoop tracing disabled (set COZELOOP_API_TOKEN and COZELOOP_WORKSPACE_ID to enable)")
 	}
 
-	cm := examplemodel.NewChatModel()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, sessionID, instruction)
+	default:
+		runTyped[*schema.Message](ctx, sessionID, instruction)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 
 	projectRoot := os.Getenv("PROJECT_ROOT")
 	if projectRoot == "" {
@@ -114,7 +126,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	agent, err := deep.New(ctx, &deep.Config{
+	cfg := &deep.TypedConfig[M]{
 		Name:           "Ch07InterruptAgent",
 		Description:    "ChatWithDoc agent with interrupt/resume support.",
 		ChatModel:      cm,
@@ -122,36 +134,27 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		Backend:        backend,
 		StreamingShell: backend,
 		MaxIteration:   50,
-		Handlers: []adk.ChatModelAgentMiddleware{
-			&approvalMiddleware{},
-			&safeToolMiddleware{},
+		Handlers: []adk.TypedChatModelAgentMiddleware[M]{
+			newApprovalMiddleware[M](),
+			helpers.NewSafeToolMiddleware[M](),
 		},
-		ModelRetryConfig: &adk.ModelRetryConfig{
-			MaxRetries: 5,
-			IsRetryAble: func(_ context.Context, err error) bool {
-				return strings.Contains(err.Error(), "429") ||
-					strings.Contains(err.Error(), "Too Many Requests") ||
-					strings.Contains(err.Error(), "qpm limit")
-			},
-		},
-	})
+	}
+	helpers.ApplyMessageModelRetry(cfg)
+	agent, err := deep.NewTyped[M](ctx, cfg)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 		CheckPointStore: adkstore.NewInMemoryStore(),
 	})
 
-	sessionDir := os.Getenv("SESSION_DIR")
-	if sessionDir == "" {
-		sessionDir = "./data/sessions"
-	}
+	sessionDir := msgops.DefaultSessionDir(msgops.KindOf[M]())
 
-	store, err := mem.NewStore(sessionDir)
+	store, err := mem.NewStore[M](sessionDir)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -191,29 +194,34 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 			break
 		}
 
-		userMsg := schema.UserMessage(line)
+		userMsg := msgops.NewUser[M](line)
 		if err := session.Append(userMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
 		history := session.GetMessages()
-		events := runner.Run(ctx, history, adk.WithCheckPointID(checkPointID))
-		content, interruptInfo, err := printAndCollectAssistantFromEvents(events)
+		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history), adk.WithCheckPointID(checkPointID))
+		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+			ShowToolCalls:    true,
+			ShowToolResults:  true,
+			CaptureInterrupt: true,
+		})
 		if err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 
-		if interruptInfo != nil {
-			content, err = handleInterrupt(ctx, runner, checkPointID, interruptInfo, reader)
+		assistantText := result.AssistantText
+		if result.InterruptInfo != nil {
+			assistantText, err = handleInterrupt[M](ctx, runner, checkPointID, result.InterruptInfo, reader)
 			if err != nil {
 				_, _ = fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
 		}
 
-		assistantMsg := schema.AssistantMessage(content, nil)
+		assistantMsg := msgops.NewAssistant[M](assistantText, nil)
 		if err := session.Append(assistantMsg); err != nil {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
@@ -224,11 +232,17 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 	fmt.Printf("Resume with: go run ./cmd/ch07 --session %s\n", sessionID)
 }
 
-type approvalMiddleware struct {
-	*adk.BaseChatModelAgentMiddleware
+type approvalMiddleware[M adk.MessageType] struct {
+	*adk.TypedBaseChatModelAgentMiddleware[M]
 }
 
-func (m *approvalMiddleware) WrapInvokableToolCall(
+func newApprovalMiddleware[M adk.MessageType]() adk.TypedChatModelAgentMiddleware[M] {
+	return &approvalMiddleware[M]{
+		TypedBaseChatModelAgentMiddleware: &adk.TypedBaseChatModelAgentMiddleware[M]{},
+	}
+}
+
+func (m *approvalMiddleware[M]) WrapInvokableToolCall(
 	_ context.Context,
 	endpoint adk.InvokableToolCallEndpoint,
 	tCtx *adk.ToolContext,
@@ -268,7 +282,7 @@ func (m *approvalMiddleware) WrapInvokableToolCall(
 	}, nil
 }
 
-func (m *approvalMiddleware) WrapStreamableToolCall(
+func (m *approvalMiddleware[M]) WrapStreamableToolCall(
 	_ context.Context,
 	endpoint adk.StreamableToolCallEndpoint,
 	tCtx *adk.ToolContext,
@@ -291,9 +305,9 @@ func (m *approvalMiddleware) WrapStreamableToolCall(
 				return endpoint(ctx, storedArgs, opts...)
 			}
 			if data.DisapproveReason != nil {
-				return singleChunkReader(fmt.Sprintf("tool '%s' disapproved: %s", tCtx.Name, *data.DisapproveReason)), nil
+				return helpers.SingleChunkReader(fmt.Sprintf("tool '%s' disapproved: %s", tCtx.Name, *data.DisapproveReason)), nil
 			}
-			return singleChunkReader(fmt.Sprintf("tool '%s' disapproved", tCtx.Name)), nil
+			return helpers.SingleChunkReader(fmt.Sprintf("tool '%s' disapproved", tCtx.Name)), nil
 		}
 
 		isTarget, _, _ = tool.GetResumeContext[any](ctx)
@@ -308,183 +322,7 @@ func (m *approvalMiddleware) WrapStreamableToolCall(
 	}, nil
 }
 
-type safeToolMiddleware struct {
-	*adk.BaseChatModelAgentMiddleware
-}
-
-func (m *safeToolMiddleware) WrapInvokableToolCall(
-	_ context.Context,
-	endpoint adk.InvokableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.InvokableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (string, error) {
-		result, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return "", err
-			}
-			return fmt.Sprintf("[tool error] %v", err), nil
-		}
-		return result, nil
-	}, nil
-}
-
-func (m *safeToolMiddleware) WrapStreamableToolCall(
-	_ context.Context,
-	endpoint adk.StreamableToolCallEndpoint,
-	_ *adk.ToolContext,
-) (adk.StreamableToolCallEndpoint, error) {
-	return func(ctx context.Context, args string, opts ...tool.Option) (*schema.StreamReader[string], error) {
-		sr, err := endpoint(ctx, args, opts...)
-		if err != nil {
-			if _, ok := compose.IsInterruptRerunError(err); ok {
-				return nil, err
-			}
-			return singleChunkReader(fmt.Sprintf("[tool error] %v", err)), nil
-		}
-		return safeWrapReader(sr), nil
-	}, nil
-}
-
-func singleChunkReader(msg string) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](1)
-	_ = w.Send(msg, nil)
-	w.Close()
-	return r
-}
-
-func safeWrapReader(sr *schema.StreamReader[string]) *schema.StreamReader[string] {
-	r, w := schema.Pipe[string](64)
-	go func() {
-		defer w.Close()
-		for {
-			chunk, err := sr.Recv()
-			if errors.Is(err, io.EOF) {
-				return
-			}
-			if err != nil {
-				_ = w.Send(fmt.Sprintf("\n[tool error] %v", err), nil)
-				return
-			}
-			_ = w.Send(chunk, nil)
-		}
-	}()
-	return r
-}
-
-func printAndCollectAssistantFromEvents(events *adk.AsyncIterator[*adk.AgentEvent]) (string, *adk.InterruptInfo, error) {
-	var sb strings.Builder
-	var interruptInfo *adk.InterruptInfo
-
-	for {
-		event, ok := events.Next()
-		if !ok {
-			break
-		}
-		if event.Err != nil {
-			return "", nil, event.Err
-		}
-
-		if event.Action != nil && event.Action.Interrupted != nil {
-			interruptInfo = event.Action.Interrupted
-			continue
-		}
-
-		if event.Output != nil && event.Output.MessageOutput != nil {
-			mv := event.Output.MessageOutput
-			if mv.Role == schema.Tool {
-				content := drainToolResult(mv)
-				fmt.Printf("[tool result] %s\n", truncate(content, 200))
-				continue
-			}
-
-			if mv.Role != schema.Assistant && mv.Role != "" {
-				continue
-			}
-
-			if mv.IsStreaming {
-				mv.MessageStream.SetAutomaticClose()
-				var accumulatedMessages []*schema.Message
-				for {
-					frame, err := mv.MessageStream.Recv()
-					if errors.Is(err, io.EOF) {
-						break
-					}
-					if err != nil {
-						return "", nil, err
-					}
-					if frame != nil {
-						accumulatedMessages = append(accumulatedMessages, frame)
-						if frame.Content != "" {
-							sb.WriteString(frame.Content)
-							_, _ = fmt.Fprint(os.Stdout, frame.Content)
-						}
-					}
-				}
-				mergedMsg, err := schema.ConcatMessages(accumulatedMessages)
-				if err != nil {
-					return "", nil, err
-				}
-				for _, tc := range mergedMsg.ToolCalls {
-					if tc.Function.Name != "" && tc.Function.Arguments != "" {
-						fmt.Printf("\n[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
-					}
-				}
-				_, _ = fmt.Fprintln(os.Stdout)
-				continue
-			}
-
-			if mv.Message != nil {
-				sb.WriteString(mv.Message.Content)
-				_, _ = fmt.Fprintln(os.Stdout, mv.Message.Content)
-				for _, tc := range mv.Message.ToolCalls {
-					fmt.Printf("[tool call] %s(%s)\n", tc.Function.Name, tc.Function.Arguments)
-				}
-			}
-		}
-	}
-
-	return sb.String(), interruptInfo, nil
-}
-
-func drainToolResult(mo *adk.MessageVariant) string {
-	if mo.IsStreaming && mo.MessageStream != nil {
-		var sb strings.Builder
-		for {
-			chunk, err := mo.MessageStream.Recv()
-			if errors.Is(err, io.EOF) {
-				break
-			}
-			if err != nil {
-				break
-			}
-			if chunk != nil && chunk.Content != "" {
-				sb.WriteString(chunk.Content)
-			}
-		}
-		return sb.String()
-	}
-	if mo.Message != nil {
-		return mo.Message.Content
-	}
-	return ""
-}
-
-func truncate(s string, maxLen int) string {
-	if len(s) <= maxLen {
-		return s
-	}
-	var result bytes.Buffer
-	if err := json.Compact(&result, []byte(s)); err == nil {
-		s = result.String()
-	}
-	if len(s) <= maxLen {
-		return s
-	}
-	return s[:maxLen] + "..."
-}
-
-func handleInterrupt(ctx context.Context, runner *adk.Runner, checkPointID string, interruptInfo *adk.InterruptInfo, reader *bufio.Reader) (string, error) {
+func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRunner[M], checkPointID string, interruptInfo *adk.InterruptInfo, reader *bufio.Reader) (string, error) {
 	for _, ic := range interruptInfo.InterruptContexts {
 		if !ic.IsRootCause {
 			continue
@@ -524,16 +362,20 @@ func handleInterrupt(ctx context.Context, runner *adk.Runner, checkPointID strin
 			return "", fmt.Errorf("failed to resume: %w", err)
 		}
 
-		content, newInterruptInfo, err := printAndCollectAssistantFromEvents(events)
+		resumeResult, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+			ShowToolCalls:    true,
+			ShowToolResults:  true,
+			CaptureInterrupt: true,
+		})
 		if err != nil {
 			return "", err
 		}
 
-		if newInterruptInfo != nil {
-			return handleInterrupt(ctx, runner, checkPointID, newInterruptInfo, reader)
+		if resumeResult.InterruptInfo != nil {
+			return handleInterrupt[M](ctx, runner, checkPointID, resumeResult.InterruptInfo, reader)
 		}
 
-		return content, nil
+		return resumeResult.AssistantText, nil
 	}
 
 	return "", fmt.Errorf("no root cause interrupt context found")

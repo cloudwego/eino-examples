@@ -50,6 +50,8 @@ go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/e
 EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run ./cmd/ch10/
 ```
 
+会话默认保存在 `./data/sessions_agentic`。
+
 ## 从文本到 UI：为什么需要 A2UI
 
 前八章我们实现的 Agent 只输出文本，但现代 AI 应用需要更丰富的交互。
@@ -112,7 +114,7 @@ type Message struct {
 
 最终 Web 版的核心链路是：
 
-- 后端运行 Agent，得到 `*adk.AsyncIterator[*adk.AgentEvent]`
+- 后端运行 Agent，得到 `*adk.AsyncIterator[*adk.TypedAgentEvent[M]]`
 - 把事件流转换为 A2UI JSONL/SSE 流输出给浏览器（见 [a2ui/streamer.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/a2ui/streamer.go)）
 - 前端解析 SSE 的 `data:` 行并渲染组件树（见 [static/index.html](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/static/index.html)）
 
@@ -127,7 +129,7 @@ type Message struct {
 
 ### 事件流转换（高层）
 
-服务端把 `Runner.Run(...)` 的事件流交给 `a2ui.StreamToWriter(...)`，后者负责：
+服务端把 `Runner.Run(...)` 的事件流交给 `a2ui.StreamToWriter[M](...)`，后者负责：
 
 - 对 user/assistant/tool 的输出做拆分
 - 把 tool call / tool result 渲染成 “chip 卡片”

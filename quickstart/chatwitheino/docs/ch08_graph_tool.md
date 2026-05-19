@@ -240,6 +240,7 @@ func BuildTool(ctx context.Context, cm model.BaseChatModel) (tool.BaseTool, erro
 **关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [rag/rag.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/rag/rag.go)）：
 
 ```go
+func BuildTool[M adk.MessageType](ctx context.Context, cm model.BaseModel[M]) (tool.BaseTool, error) {
 // 构建工作流
 wf := compose.NewWorkflow[Input, Output]()
 
@@ -252,6 +253,7 @@ wf.AddLambdaNode("score", scoreFunc).
 
 // 封装为 Tool
 return graphtool.NewInvokableGraphTool[Input, Output](wf, "answer_from_document", "...")
+}
 ```
 
 ## Graph Tool 执行流程

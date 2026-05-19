@@ -22,9 +22,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	localbk "github.com/cloudwego/eino-ext/adk/backend/local"
@@ -32,8 +30,10 @@ import (
 	"github.com/cloudwego/eino/adk/prebuilt/deep"
 	"github.com/cloudwego/eino/schema"
 
-	"github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/a2ui"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/helpers"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -44,31 +44,46 @@ func main() {
 
 	ctx := context.Background()
 
-	agent, err := func() (adk.Agent, error) {
-		backend, err := localbk.NewBackend(ctx, &localbk.Config{})
-		if err != nil {
-			return nil, err
-		}
-		return deep.New(ctx, &deep.Config{
-			Name:           "ChatWithDocAgent",
-			Description:    "An agent that reads and answers questions about documents.",
-			ChatModel:      model.NewChatModel(),
-			Backend:        backend,
-			StreamingShell: backend,
-			MaxIteration:   10,
-		})
-	}()
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, query)
+	default:
+		runTyped[*schema.Message](ctx, query)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context, query string) {
+	cm, err := chatmodel.NewModel[M](ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "build model: %v\n", err)
+		os.Exit(1)
+	}
+
+	backend, err := localbk.NewBackend(ctx, &localbk.Config{})
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "build backend: %v\n", err)
+		os.Exit(1)
+	}
+
+	agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
+		Name:           "ChatWithDocAgent",
+		Description:    "An agent that reads and answers questions about documents.",
+		ChatModel:      cm,
+		Backend:        backend,
+		StreamingShell: backend,
+		MaxIteration:   10,
+	})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "buildAgent: %v\n", err)
 		os.Exit(1)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
+	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
 
-	messages := []*schema.Message{schema.UserMessage(query)}
+	messages := []M{msgops.NewUser[M](query)}
 
 	fmt.Printf("→ user: %s\n\n", query)
 
@@ -129,7 +144,7 @@ func (p *jsonlPrinter) printLine(line []byte) {
 		for _, c := range msg.SurfaceUpdate.Components {
 			switch {
 			case c.Component.Text != nil && c.Component.Text.Value != "":
-				fmt.Printf("[surfaceUpdate] %s: Text=%q\n", c.ID, truncate(c.Component.Text.Value, 60))
+				fmt.Printf("[surfaceUpdate] %s: Text=%q\n", c.ID, helpers.Truncate(c.Component.Text.Value, 60))
 			case c.Component.Column != nil:
 				fmt.Printf("[surfaceUpdate] %s: Column children=%v\n", c.ID, c.Component.Column.Children)
 			case c.Component.Card != nil:
@@ -138,18 +153,7 @@ func (p *jsonlPrinter) printLine(line []byte) {
 		}
 	case msg.DataModelUpdate != nil:
 		for _, dc := range msg.DataModelUpdate.Contents {
-			fmt.Printf("[dataModelUpdate] %s = %q\n", dc.Key, truncate(dc.ValueString, 80))
+			fmt.Printf("[dataModelUpdate] %s = %q\n", dc.Key, helpers.Truncate(dc.ValueString, 80))
 		}
 	}
 }
-
-func truncate(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "…"
-}
-
-// Ensure io.EOF is imported (used by a2ui internally).
-var _ = errors.Is(io.EOF, io.EOF)
