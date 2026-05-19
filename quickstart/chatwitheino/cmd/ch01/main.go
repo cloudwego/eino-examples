@@ -25,10 +25,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cloudwego/eino-ext/components/model/ark"
-	"github.com/cloudwego/eino-ext/components/model/openai"
-	"github.com/cloudwego/eino/components/model"
+	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/chatmodel"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 func main() {
@@ -43,15 +44,24 @@ func main() {
 	}
 
 	ctx := context.Background()
-	cm, err := newChatModel(ctx)
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx, instruction, query)
+	default:
+		runTyped[*schema.Message](ctx, instruction, query)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context, instruction, query string) {
+	cm, err := chatmodel.NewModel[M](ctx)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	messages := []*schema.Message{
-		schema.SystemMessage(instruction),
-		schema.UserMessage(query),
+	messages := []M{
+		msgops.NewSystem[M](instruction),
+		msgops.NewUser[M](query),
 	}
 
 	_, _ = fmt.Fprint(os.Stdout, "[assistant] ")
@@ -71,25 +81,9 @@ func main() {
 			_, _ = fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
-		if frame != nil {
-			_, _ = fmt.Fprint(os.Stdout, frame.Content)
+		if !msgops.IsNil(frame) {
+			_, _ = fmt.Fprint(os.Stdout, msgops.AssistantDeltaText(frame))
 		}
 	}
 	_, _ = fmt.Fprintln(os.Stdout)
-}
-
-func newChatModel(ctx context.Context) (model.ToolCallingChatModel, error) {
-	if os.Getenv("MODEL_TYPE") == "ark" {
-		return ark.NewChatModel(ctx, &ark.ChatModelConfig{
-			APIKey:  os.Getenv("ARK_API_KEY"),
-			Model:   os.Getenv("ARK_MODEL"),
-			BaseURL: os.Getenv("ARK_BASE_URL"),
-		})
-	}
-	return openai.NewChatModel(ctx, &openai.ChatModelConfig{
-		APIKey:  os.Getenv("OPENAI_API_KEY"),
-		Model:   os.Getenv("OPENAI_MODEL"),
-		BaseURL: os.Getenv("OPENAI_BASE_URL"),
-		ByAzure: os.Getenv("OPENAI_BY_AZURE") == "true",
-	})
 }
