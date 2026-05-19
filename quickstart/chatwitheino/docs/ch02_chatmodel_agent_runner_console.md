@@ -226,7 +226,7 @@ for {
 
 没有 tools 时，`ChatModelAgent` 在一次 `Run()` 里只会完成一轮模型调用。多轮对话是通过调用侧维护 history 实现的：
 
-1. 用 `history []M` 保存累计对话，`M` 可以是 `*schema.Message` 或 `*schema.AgenticMessage`
+1. 用 `history []M` 保存累计对话，本示例默认 `M` 为 `*schema.AgenticMessage`
 2. 每次用户输入：通过 `msgops.NewUser[M]` 追加到 history
 3. 调用 `runner.Run(ctx, history)` 得到事件流，消费得到 assistant 文本
 4. 通过 `msgops.NewAssistant[M]` 把本轮 assistant 文本追加回 history，进入下一轮

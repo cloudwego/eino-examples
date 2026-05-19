@@ -8,7 +8,7 @@ title: "第三章：Memory 与 Session（持久化对话）"
 >
 > 本章介绍的 **Memory、Session、Store 是业务层概念**，**不是 Eino 框架的核心组件**。
 >
-> - **Eino 框架层面**：提供 `adk.Runner`、`adk.NewTypedRunner[M]`、`schema.Message`、`schema.AgenticMessage` 等基础抽象，框架本身不关心对话历史的存储方式
+> - **Eino 框架层面**：提供 `adk.Runner`、`adk.NewTypedRunner[M]`、`schema.AgenticMessage` 等基础抽象，框架本身不关心对话历史的存储方式
 > - **业务层层面**：Memory/Session/Store 是本示例项目为了实现持久化对话而设计的业务逻辑，通过组装给 `adk.Runner` 的输入来与 Eino 框架交互
 >
 > 换句话说，Eino 框架只负责"如何处理消息"，而"如何存储消息"完全由业务层决定。本章提供的实现只是一个简单的参考示例，你可以根据自己的业务需求选择完全不同的存储方案（数据库、Redis、云存储等）。
@@ -32,10 +32,6 @@ go run ./cmd/ch03
 
 # 恢复已有会话
 go run ./cmd/ch03 --session <session-id>
-
-# 使用 AgenticMessage
-export MESSAGE_KIND=agentic
-go run ./cmd/ch03
 ```
 
 输出示例：
@@ -84,7 +80,7 @@ type Session struct {
     ID        string
     CreatedAt time.Time
 
-    messages []M  // 对话历史，M 为 *schema.Message 或 *schema.AgenticMessage
+    messages []M  // 对话历史，示例默认 M 为 *schema.AgenticMessage
     // ...
 }
 ```
@@ -115,19 +111,14 @@ type Store struct {
 每个 Session 存储为一个 `.jsonl` 文件：
 
 ```jsonl
-{"type":"session","id":"083d16da-...","created_at":"2026-03-11T10:00:00Z","message_kind":"message"}
-{"role":"user","content":"你好，我是谁？"}
-{"role":"assistant","content":"你好！我暂时不知道你是谁..."}
-{"role":"user","content":"我叫张三"}
-{"role":"assistant","content":"好的，张三，很高兴认识你！"}
+{"type":"session","id":"083d16da-...","created_at":"2026-03-11T10:00:00Z","message_kind":"agentic"}
+{"role":"user","content_blocks":[{"type":"user_input_text","user_input_text":{"text":"你好，我是谁？"}}]}
+{"role":"assistant","content_blocks":[{"type":"assistant_gen_text","assistant_gen_text":{"text":"你好！我暂时不知道你是谁..."}}]}
+{"role":"user","content_blocks":[{"type":"user_input_text","user_input_text":{"text":"我叫张三"}}]}
+{"role":"assistant","content_blocks":[{"type":"assistant_gen_text","assistant_gen_text":{"text":"好的，张三，很高兴认识你！"}}]}
 ```
 
-`message` 与 `agentic` 使用不同目录，不做自动转换：
-
-- `message`：`SESSION_DIR`，默认 `./data/sessions`
-- `agentic`：`SESSION_DIR_AGENTIC`，默认 `./data/sessions_agentic`
-
-旧的 `message` 文件如果没有 `message_kind` 字段，会按 `message` 兼容读取；类型不一致的文件会被跳过或拒绝加载。
+会话默认保存在 `./data/sessions_agentic`；如果需要放到其他目录，可以设置 `SESSION_DIR_AGENTIC`。
 
 **为什么用 JSONL？**
 - **简单**：每行一个 JSON 对象，易于读写
@@ -142,7 +133,7 @@ type Store struct {
 ### 1. 创建 Store
 
 ```go
-sessionDir := "./data/sessions"
+sessionDir := "./data/sessions_agentic"
 store, err := mem.NewStore(sessionDir)
 if err != nil {
     log.Fatal(err)
@@ -285,7 +276,7 @@ if err := session.Append(assistantMsg); err != nil {
 ## 本章小结
 
 **框架层 vs 业务层：**
-- **Eino 框架层**：提供 `adk.Runner`、typed runner、`schema.Message`、`schema.AgenticMessage` 等基础抽象，不关心消息如何存储
+- **Eino 框架层**：提供 `adk.Runner`、typed runner、`schema.AgenticMessage` 等基础抽象，不关心消息如何存储
 - **业务层（本章实现）**：Memory/Session/Store 是业务层概念，用于管理对话历史的存储
 
 **业务层概念：**

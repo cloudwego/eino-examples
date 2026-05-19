@@ -68,10 +68,6 @@ go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/e
 ### 2) 启动 Chapter 9
 
 ```bash
-EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext go run ./cmd/ch09
-
-# 使用 AgenticMessage
-export MESSAGE_KIND=agentic
 export EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext
 go run ./cmd/ch09
 ```
@@ -138,5 +134,5 @@ Use the skill tool with skill="eino-guide" and tell me what the entry point is f
 - 当模型调用 skill 工具时，控制台会打印：
   - `[tool call] ...`
   - `[tool result] ...`（对结果做了截断展示）
-- `message` 会话保存在 `SESSION_DIR`（默认 `./data/sessions`），`agentic` 会话保存在 `SESSION_DIR_AGENTIC`（默认 `./data/sessions_agentic`），支持恢复：
+- 会话默认保存在 `./data/sessions_agentic`，支持恢复：
   - `go run ./cmd/ch09 --session <id>`

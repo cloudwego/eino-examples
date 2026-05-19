@@ -22,10 +22,6 @@ title: "第八章：Graph Tool（复杂工作流）"
 export PROJECT_ROOT=/path/to/your/project
 
 go run ./cmd/ch08
-
-# 使用 AgenticMessage
-export MESSAGE_KIND=agentic
-go run ./cmd/ch08
 ```
 
 输出示例：

@@ -74,15 +74,8 @@ export PROJECT_ROOT=/path/to/eino  # Eino 核心库根目录
 # 设置项目根目录
 export PROJECT_ROOT=/path/to/your/project
 
-# 默认使用 Message
-go run ./cmd/ch05
-
-# 使用 AgenticMessage
-export MESSAGE_KIND=agentic
 go run ./cmd/ch05
 ```
-
-`MESSAGE_KIND` 默认为 `message`，即 `*schema.Message`；设置为 `agentic` 后会切换到 `*schema.AgenticMessage`。两种消息类型的会话分开存储，不做自动转换；使用 `--session` 恢复会话时，请保持 `MESSAGE_KIND` 与创建该会话时一致。
 
 输出示例：
 

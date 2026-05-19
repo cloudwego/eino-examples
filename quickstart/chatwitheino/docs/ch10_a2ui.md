@@ -33,10 +33,6 @@ Eino 更关注“可组合的智能执行与编排能力”，至于“如何呈
 
 ```bash
 go run ./cmd/ch10/
-
-# 使用 AgenticMessage
-export MESSAGE_KIND=agentic
-go run ./cmd/ch10/
 ```
 
 输出示例：
@@ -54,7 +50,7 @@ go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/e
 EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run ./cmd/ch10/
 ```
 
-`message` 会话默认保存在 `./data/sessions`，`agentic` 会话默认保存在 `./data/sessions_agentic`。两种消息类型分开存储，不做自动转换。
+会话默认保存在 `./data/sessions_agentic`。
 
 ## 从文本到 UI：为什么需要 A2UI
 

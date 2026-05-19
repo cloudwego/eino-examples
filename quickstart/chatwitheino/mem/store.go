@@ -132,8 +132,8 @@ func (s *Session[M]) Title() string {
 //
 // File format:
 //
-//	{"type":"session","id":"...","created_at":"...","message_kind":"message"}   ← header (line 1)
-//	{"role":"user","content":"..."}                                             ← message (lines 2+)
+//	{"type":"session","id":"...","created_at":"...","message_kind":"agentic"}   ← header (line 1)
+//	{"role":"user","content_blocks":[...]}                                      ← message (lines 2+)
 type Store[M adk.MessageType] struct {
 	dir   string
 	kind  msgops.Kind

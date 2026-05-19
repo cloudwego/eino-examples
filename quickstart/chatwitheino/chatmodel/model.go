@@ -33,9 +33,9 @@ import (
 	arkModel "github.com/volcengine/volcengine-go-sdk/service/arkruntime/model"
 )
 
-// NewModel creates a model matching M. MESSAGE_KIND selects M at the caller
-// boundary; MODEL_TYPE still selects the provider (OpenAI by default, Ark when
-// MODEL_TYPE=ark).
+// NewModel creates a model matching M. The caller chooses the concrete message
+// type at the boundary; MODEL_TYPE still selects the provider (OpenAI by
+// default, Ark when MODEL_TYPE=ark).
 func NewModel[M adk.MessageType](ctx context.Context) (einomodel.BaseModel[M], error) {
 	var zero M
 	switch any(zero).(type) {

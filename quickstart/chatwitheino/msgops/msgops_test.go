@@ -22,6 +22,30 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
+func TestKindFromEnvDefaultsToAgentic(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  Kind
+	}{
+		{name: "empty", value: "", want: KindAgentic},
+		{name: "agentic", value: "agentic", want: KindAgentic},
+		{name: "agentic message", value: "agenticmessage", want: KindAgentic},
+		{name: "legacy message", value: "message", want: KindMessage},
+		{name: "unknown", value: "unknown", want: KindAgentic},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("MESSAGE_KIND", tt.value)
+
+			if got := KindFromEnv(); got != tt.want {
+				t.Fatalf("KindFromEnv() = %s, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestNormalizeForSessionAgenticMessage(t *testing.T) {
 	msg := &schema.AgenticMessage{
 		Role: schema.AgenticRoleTypeAssistant,

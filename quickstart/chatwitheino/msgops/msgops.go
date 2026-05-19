@@ -59,13 +59,16 @@ type ToolResult struct {
 	Content string
 }
 
-// KindFromEnv reads MESSAGE_KIND. Unknown values fall back to message.
+// KindFromEnv reads MESSAGE_KIND. AgenticMessage is the default representation;
+// set MESSAGE_KIND=message only when explicitly exercising the legacy path.
 func KindFromEnv() Kind {
 	switch strings.ToLower(strings.TrimSpace(os.Getenv("MESSAGE_KIND"))) {
 	case string(KindAgentic), "agenticmessage", "agentic_message":
 		return KindAgentic
-	default:
+	case string(KindMessage):
 		return KindMessage
+	default:
+		return KindAgentic
 	}
 }
 
