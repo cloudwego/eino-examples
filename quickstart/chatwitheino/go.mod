@@ -5,11 +5,11 @@ go 1.24.9
 replace github.com/cloudwego/eino-examples => ../..
 
 require (
-	github.com/cloudwego/eino v0.8.11
+	github.com/cloudwego/eino v0.8.13
 	github.com/cloudwego/eino-examples v0.0.0-00010101000000-000000000000
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.2
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.2
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.67
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.3
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
 	github.com/cloudwego/hertz v0.10.3
 	github.com/coze-dev/cozeloop-go v0.1.22
@@ -59,7 +59,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.199 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.2.9 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.2.27 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/arch v0.19.0 // indirect
