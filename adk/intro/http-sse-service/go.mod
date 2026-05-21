@@ -5,7 +5,7 @@ go 1.24.9
 replace github.com/cloudwego/eino-examples => ../../..
 
 require (
-	github.com/cloudwego/eino v0.9.0-alpha.24
+	github.com/cloudwego/eino v0.9.0-beta.1
 	github.com/cloudwego/eino-examples v0.0.0-00010101000000-000000000000
 	github.com/cloudwego/hertz v0.10.3
 	github.com/hertz-contrib/sse v0.1.0

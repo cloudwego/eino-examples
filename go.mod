@@ -6,13 +6,13 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.15.0
 	github.com/chromedp/chromedp v0.9.5
-	github.com/cloudwego/eino v0.9.0-alpha.24
+	github.com/cloudwego/eino v0.9.0-beta.1
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.3.0-beta.1
 	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/model/agenticark v0.1.0-alpha.2.0.20260511121518-fb88c306feaf
-	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.1.0-alpha.2.0.20260512032819-b6ea3a91fcab
+	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1
+	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.2
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
@@ -33,7 +33,7 @@ require (
 	github.com/pkoukk/tiktoken-go v0.1.8
 	github.com/redis/go-redis/v9 v9.17.2
 	github.com/stretchr/testify v1.11.1
-	github.com/volcengine/volcengine-go-sdk v1.2.27
+	github.com/volcengine/volcengine-go-sdk v1.2.28
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/sync v0.17.0
