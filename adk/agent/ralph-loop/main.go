@@ -34,7 +34,7 @@
 //   - RalphLoop wrapping TurnLoop to drive the push-based event loop
 //   - InMemoryBackend + filesystem middleware for persistent file tools
 //   - VerifyCompletion as the verification gate
-//   - ToolCallMiddleware to make tool errors non-fatal (returns error as string)
+//   - WrapInvokableToolCall handler to make tool errors non-fatal (returns error as string)
 //   - ModelRetryConfig for resilient API calls with exponential backoff
 package main
 
@@ -48,7 +48,8 @@ import (
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/adk/filesystem"
 	fsmiddleware "github.com/cloudwego/eino/adk/middlewares/filesystem"
-	"github.com/cloudwego/eino/compose"
+	"github.com/cloudwego/eino/components/tool"
+	"github.com/cloudwego/eino/schema"
 
 	commonmodel "github.com/cloudwego/eino-examples/adk/common/model"
 	"github.com/cloudwego/eino-examples/adk/common/prints"
@@ -122,26 +123,11 @@ func main() {
 			"Follow the task instructions precisely. " +
 			"When all deliverables are complete, output exactly: " + completionPromise,
 		Model:    chatModel,
-		Handlers: []adk.ChatModelAgentMiddleware{fsMw},
+		Handlers: []adk.ChatModelAgentMiddleware{fsMw, &errorTolerantToolHandler{}},
 		ModelRetryConfig: &adk.ModelRetryConfig{
 			MaxRetries: 3,
 			BackoffFunc: func(_ context.Context, attempt int) time.Duration {
 				return time.Duration(5<<(attempt-1)) * time.Second
-			},
-		},
-		Middlewares: []adk.AgentMiddleware{
-			{
-				WrapToolCall: compose.ToolMiddleware{
-					Invokable: func(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
-						return func(ctx context.Context, input *compose.ToolInput) (*compose.ToolOutput, error) {
-							out, err := next(ctx, input)
-							if err != nil {
-								return &compose.ToolOutput{Result: fmt.Sprintf("Error: %v", err)}, nil
-							}
-							return out, nil
-						}
-					},
-				},
 			},
 		},
 	})
@@ -210,4 +196,35 @@ func main() {
 		lines := strings.Count(content.Content, "\n") + 1
 		fmt.Printf("  (%d lines)\n", lines)
 	}
+}
+
+type errorTolerantToolHandler struct {
+	*adk.BaseChatModelAgentMiddleware
+}
+
+func (h *errorTolerantToolHandler) WrapInvokableToolCall(_ context.Context, endpoint adk.InvokableToolCallEndpoint, _ *adk.ToolContext) (adk.InvokableToolCallEndpoint, error) {
+	return func(ctx context.Context, argumentsInJSON string, opts ...tool.Option) (string, error) {
+		result, err := endpoint(ctx, argumentsInJSON, opts...)
+		if err != nil {
+			return fmt.Sprintf("Error: %v", err), nil
+		}
+		return result, nil
+	}, nil
+}
+
+func (h *errorTolerantToolHandler) WrapEnhancedInvokableToolCall(_ context.Context, endpoint adk.EnhancedInvokableToolCallEndpoint, _ *adk.ToolContext) (adk.EnhancedInvokableToolCallEndpoint, error) {
+	return func(ctx context.Context, toolArgument *schema.ToolArgument, opts ...tool.Option) (*schema.ToolResult, error) {
+		result, err := endpoint(ctx, toolArgument, opts...)
+		if err != nil {
+			return &schema.ToolResult{
+				Parts: []schema.ToolOutputPart{
+					{
+						Type: schema.ToolPartTypeText,
+						Text: fmt.Sprintf("Error: %v", err),
+					},
+				},
+			}, nil
+		}
+		return result, nil
+	}, nil
 }

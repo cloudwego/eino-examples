@@ -5,12 +5,12 @@ go 1.24.9
 replace github.com/cloudwego/eino-examples => ../..
 
 require (
-	github.com/cloudwego/eino v0.9.0-alpha.24
+	github.com/cloudwego/eino v0.9.0-beta.1
 	github.com/cloudwego/eino-examples v0.0.0-00010101000000-000000000000
 	github.com/cloudwego/eino-ext/adk/backend/local v0.2.2
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
-	github.com/cloudwego/eino-ext/components/model/agenticark v0.1.0-alpha.2.0.20260511121518-fb88c306feaf
-	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.1.0-alpha.2.0.20260512032819-b6ea3a91fcab
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.3.0-beta.1
+	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1
+	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.12
 	github.com/cloudwego/hertz v0.10.3
