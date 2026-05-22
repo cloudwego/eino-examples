@@ -40,6 +40,8 @@ func newMaxOutputTokenRetryConfig(retryMaxTokens []int, inspect responseInspecto
 
 			status, reason := inspect(retryCtx.OutputMessage)
 			idx := retryCtx.RetryAttempt - 1
+			// ShouldRetry is called after each attempt, including the final retry.
+			// Once all configured token budgets are used, rewrite to a clear error.
 			if idx >= len(retryMaxTokens) {
 				return &adk.TypedRetryDecision[*schema.AgenticMessage]{
 					RewriteError: fmt.Errorf("response remained incomplete after %d retries: status=%q reason=%q", len(retryMaxTokens), status, reason),
@@ -50,6 +52,8 @@ func newMaxOutputTokenRetryConfig(retryMaxTokens []int, inspect responseInspecto
 			fmt.Printf("[retry] attempt=%d rejected status=%q reason=%q -> max_output_tokens=%d\n",
 				retryCtx.RetryAttempt, status, reason, nextMaxTokens)
 
+			// AdditionalOptions accumulate across retries, and WithMaxTokens is last-wins;
+			// only the latest max_output_tokens value applies to the next attempt.
 			return &adk.TypedRetryDecision[*schema.AgenticMessage]{
 				Retry:             true,
 				AdditionalOptions: []einoModel.Option{einoModel.WithMaxTokens(nextMaxTokens)},

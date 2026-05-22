@@ -41,9 +41,7 @@ const (
 	travelRouteToolName = "travel_route"
 	tokenLimitReason    = "max_output_tokens"
 
-	defaultArkInitialMaxTokens    = 8
-	defaultOpenAIInitialMaxTokens = 16
-	defaultRequestTimeout         = 3 * time.Minute
+	defaultRequestTimeout = 3 * time.Minute
 )
 
 var retryMaxTokens = []int{4096, 8192, 16384}
