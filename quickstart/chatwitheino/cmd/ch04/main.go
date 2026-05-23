@@ -95,7 +95,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	agent, err := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
+	agent, err := deep.NewTyped(ctx, &deep.TypedConfig[M]{
 		Name:           "Ch04ToolAgent",
 		Description:    "ChatWithDoc agent with filesystem access via LocalBackend.",
 		ChatModel:      cm,
@@ -109,7 +109,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
+	runner := adk.NewTypedRunner(adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})
@@ -158,7 +158,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history))
-		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+		result, err := helpers.PrintAndCollect(events, helpers.PrintOptions{
 			ShowToolCalls:   true,
 			ShowToolResults: true,
 		})

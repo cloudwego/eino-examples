@@ -58,7 +58,7 @@ func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction str
 		os.Exit(1)
 	}
 
-	agent, err := adk.NewTypedChatModelAgent[M](ctx, &adk.TypedChatModelAgentConfig[M]{
+	agent, err := adk.NewTypedChatModelAgent(ctx, &adk.TypedChatModelAgentConfig[M]{
 		Name:        "Ch03MemoryAgent",
 		Description: "ChatModelAgent with JSONL-based persistent session.",
 		Instruction: instruction,
@@ -69,7 +69,7 @@ func runTyped[M adk.MessageType](ctx context.Context, sessionID, instruction str
 		os.Exit(1)
 	}
 
-	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
+	runner := adk.NewTypedRunner(adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})

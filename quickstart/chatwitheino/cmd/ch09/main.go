@@ -128,7 +128,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		os.Exit(1)
 	}
 
-	ragTool, err := rag.BuildTool[M](ctx, cm)
+	ragTool, err := rag.BuildTool(ctx, cm)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, fmt.Errorf("build rag tool: %w", err))
 		os.Exit(1)
@@ -145,7 +145,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 			_, _ = fmt.Fprintln(os.Stderr, sbErr)
 			os.Exit(1)
 		}
-		skillMiddleware, smErr := skill.NewTyped[M](ctx, &skill.TypedConfig[M]{
+		skillMiddleware, smErr := skill.NewTyped(ctx, &skill.TypedConfig[M]{
 			Backend: skillBackend,
 		})
 		if smErr != nil {
@@ -172,13 +172,13 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 		},
 	}
 	helpers.ApplyMessageModelRetry(cfg)
-	agent, err := deep.NewTyped[M](ctx, cfg)
+	agent, err := deep.NewTyped(ctx, cfg)
 	if err != nil {
 		_, _ = fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
+	runner := adk.NewTypedRunner(adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 		CheckPointStore: adkstore.NewInMemoryStore(),
@@ -239,7 +239,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		history := session.GetMessages()
 		events := runner.Run(ctx, msgops.NormalizeMessagesForModelInput(history), adk.WithCheckPointID(checkPointID))
-		result, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+		result, err := helpers.PrintAndCollect(events, helpers.PrintOptions{
 			ShowToolCalls:    true,
 			ShowToolResults:  true,
 			CaptureInterrupt: true,
@@ -251,7 +251,7 @@ Always use absolute paths when calling filesystem tools.`, projectRoot, projectR
 
 		assistantText := result.AssistantText
 		if result.InterruptInfo != nil {
-			assistantText, err = handleInterrupt[M](ctx, runner, checkPointID, result.InterruptInfo, reader)
+			assistantText, err = handleInterrupt(ctx, runner, checkPointID, result.InterruptInfo, reader)
 			if err != nil {
 				_, _ = fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
@@ -414,7 +414,7 @@ func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRu
 			return "", fmt.Errorf("failed to resume: %w", err)
 		}
 
-		resumeResult, err := helpers.PrintAndCollect[M](events, helpers.PrintOptions{
+		resumeResult, err := helpers.PrintAndCollect(events, helpers.PrintOptions{
 			ShowToolCalls:    true,
 			ShowToolResults:  true,
 			CaptureInterrupt: true,
@@ -424,8 +424,8 @@ func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRu
 		}
 
 		if resumeResult.InterruptInfo != nil {
-			return handleInterrupt[M](ctx, runner, checkPointID, resumeResult.InterruptInfo, reader)
-		}
+			return handleInterrupt(ctx, runner, checkPointID, resumeResult.InterruptInfo, reader)
+		}	
 
 		return resumeResult.AssistantText, nil
 	}

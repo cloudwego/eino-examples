@@ -280,7 +280,7 @@ func (s *Server[M]) handleRender(_ context.Context, c *app.RequestContext) {
 
 // handleChat handles a new chat message. It creates or reuses a TurnLoop for the session.
 // If a loop is already running (busy), it pushes with preempt to cancel the current turn.
-func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleChat(_ context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	body, _ := c.Body()
@@ -424,7 +424,7 @@ func (s *Server[M]) handleChat(ctx context.Context, c *app.RequestContext) {
 
 // handleApprove resumes an interrupted agent run with the user's approval decision.
 // Creates a new TurnLoop with checkpoint/resume to continue from the interrupt.
-func (s *Server[M]) handleApprove(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleApprove(_ context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	sess, err := s.cfg.Store.GetOrCreate(id)
@@ -786,7 +786,7 @@ func (s *Server[M]) buildRunMessages(sessionID string, history []M) []M {
 	return runMessages
 }
 
-func (s *Server[M]) handleUpload(ctx context.Context, c *app.RequestContext) {
+func (s *Server[M]) handleUpload(_ context.Context, c *app.RequestContext) {
 	id := c.Param("id")
 
 	absWorkDir, err := filepath.Abs(filepath.Join(s.cfg.WorkspaceDir, id))

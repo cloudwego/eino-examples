@@ -108,7 +108,7 @@ type synthIn struct {
 // and supports interrupt/resume via a built-in checkpoint store.
 func BuildTool[M adk.MessageType](ctx context.Context, cm model.BaseModel[M]) (tool.BaseTool, error) {
 	wf := buildWorkflow(cm)
-	return graphtool.NewInvokableGraphTool[Input, Output](
+	return graphtool.NewInvokableGraphTool(
 		wf,
 		"answer_from_document",
 		"Search a large uploaded document for content relevant to a question and synthesize a "+
@@ -312,7 +312,7 @@ func splitIntoChunks(text string, chunkSize int) []*schema.Document {
 		buf.Reset()
 	}
 
-	for _, para := range strings.Split(text, "\n\n") {
+	for para := range strings.SplitSeq(text, "\n\n") {
 		para = strings.TrimSpace(para)
 		if para == "" {
 			continue
@@ -322,7 +322,7 @@ func splitIntoChunks(text string, chunkSize int) []*schema.Document {
 		}
 		// paragraph itself exceeds chunkSize: split by line
 		if len(para) > chunkSize {
-			for _, line := range strings.Split(para, "\n") {
+			for line := range strings.SplitSeq(para, "\n") {
 				line = strings.TrimSpace(line)
 				if line == "" {
 					continue

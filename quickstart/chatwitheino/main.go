@@ -122,7 +122,7 @@ func runTyped[M adk.MessageType](ctx context.Context) {
 	}
 	log.Printf("examples dir: %s", examplesDir)
 
-	srv := server.New[M](server.Config[M]{
+	srv := server.New(server.Config[M]{
 		Agent:           agent,
 		CheckPointStore: checkpointStore,
 		Store:           store,

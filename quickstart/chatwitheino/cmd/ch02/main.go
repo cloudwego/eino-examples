@@ -64,7 +64,7 @@ func runTyped[M adk.MessageType](ctx context.Context, instruction string) {
 		os.Exit(1)
 	}
 
-	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
+	runner := adk.NewTypedRunner(adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 	})

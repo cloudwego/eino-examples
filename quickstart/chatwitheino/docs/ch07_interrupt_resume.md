@@ -106,9 +106,12 @@ func myTool(ctx context.Context, args string) (string, error) {
     }
 
     // Resume 后的第二次调用：读取用户审批结果
-    // isTarget: 本次 Resume 是否针对当前 Tool（一次 Resume 只针对一个 Tool）
-    // hasData:  Resume 时是否携带了审批结果数据
-    // data:     用户传入的审批结果
+    // GetResumeContext 返回三个值：
+    // - isTarget: 当前 tool 触发的中断 ID 是否被包含在 ResumeWithParams 时 Targets 的 key 中
+    //             例如 ResumeWithParams 时传入 Targets: map[string]any{"interrupt_id_1": data}
+    //             若当前 tool 触发的中断 ID 是 "interrupt_id_1"，则 isTarget=true
+    // - hasData:  当 isTarget=true 时，该中断 ID 对应的 value 是否非 nil（即是否有数据）
+    // - data:     若 hasData=true，则是 Targets 中该中断 ID 对应的 value；若 hasData=false，则为对应类型的零值
     isTarget, hasData, data := tool.GetResumeContext[*ApprovalResult](ctx)
     if isTarget && hasData {
         if data.Approved {

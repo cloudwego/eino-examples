@@ -197,7 +197,7 @@ func TestChatNormalFlow(t *testing.T) {
 	}
 
 	// Drain the iterator.
-	var content string
+	var content strings.Builder
 	for {
 		event, ok := envelope.events.Next()
 		if !ok {
@@ -205,19 +205,19 @@ func TestChatNormalFlow(t *testing.T) {
 		}
 		if event.Output != nil && event.Output.MessageOutput != nil {
 			if m := event.Output.MessageOutput.Message; m != nil && m.Content != "" {
-				content += m.Content
+				content.WriteString(m.Content)
 			}
 		}
 	}
 
-	if content != "test response" {
-		t.Errorf("expected 'test response', got %q", content)
+	if content.String() != "test response" {
+		t.Errorf("expected 'test response', got %q", content.String())
 	}
 
 	// Signal done to OnAgentEvents.
 	envelope.done <- iterResult[*schema.Message]{
-		lastContent:   content,
-		intermediates: []*schema.Message{schema.AssistantMessage(content, nil)},
+		lastContent:   content.String(),
+		intermediates: []*schema.Message{schema.AssistantMessage(content.String(), nil)},
 	}
 
 	// Stop the loop — no more items to process.

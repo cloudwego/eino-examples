@@ -99,38 +99,45 @@ you> 读取一个不存在的文件
 `ChatModelAgentMiddleware` 是 Agent 的中间件接口：
 
 ```go
-type ChatModelAgentMiddleware interface {
-    // BeforeAgent is called before each agent run, allowing modification of
-    // the agent's instruction and tools configuration.
-    BeforeAgent(ctx context.Context, runCtx *ChatModelAgentContext) (context.Context, *ChatModelAgentContext, error)
+type TypedChatModelAgentMiddleware[M MessageType] interface {
+	// BeforeAgent is called before each agent run, allowing modification of
+	// the agent's instruction and tools configuration.
+	BeforeAgent(ctx context.Context, runCtx *ChatModelAgentContext) (context.Context, *ChatModelAgentContext, error)
 
-    // BeforeModelRewriteState is called before each model invocation.
-    // The returned state is persisted to the agent's internal state and passed to the model.
-    BeforeModelRewriteState(ctx context.Context, state *ChatModelAgentState, mc *ModelContext) (context.Context, *ChatModelAgentState, error)
+	// AfterAgent is called after the agent run reaches a successful terminal state.
+	// Successful terminal states are: final answer (model response with no tool calls),
+	// and return-directly tool result.
+	AfterAgent(ctx context.Context, state *TypedChatModelAgentState[M]) (context.Context, error)
 
-    // AfterModelRewriteState is called after each model invocation.
-    // The input state includes the model's response as the last message.
-    AfterModelRewriteState(ctx context.Context, state *ChatModelAgentState, mc *ModelContext) (context.Context, *ChatModelAgentState, error)
+	// BeforeModelRewriteState is called before each model invocation.
+	// The returned state is persisted to the agent's internal state and passed to the model.
+	// The returned context is propagated to the model call and subsequent handlers.
+	BeforeModelRewriteState(ctx context.Context, state *TypedChatModelAgentState[M], mc *TypedModelContext[M]) (context.Context, *TypedChatModelAgentState[M], error)
 
-    // WrapInvokableToolCall wraps a tool's synchronous execution with custom behavior.
-    // This method is only called for tools that implement InvokableTool.
-    WrapInvokableToolCall(ctx context.Context, endpoint InvokableToolCallEndpoint, tCtx *ToolContext) (InvokableToolCallEndpoint, error)
+	// AfterModelRewriteState is called after each model invocation.
+	// The input state includes the model's response as the last message.
+	// The returned state is persisted to the agent's internal state.
+	AfterModelRewriteState(ctx context.Context, state *TypedChatModelAgentState[M], mc *TypedModelContext[M]) (context.Context, *TypedChatModelAgentState[M], error)
 
-    // WrapStreamableToolCall wraps a tool's streaming execution with custom behavior.
-    // This method is only called for tools that implement StreamableTool.
-    WrapStreamableToolCall(ctx context.Context, endpoint StreamableToolCallEndpoint, tCtx *ToolContext) (StreamableToolCallEndpoint, error)
+	// WrapInvokableToolCall wraps a tool's synchronous execution with custom behavior.
+	// Return the input endpoint unchanged and nil error if no wrapping is needed.
+	WrapInvokableToolCall(ctx context.Context, endpoint InvokableToolCallEndpoint, tCtx *ToolContext) (InvokableToolCallEndpoint, error)
 
-    // WrapEnhancedInvokableToolCall wraps an enhanced tool's synchronous execution.
-    // This method is only called for tools that implement EnhancedInvokableTool.
-    WrapEnhancedInvokableToolCall(ctx context.Context, endpoint EnhancedInvokableToolCallEndpoint, tCtx *ToolContext) (EnhancedInvokableToolCallEndpoint, error)
+	// WrapStreamableToolCall wraps a tool's streaming execution with custom behavior.
+	// Return the input endpoint unchanged and nil error if no wrapping is needed.
+	WrapStreamableToolCall(ctx context.Context, endpoint StreamableToolCallEndpoint, tCtx *ToolContext) (StreamableToolCallEndpoint, error)
 
-    // WrapEnhancedStreamableToolCall wraps an enhanced tool's streaming execution.
-    // This method is only called for tools that implement EnhancedStreamableTool.
-    WrapEnhancedStreamableToolCall(ctx context.Context, endpoint EnhancedStreamableToolCallEndpoint, tCtx *ToolContext) (EnhancedStreamableToolCallEndpoint, error)
+	// WrapEnhancedInvokableToolCall wraps an enhanced tool's synchronous execution with custom behavior.
+	// Return the input endpoint unchanged and nil error if no wrapping is needed.
+	WrapEnhancedInvokableToolCall(ctx context.Context, endpoint EnhancedInvokableToolCallEndpoint, tCtx *ToolContext) (EnhancedInvokableToolCallEndpoint, error)
 
-    // WrapModel wraps a chat model with custom behavior.
-    // This method is called at request time when the model is about to be invoked.
-    WrapModel(ctx context.Context, m model.BaseChatModel, mc *ModelContext) (model.BaseChatModel, error)
+	// WrapEnhancedStreamableToolCall wraps an enhanced tool's streaming execution with custom behavior.
+	// Return the input endpoint unchanged and nil error if no wrapping is needed.
+	WrapEnhancedStreamableToolCall(ctx context.Context, endpoint EnhancedStreamableToolCallEndpoint, tCtx *ToolContext) (EnhancedStreamableToolCallEndpoint, error)
+
+	// WrapModel wraps a chat model with custom behavior around the actual model call.
+	// Return the input model unchanged and nil error if no wrapping is needed.
+	WrapModel(ctx context.Context, m model.BaseModel[M], mc *TypedModelContext[M]) (model.BaseModel[M], error)
 }
 ```
 

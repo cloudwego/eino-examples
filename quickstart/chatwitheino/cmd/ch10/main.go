@@ -81,7 +81,7 @@ func runTyped[M adk.MessageType](ctx context.Context) {
 		log.Fatalf("build agent: %v", err)
 	}
 
-	runner := adk.NewTypedRunner[M](adk.TypedRunnerConfig[M]{
+	runner := adk.NewTypedRunner(adk.TypedRunnerConfig[M]{
 		Agent:           agent,
 		EnableStreaming: true,
 		CheckPointStore: adkstore.NewInMemoryStore(),
@@ -497,7 +497,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		return nil, err
 	}
 
-	ragTool, err := rag.BuildTool[M](ctx, cm)
+	ragTool, err := rag.BuildTool(ctx, cm)
 	if err != nil {
 		return nil, fmt.Errorf("build rag tool: %w", err)
 	}
@@ -522,7 +522,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		},
 	}
 	helpers.ApplyMessageModelRetry(cfg)
-	return deep.NewTyped[M](ctx, cfg)
+	return deep.NewTyped(ctx, cfg)
 }
 
 // --- Middlewares ---

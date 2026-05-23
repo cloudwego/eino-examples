@@ -261,7 +261,7 @@ if cozeloopApiToken != "" && cozeloopWorkspaceID != "" {
 }
 ```
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch06/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch06/main.go)）：
+关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch06/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch06/main.go)）：
 
 ```go
 // 设置 CozeLoop 追踪

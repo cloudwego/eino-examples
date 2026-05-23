@@ -47,7 +47,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		return nil, err
 	}
 
-	ragTool, err := rag.BuildTool[M](ctx, cm)
+	ragTool, err := rag.BuildTool(ctx, cm)
 	if err != nil {
 		return nil, fmt.Errorf("build rag tool: %w", err)
 	}
@@ -61,7 +61,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		if sbErr != nil {
 			return nil, sbErr
 		}
-		skillMiddleware, smErr := skill.NewTyped[M](ctx, &skill.TypedConfig[M]{
+		skillMiddleware, smErr := skill.NewTyped(ctx, &skill.TypedConfig[M]{
 			Backend: skillBackend,
 		})
 		if smErr != nil {
@@ -86,7 +86,7 @@ func buildAgentTyped[M adk.MessageType](ctx context.Context) (adk.TypedResumable
 		},
 	}
 	helpers.ApplyMessageModelRetry(cfg)
-	return deep.NewTyped[M](ctx, cfg)
+	return deep.NewTyped(ctx, cfg)
 }
 
 func resolveSkillsDir() (string, bool) {

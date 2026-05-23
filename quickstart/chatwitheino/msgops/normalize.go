@@ -17,6 +17,8 @@
 package msgops
 
 import (
+	"maps"
+
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
 )
@@ -91,9 +93,7 @@ func normalizeAgenticContentBlock(block *schema.ContentBlock) *schema.ContentBlo
 
 func normalizeAgenticBlockExtra(blockType schema.ContentBlockType, extra map[string]any) map[string]any {
 	out := make(map[string]any, len(extra)+2)
-	for k, v := range extra {
-		out[k] = v
-	}
+	maps.Copy(out, extra)
 
 	if needsCompletedStatus(blockType) {
 		out[arkItemStatusKey] = itemStatusCompleted
@@ -121,8 +121,6 @@ func cloneMap(in map[string]any) map[string]any {
 		return nil
 	}
 	out := make(map[string]any, len(in))
-	for k, v := range in {
-		out[k] = v
-	}
+	maps.Copy(out, in)
 	return out
 }
