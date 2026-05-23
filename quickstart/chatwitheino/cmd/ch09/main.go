@@ -425,7 +425,7 @@ func handleInterrupt[M adk.MessageType](ctx context.Context, runner *adk.TypedRu
 
 		if resumeResult.InterruptInfo != nil {
 			return handleInterrupt(ctx, runner, checkPointID, resumeResult.InterruptInfo, reader)
-		}	
+		}
 
 		return resumeResult.AssistantText, nil
 	}
