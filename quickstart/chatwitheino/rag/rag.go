@@ -48,6 +48,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/compose"
@@ -55,6 +56,7 @@ import (
 
 	"github.com/cloudwego/eino-examples/adk/common/tool/graphtool"
 	"github.com/cloudwego/eino-examples/compose/batch/batch"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 )
 
 // Input is the tool call argument struct. Its JSON tags are used by utils.InferTool
@@ -104,7 +106,7 @@ type synthIn struct {
 // BuildTool constructs the answer_from_document tool backed by the RAG workflow.
 // It uses graphtool.NewInvokableGraphTool, which compiles the workflow per invocation
 // and supports interrupt/resume via a built-in checkpoint store.
-func BuildTool(ctx context.Context, cm model.BaseChatModel) (tool.BaseTool, error) {
+func BuildTool[M adk.MessageType](ctx context.Context, cm model.BaseModel[M]) (tool.BaseTool, error) {
 	wf := buildWorkflow(cm)
 	return graphtool.NewInvokableGraphTool[Input, Output](
 		wf,
@@ -117,7 +119,7 @@ func BuildTool(ctx context.Context, cm model.BaseChatModel) (tool.BaseTool, erro
 
 // buildWorkflow constructs the RAG compose.Workflow (uncompiled).
 // graphtool.NewInvokableGraphTool compiles it per invocation.
-func buildWorkflow(cm model.BaseChatModel) *compose.Workflow[Input, Output] {
+func buildWorkflow[M adk.MessageType](cm model.BaseModel[M]) *compose.Workflow[Input, Output] {
 	scoreWF := newScoreWorkflow(cm)
 	scorer := batch.NewBatchNode(&batch.NodeConfig[scoreTask, scoredChunk]{
 		Name:           "ChunkScorer",
@@ -219,7 +221,7 @@ func buildWorkflow(cm model.BaseChatModel) *compose.Workflow[Input, Output] {
 
 // newScoreWorkflow builds the single-node inner workflow used by each BatchNode task.
 // It is intentionally trivial: BatchNode provides the parallelism, not the inner graph.
-func newScoreWorkflow(cm model.BaseChatModel) *compose.Workflow[scoreTask, scoredChunk] {
+func newScoreWorkflow[M adk.MessageType](cm model.BaseModel[M]) *compose.Workflow[scoreTask, scoredChunk] {
 	wf := compose.NewWorkflow[scoreTask, scoredChunk]()
 	wf.AddLambdaNode("score_chunk", compose.InvokableLambda(
 		func(ctx context.Context, t scoreTask) (scoredChunk, error) {
@@ -233,7 +235,7 @@ func newScoreWorkflow(cm model.BaseChatModel) *compose.Workflow[scoreTask, score
 // scoreOneChunk asks the model to rate the relevance of a single chunk (0–10)
 // and extract the most relevant excerpt. Parse errors are treated as score 0
 // so a bad JSON response never aborts the pipeline.
-func scoreOneChunk(ctx context.Context, cm model.BaseChatModel, t scoreTask) (scoredChunk, error) {
+func scoreOneChunk[M adk.MessageType](ctx context.Context, cm model.BaseModel[M], t scoreTask) (scoredChunk, error) {
 	prompt := fmt.Sprintf(`Rate how relevant the following text chunk is to the question.
 
 Question: %s
@@ -247,13 +249,13 @@ Reply with JSON only — no explanation, no markdown fences:
 Score guide: 0=completely irrelevant, 3=tangentially related, 7=clearly relevant, 10=directly answers the question.`,
 		t.Question, t.Text)
 
-	resp, err := cm.Generate(ctx, []*schema.Message{schema.UserMessage(prompt)})
+	resp, err := cm.Generate(ctx, []M{msgops.NewUser[M](prompt)})
 	if err != nil {
 		// treat model error as irrelevant rather than aborting the batch
 		return scoredChunk{Text: t.Text, Score: 0}, nil
 	}
 
-	content := strings.TrimSpace(resp.Content)
+	content := strings.TrimSpace(msgops.Text(resp))
 	// strip optional markdown code block wrapper
 	content = strings.TrimPrefix(content, "```json")
 	content = strings.TrimPrefix(content, "```")
@@ -271,7 +273,7 @@ Score guide: 0=completely irrelevant, 3=tangentially related, 7=clearly relevant
 }
 
 // synthesize builds a prompt from the top-k chunks and generates a cited answer.
-func synthesize(ctx context.Context, cm model.BaseChatModel, in synthIn) (Output, error) {
+func synthesize[M adk.MessageType](ctx context.Context, cm model.BaseModel[M], in synthIn) (Output, error) {
 	var sb strings.Builder
 	sb.WriteString("Answer the following question using only the provided document excerpts.\n\n")
 	sb.WriteString("Question: ")
@@ -289,11 +291,11 @@ func synthesize(ctx context.Context, cm model.BaseChatModel, in synthIn) (Output
 	}
 	sb.WriteString("Provide a clear, concise answer. Cite excerpt numbers like [1] when referencing sources.")
 
-	resp, err := cm.Generate(ctx, []*schema.Message{schema.UserMessage(sb.String())})
+	resp, err := cm.Generate(ctx, []M{msgops.NewUser[M](sb.String())})
 	if err != nil {
 		return Output{}, fmt.Errorf("synthesize: %w", err)
 	}
-	return Output{Answer: resp.Content, Sources: sources}, nil
+	return Output{Answer: msgops.Text(resp), Sources: sources}, nil
 }
 
 // splitIntoChunks splits text into chunks of at most chunkSize characters,

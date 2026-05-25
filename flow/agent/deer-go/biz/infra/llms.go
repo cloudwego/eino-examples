@@ -21,7 +21,7 @@ import (
 
 	"github.com/cloudwego/eino-ext/components/model/openai"
 	openai3 "github.com/cloudwego/eino-ext/libs/acl/openai"
-	"github.com/getkin/kin-openapi/openapi3gen"
+	"github.com/eino-contrib/jsonschema"
 
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
@@ -39,7 +39,7 @@ func InitModel() {
 		Model:   conf.Config.Model.DefaultModel,
 	}
 	ChatModel, _ = openai.NewChatModel(context.Background(), config)
-	planSchema, _ := openapi3gen.NewSchemaRefForValue(&model.Plan{}, nil)
+	planSchema := jsonschema.Reflect(&model.Plan{})
 
 	planconfig := &openai.ChatModelConfig{
 		BaseURL: conf.Config.Model.BaseURL,
@@ -48,9 +48,9 @@ func InitModel() {
 		ResponseFormat: &openai3.ChatCompletionResponseFormat{
 			Type: openai3.ChatCompletionResponseFormatTypeJSONSchema,
 			JSONSchema: &openai3.ChatCompletionResponseFormatJSONSchema{
-				Name:   "plan",
-				Strict: false,
-				Schema: planSchema.Value,
+				Name:       "plan",
+				Strict:     false,
+				JSONSchema: planSchema,
 			},
 		},
 	}

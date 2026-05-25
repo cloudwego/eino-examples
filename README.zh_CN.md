@@ -18,9 +18,14 @@
 | [adk/intro/workflow](./adk/intro/workflow) | Workflow Agents | Loop、Parallel、Sequential Agent 模式 |
 | [adk/intro/session](./adk/intro/session) | Session 管理 | 展示如何通过 Session 在多个 Agent 之间传递数据和状态 |
 | [adk/intro/transfer](./adk/intro/transfer) | Agent 转移 | 展示 ChatModelAgent 的 Transfer 能力，实现 Agent 间的任务转移 |
+| [adk/intro/agent_with_summarization](./adk/intro/agent_with_summarization) | 带摘要的 Agent | 展示如何为长对话 ChatModelAgent 添加对话摘要能力 |
 | [adk/intro/http-sse-service](./adk/intro/http-sse-service) | HTTP SSE 服务 | 展示如何将 ADK Runner 暴露为支持 Server-Sent Events 的 HTTP 服务 |
+| [adk/agentic](./adk/agentic) | Agentic 示例 | AgenticModel 示例，包括研究助手和 max-output-token 截断重试 |
+| [adk/agent/ralph-loop](./adk/agent/ralph-loop) | Ralph Loop | 自主迭代循环，结合文件系统工作状态和验证门控 |
+| [adk/cancel/graceful-exit](./adk/cancel/graceful-exit) | Graceful Exit | 展示如何安全取消和恢复 Agent |
+| [adk/middlewares](./adk/middlewares) | Middlewares | Skill 中间件和动态工具检索中间件示例 |
 | [adk/human-in-the-loop](./adk/human-in-the-loop) | 人机协作 | 8 个示例：审批、审核编辑、反馈循环、追问、Supervisor 等模式 |
-| [adk/multiagent](./adk/multiagent) | 多 Agent 协作 | Supervisor、Plan-Execute-Replan、Deep Agents、Excel Agent 示例 |
+| [adk/multiagent](./adk/multiagent) | 多 Agent 协作 | Supervisor、Plan-Execute-Replan、Deep Agents、Project Manager、Excel Agent 示例 |
 | [adk/common/tool/graphtool](./adk/common/tool/graphtool) | GraphTool | 将 Graph/Chain/Workflow 封装为 Agent 工具 |
 
 ### 🔗 Compose (编排)
@@ -28,7 +33,7 @@
 | 目录 | 名称 | 说明 |
 |------|------|------|
 | [compose/chain](./compose/chain) | Chain | 使用 compose.Chain 进行顺序编排，包含 Prompt + ChatModel |
-| [compose/graph](./compose/graph) | Graph | 图编排示例：状态图、工具调用 Agent、异步节点、中断机制 |
+| [compose/graph](./compose/graph) | Graph | 图编排示例：状态图、单次工具调用、异步节点、中断机制 |
 | [compose/workflow](./compose/workflow) | Workflow | 工作流示例：字段映射、纯数据流、纯控制流、静态值、流式处理 |
 | [compose/batch](./compose/batch) | BatchNode | 批量处理组件，支持并发控制和中断恢复 |
 
@@ -59,6 +64,7 @@
 | [quickstart/chat](./quickstart/chat) | Chat 快速开始 | 最基础的 LLM 对话示例，包含模板、生成、流式输出 |
 | [quickstart/eino_assistant](./quickstart/eino_assistant) | Eino 助手 | 完整的 RAG 应用示例，包含知识索引、Agent 服务、Web 界面 |
 | [quickstart/todoagent](./quickstart/todoagent) | Todo Agent | 简单的 Todo 管理 Agent 示例 |
+| [quickstart/chatwitheino](./quickstart/chatwitheino) | Chat with Eino | 11 章渐进式教程，从 ChatModel 到 Runner、Session、Tool、Middleware、Callback、Interrupt、GraphTool、Skill、A2UI 和 TurnLoop |
 
 ### 🛠️ DevOps (开发运维)
 

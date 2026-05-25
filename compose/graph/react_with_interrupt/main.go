@@ -112,7 +112,7 @@ func main() {
 
 func newChatTemplate(_ context.Context) prompt.ChatTemplate {
 	return prompt.FromMessages(schema.FString,
-		schema.SystemMessage("You are a helpful assistant. If the user asks about the booking, call the \"BookTicket\" tool to book ticket."),
+		schema.SystemMessage("You are a helpful assistant. When the user asks to book a ticket, you MUST call the \"BookTicket\" tool immediately. Use the user's name as passenger_name, the destination as location, and \"000-0000-0000\" as passenger_phone_number if not provided."),
 		schema.UserMessage("I'm {name}. Help me book a ticket to {location}"),
 	)
 }
@@ -147,7 +147,7 @@ func newChatModel(ctx context.Context) model.ToolCallingChatModel {
 type bookInput struct {
 	Location             string `json:"location"`
 	PassengerName        string `json:"passenger_name"`
-	PassengerPhoneNumber string `json:"passenger_phone_number"`
+	PassengerPhoneNumber string `json:"passenger_phone_number,omitempty"`
 }
 
 func newToolsNode(ctx context.Context) *compose.ToolsNode {

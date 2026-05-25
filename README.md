@@ -18,9 +18,14 @@ This repository contains examples and demonstrations for using the Eino framewor
 | [adk/intro/workflow](./adk/intro/workflow) | Workflow Agents | Loop, Parallel, and Sequential Agent patterns |
 | [adk/intro/session](./adk/intro/session) | Session Management | Passing data and state across Agents using Session |
 | [adk/intro/transfer](./adk/intro/transfer) | Agent Transfer | ChatModelAgent's Transfer capability for task handoff between Agents |
+| [adk/intro/agent_with_summarization](./adk/intro/agent_with_summarization) | Agent Summarization | Adds conversation summarization to long-running ChatModelAgent sessions |
 | [adk/intro/http-sse-service](./adk/intro/http-sse-service) | HTTP SSE Service | Exposing ADK Runner as an HTTP service with Server-Sent Events |
+| [adk/agentic](./adk/agentic) | Agentic Examples | AgenticModel examples, including research assistant and max-output-token retry |
+| [adk/agent/ralph-loop](./adk/agent/ralph-loop) | Ralph Loop | Autonomous iteration loop with filesystem-backed work state and verification gates |
+| [adk/cancel/graceful-exit](./adk/cancel/graceful-exit) | Graceful Exit | Cancel and resume nested Agents safely from terminal signals |
+| [adk/middlewares](./adk/middlewares) | Middlewares | Skill middleware and dynamic tool search middleware examples |
 | [adk/human-in-the-loop](./adk/human-in-the-loop) | Human-in-the-Loop | 8 examples: Approval, Review-Edit, Feedback Loop, Follow-up, Supervisor patterns |
-| [adk/multiagent](./adk/multiagent) | Multi-Agent | Supervisor, Plan-Execute-Replan, Deep Agents, Excel Agent examples |
+| [adk/multiagent](./adk/multiagent) | Multi-Agent | Supervisor, Plan-Execute-Replan, Deep Agents, Project Manager, Excel Agent examples |
 | [adk/common/tool/graphtool](./adk/common/tool/graphtool) | GraphTool | Wrapping Graph/Chain/Workflow as Agent tools |
 
 ### 🔗 Compose (Orchestration)
@@ -28,7 +33,7 @@ This repository contains examples and demonstrations for using the Eino framewor
 | Directory | Name | Description |
 |-----------|------|-------------|
 | [compose/chain](./compose/chain) | Chain | Sequential orchestration with compose.Chain, including Prompt + ChatModel |
-| [compose/graph](./compose/graph) | Graph | Graph orchestration examples: state graph, tool call agent, async nodes, interrupt |
+| [compose/graph](./compose/graph) | Graph | Graph orchestration examples: state graph, single tool call, async nodes, interrupt |
 | [compose/workflow](./compose/workflow) | Workflow | Workflow examples: field mapping, data-only, control-only, static values, streaming |
 | [compose/batch](./compose/batch) | BatchNode | Batch processing component with concurrency control and interrupt/resume support |
 
@@ -59,6 +64,7 @@ This repository contains examples and demonstrations for using the Eino framewor
 | [quickstart/chat](./quickstart/chat) | Chat QuickStart | Basic LLM chat example with template, generate, and streaming |
 | [quickstart/eino_assistant](./quickstart/eino_assistant) | Eino Assistant | Complete RAG application with knowledge indexing, Agent service, and Web UI |
 | [quickstart/todoagent](./quickstart/todoagent) | Todo Agent | Simple Todo management Agent example |
+| [quickstart/chatwitheino](./quickstart/chatwitheino) | Chat with Eino | 11-chapter progressive tutorial from ChatModel to Runner, Session, Tool, Middleware, Callback, Interrupt, GraphTool, Skill, A2UI, and TurnLoop |
 
 ### 🛠️ DevOps
 

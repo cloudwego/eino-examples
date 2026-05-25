@@ -42,7 +42,7 @@ func Init() error {
 	initOnce.Do(func() {
 		err = InitRedisIndex(context.Background(), &Config{
 			RedisAddr: "localhost:6379",
-			Dimension: 4096,
+			Dimension: 2048,
 		})
 	})
 	return err
