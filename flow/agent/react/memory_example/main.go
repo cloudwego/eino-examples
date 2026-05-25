@@ -48,7 +48,7 @@ func main() {
 		panic(err)
 	}
 
-	sys := "你是一个简洁的助手。请在多轮对话中保持上下文。当用户询问餐厅或菜品时，请使用工具查询。"
+	sys := "你是一个简洁的助手。请在多轮对话中保持上下文。当用户询问餐厅或菜品时，请使用工具查询。如果调用工具，禁止输出额外信息，只输出工具调用信息。"
 
 	restaurantTool := tools.GetRestaurantTool()
 	dishTool := tools.GetDishTool()
