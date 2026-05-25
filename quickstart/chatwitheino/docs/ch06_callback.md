@@ -208,26 +208,25 @@ Callback 在组件生命周期的 5 个关键时机触发。下表中 `Timing*` 
 
 ### 1. 实现自定义 Callback Handler
 
-完整实现 `Handler` 接口需要实现所有 5 个方法，较为繁琐。Eino 提供了 `callbacks.HandlerHelper` 帮助类来简化实现：
+完整实现 `Handler` 接口需要实现所有 5 个方法，Eino 提供了 `callbacks.NewHandlerBuilder` 类来实现：
 
 ```go
 import "github.com/cloudwego/eino/callbacks"
 
-// 使用 NewHandlerHelper 注册感兴趣的回调
-handler := callbacks.NewHandlerHelper().
-    OnStart(func(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
+// 使用 NewHandlerBuilder 注册感兴趣的回调
+handler := callbacks.NewHandlerBuilder().
+    OnStartFn(func(ctx context.Context, info *callbacks.RunInfo, input callbacks.CallbackInput) context.Context {
         log.Printf("[trace] %s/%s start", info.Component, info.Name)
         return ctx
     }).
-    OnEnd(func(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
+        OnEndFn(func(ctx context.Context, info *callbacks.RunInfo, output callbacks.CallbackOutput) context.Context {
         log.Printf("[trace] %s/%s end", info.Component, info.Name)
         return ctx
     }).
-    OnError(func(ctx context.Context, info *callbacks.RunInfo, err error) context.Context {
+    OnErrorFn(func(ctx context.Context, info *callbacks.RunInfo, err error) context.Context {
         log.Printf("[trace] %s/%s error: %v", info.Component, info.Name, err)
         return ctx
-    }).
-    Handler()
+    }).Build()
 
 // 注册为全局 Callback
 callbacks.AppendGlobalHandlers(handler)
