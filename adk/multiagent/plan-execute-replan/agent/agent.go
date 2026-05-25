@@ -32,7 +32,6 @@ import (
 )
 
 func NewPlanner(ctx context.Context) (adk.Agent, error) {
-
 	return planexecute.NewPlanner(ctx, &planexecute.PlannerConfig{
 		ToolCallingChatModel: model.NewChatModel(),
 	})
@@ -64,7 +63,7 @@ func formatInput(in []adk.Message) string {
 func formatExecutedSteps(in []planexecute.ExecutedStep) string {
 	var sb strings.Builder
 	for idx, m := range in {
-		sb.WriteString(fmt.Sprintf("## %d. Step: %v\n  Result: %v\n\n", idx+1, m.Step, m.Result))
+		_, _ = fmt.Fprintf(&sb, "## %d. Step: %v\n  Result: %v\n\n", idx+1, m.Step, m.Result)
 	}
 	return sb.String()
 }

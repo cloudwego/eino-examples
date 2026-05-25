@@ -87,11 +87,11 @@ func RegisterAnyInputGraph(ctx context.Context) {
 
 	_ = g.AddLambdaNode("node_1", compose.InvokableLambda(func(ctx context.Context, input map[string]any) (output string, err error) {
 		for k, v := range input {
-			switch v.(type) {
+			switch v := v.(type) {
 			case string:
-				output += k + ":" + v.(string) + ","
+				output += k + ":" + v + ","
 			case int:
-				output += k + ":" + fmt.Sprintf("%d", v.(int))
+				output += k + ":" + fmt.Sprintf("%d", v)
 			default:
 				return "", fmt.Errorf("unsupported type: %T", v)
 			}

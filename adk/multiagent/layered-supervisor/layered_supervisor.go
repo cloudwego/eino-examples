@@ -60,7 +60,9 @@ func main() {
 		prints.Event(event)
 
 		if event.Output != nil {
-			lastMessage, _, err = adk.GetMessage(event)
+			if msg, _, getErr := adk.GetMessage(event); getErr == nil {
+				lastMessage = msg
+			}
 		}
 	}
 

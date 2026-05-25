@@ -27,7 +27,7 @@ import (
 )
 
 func routerResearchTeam(ctx context.Context, input string, opts ...any) (output string, err error) {
-	//ilog.EventInfo(ctx, "routerResearchTeam", "input", input)
+	// ilog.EventInfo(ctx, "routerResearchTeam", "input", input)
 	err = compose.ProcessState[*model.State](ctx, func(_ context.Context, state *model.State) error {
 		defer func() {
 			output = state.Goto

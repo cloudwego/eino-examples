@@ -64,7 +64,7 @@ func main() {
 	// minimal: we will export graph via API when available and compile a mermaid diagram
 
 	// Create a new cached ark chat model.
-	//arkModel, err = NewCachedARKChatModel(ctx, config)
+	// arkModel, err = NewCachedARKChatModel(ctx, config)
 
 	config := &ark.ChatModelConfig{
 		APIKey: arkApiKey,
@@ -144,7 +144,7 @@ func main() {
 
 	opt := []agent.AgentOption{
 		agent.WithComposeOptions(compose.WithCallbacks(&LoggerCallback{})),
-		//react.WithChatModelOptions(ark.WithCache(cacheOption)),
+		// react.WithChatModelOptions(ark.WithCache(cacheOption)),
 	}
 
 	// Export graph and compile with mermaid (non-critical path)
@@ -222,9 +222,9 @@ func (cb *LoggerCallback) OnError(ctx context.Context, info *callbacks.RunInfo, 
 }
 
 func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callbacks.RunInfo,
-	output *schema.StreamReader[callbacks.CallbackOutput]) context.Context {
-
-	var graphInfoName = react.GraphName
+	output *schema.StreamReader[callbacks.CallbackOutput],
+) context.Context {
+	graphInfoName := react.GraphName
 
 	go func() {
 		defer func() {
@@ -257,13 +257,13 @@ func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callb
 				fmt.Printf("%s: %s\n", info.Name, string(s))
 			}
 		}
-
 	}()
 	return ctx
 }
 
 func (cb *LoggerCallback) OnStartWithStreamInput(ctx context.Context, info *callbacks.RunInfo,
-	input *schema.StreamReader[callbacks.CallbackInput]) context.Context {
+	input *schema.StreamReader[callbacks.CallbackInput],
+) context.Context {
 	defer input.Close()
 	return ctx
 }

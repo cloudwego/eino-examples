@@ -421,7 +421,6 @@ func runInterruptAndResume(ctx context.Context) {
 	// Step 1: First invocation - high priority docs will interrupt
 	fmt.Println("First invocation (will interrupt for high priority docs):")
 	results, err := runner.Invoke(ctx, docs, compose.WithCheckPointID(checkpointID))
-
 	if err != nil {
 		// Step 2: Extract interrupt info
 		info, infoOk := compose.ExtractInterruptInfo(err)

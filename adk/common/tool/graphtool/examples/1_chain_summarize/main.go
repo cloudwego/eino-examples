@@ -80,8 +80,6 @@ Create a summary in approximately {max_words} words:`))
 		AppendChatModel(cm).
 		AppendLambda(compose.InvokableLambda(func(ctx context.Context, msg *schema.Message) (map[string]any, error) {
 			keyPointsContent := msg.Content
-			keyPoints := parseKeyPoints(keyPointsContent)
-			ctx = context.WithValue(ctx, keyPointsCtxKey, keyPoints)
 			return map[string]any{
 				"key_points": keyPointsContent,
 				"max_words":  100,
@@ -102,14 +100,6 @@ Create a summary in approximately {max_words} words:`))
 		"summarize_document",
 		"Summarize a document by extracting key points and creating a coherent summary. Returns the summary, key points, and word count.",
 	)
-}
-
-type ctxKey string
-
-const keyPointsCtxKey ctxKey = "key_points_list"
-
-func parseKeyPoints(content string) []string {
-	return []string{content}
 }
 
 func countWords(s string) int {

@@ -44,7 +44,6 @@ Focus on delivering accurate and complete results.`,
 }
 
 func NewCritiqueAgent() adk.Agent {
-
 	exitAndSummarizeTool, err := utils.InferTool("exit_and_summarize", "exit from the loop and provide a final summary response",
 		func(ctx context.Context, req *exitAndSummarize) (string, error) {
 			_ = adk.SendToolGenAction(ctx, "exit_and_summarize", adk.NewBreakLoopAction("critique_agent"))

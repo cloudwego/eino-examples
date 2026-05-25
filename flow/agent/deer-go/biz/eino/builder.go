@@ -26,8 +26,8 @@ import (
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/biz/model"
 )
 
-//type I = string
-//type O = string
+// type I = string
+// type O = string
 
 // 子图流转函数，由上一个子图决定接下来流转到哪个agent
 // 并将其name写入 state.Goto ，该函数读取 state.Goto 并将控制权交给对应agent

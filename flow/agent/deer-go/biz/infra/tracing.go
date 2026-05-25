@@ -95,7 +95,6 @@ func initHertzTracing(ctx context.Context, appKey, region string) (hertzconfig.O
 	)
 	tracer, cfg := hertztracing.NewServerTracer()
 	return tracer, cfg
-
 }
 
 func InitCozeLoopTracing() {

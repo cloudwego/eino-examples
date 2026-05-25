@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/cloudwego/eino/components/tool"
@@ -175,14 +174,4 @@ func FilePostProcess(ctx context.Context, baseTool tool.InvokableTool, toolRespo
 
 func EditFilePostProcess(ctx context.Context, baseTool tool.InvokableTool, toolResponse, toolArguments string) (string, error) {
 	return fmt.Sprintf("Write file: %s success!", toolResponse), nil
-}
-
-func isImage(uri string) bool {
-	ext := filepath.Ext(uri)
-	for _, e := range []string{".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff", ".heic"} {
-		if ext == e {
-			return true
-		}
-	}
-	return false
 }

@@ -44,7 +44,7 @@ func NewSimpleMemory(cfg SimpleMemoryConfig) *SimpleMemory {
 	if cfg.Dir == "" {
 		cfg.Dir = "/tmp/eino/memory"
 	}
-	if err := os.MkdirAll(cfg.Dir, 0755); err != nil {
+	if err := os.MkdirAll(cfg.Dir, 0o755); err != nil {
 		return nil
 	}
 
@@ -73,7 +73,7 @@ func (m *SimpleMemory) GetConversation(id string, createIfNotExist bool) *Conver
 	if !ok {
 		if _, err := os.Stat(filePath); os.IsNotExist(err) {
 			if createIfNotExist {
-				if err := os.WriteFile(filePath, []byte(""), 0644); err != nil {
+				if err := os.WriteFile(filePath, []byte(""), 0o644); err != nil {
 					return nil
 				}
 				m.conversations[id] = &Conversation{
@@ -198,7 +198,7 @@ func (c *Conversation) save(msg *schema.Message) {
 	str, _ := json.Marshal(msg)
 
 	// Append to file
-	f, err := os.OpenFile(c.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	f, err := os.OpenFile(c.filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return
 	}

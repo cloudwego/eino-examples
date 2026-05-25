@@ -81,7 +81,6 @@ type ToolAInput struct {
 }
 
 func toolAFn(ctx context.Context, in *ToolAInput) (string, error) {
-
 	adk.AddSessionValue(ctx, "user-name", in.Name)
 	return in.Name, nil
 }

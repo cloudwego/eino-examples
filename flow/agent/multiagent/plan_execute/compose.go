@@ -118,9 +118,7 @@ func NewMultiAgent(ctx context.Context, config *Config) (*PlanExecuteMultiAgent,
 	// 在大模型执行之前，向全局状态中保存上下文，并组装本次的上下文
 	modelPreHandle := func(systemPrompt string, isDeepSeek bool) compose.StatePreHandler[[]*schema.Message, *state] {
 		return func(ctx context.Context, input []*schema.Message, state *state) ([]*schema.Message, error) {
-			for _, msg := range input {
-				state.messages = append(state.messages, msg)
-			}
+			state.messages = append(state.messages, input...)
 
 			if isDeepSeek {
 				return append([]*schema.Message{schema.SystemMessage(systemPrompt)}, convertMessagesForDeepSeek(state.messages)...), nil
@@ -228,7 +226,8 @@ func (r *PlanExecuteMultiAgent) Generate(ctx context.Context, input []*schema.Me
 
 // Stream 以流式的方式调用多智能体.
 func (r *PlanExecuteMultiAgent) Stream(ctx context.Context, input []*schema.Message, opts ...agent.AgentOption) (
-	output *schema.StreamReader[*schema.Message], err error) {
+	output *schema.StreamReader[*schema.Message], err error,
+) {
 	res, err := r.runnable.Stream(ctx, input, agent.GetComposeOptions(opts...)...)
 	if err != nil {
 		return nil, err
@@ -255,9 +254,10 @@ func genToolInfos(ctx context.Context, config compose.ToolsNodeConfig) ([]*schem
 func convertMessagesForDeepSeek(messages []*schema.Message) (converted []*schema.Message) {
 	converted = make([]*schema.Message, 0, len(messages)*2)
 	for _, message := range messages {
-		if message.Role == schema.Tool { // 有 DeepSeek 服务商如火山引擎，目前不支持传入 ToolMessage
+		switch message.Role {
+		case schema.Tool: // 有 DeepSeek 服务商如火山引擎，目前不支持传入 ToolMessage
 			converted = append(converted, schema.AssistantMessage(message.Content, nil))
-		} else if message.Role == schema.Assistant {
+		case schema.Assistant:
 			if len(message.ToolCalls) == 0 {
 				if len(message.Content) > 0 {
 					converted = append(converted, message)
@@ -270,7 +270,7 @@ func convertMessagesForDeepSeek(messages []*schema.Message) (converted []*schema
 					converted = append(converted, schema.AssistantMessage(fmt.Sprintf("call %s with %s, got response:", toolCall.Function.Name, toolCall.Function.Arguments), nil))
 				}
 			}
-		} else {
+		default:
 			converted = append(converted, message)
 		}
 	}
