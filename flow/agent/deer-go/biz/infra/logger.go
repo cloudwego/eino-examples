@@ -151,7 +151,8 @@ func (cb *LoggerCallback) OnError(ctx context.Context, info *callbacks.RunInfo, 
 }
 
 func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callbacks.RunInfo,
-	output *schema.StreamReader[callbacks.CallbackOutput]) context.Context {
+	output *schema.StreamReader[callbacks.CallbackOutput],
+) context.Context {
 	msgID := util.RandStr(20)
 	go func() {
 		defer output.Close() // remember to close the stream in defer
@@ -185,13 +186,13 @@ func (cb *LoggerCallback) OnEndWithStreamOutput(ctx context.Context, info *callb
 				// ilog.EventInfo(ctx, "frame_type", "type", "unknown", "v", v)
 			}
 		}
-
 	}()
 	return ctx
 }
 
 func (cb *LoggerCallback) OnStartWithStreamInput(ctx context.Context, info *callbacks.RunInfo,
-	input *schema.StreamReader[callbacks.CallbackInput]) context.Context {
+	input *schema.StreamReader[callbacks.CallbackInput],
+) context.Context {
 	defer input.Close()
 	return ctx
 }

@@ -1,0 +1,6 @@
+[2024-05-20 10:00:00] INFO: Service started.
+[2024-05-20 10:01:23] WARNING: High memory usage detected.
+[2024-05-20 10:02:15] ERROR: Database connection failed.
+[2024-05-20 10:03:00] INFO: Retry connection.
+[2024-05-20 10:03:05] ERROR: Connection timed out.
+[2024-05-20 10:05:00] INFO: Service stopped.

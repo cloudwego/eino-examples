@@ -39,8 +39,8 @@ func (l *LocalOperator) ReadFile(ctx context.Context, path string) (string, erro
 	return string(b), nil
 }
 
-func (l *LocalOperator) WriteFile(ctx context.Context, path string, content string) error {
-	return os.WriteFile(path, []byte(content), 0666)
+func (l *LocalOperator) WriteFile(ctx context.Context, path, content string) error {
+	return os.WriteFile(path, []byte(content), 0o666)
 }
 
 func (l *LocalOperator) IsDirectory(ctx context.Context, path string) (bool, error) {

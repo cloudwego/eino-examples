@@ -78,7 +78,9 @@ Today is 2025-09-09.`
 		prints.Event(event)
 
 		if event.Output != nil {
-			lastMessage, _, err = adk.GetMessage(event)
+			if msg, _, getErr := adk.GetMessage(event); getErr == nil {
+				lastMessage = msg
+			}
 		}
 	}
 

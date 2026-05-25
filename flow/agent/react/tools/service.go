@@ -59,7 +59,6 @@ func (ft *fakeService) QueryRestaurants(ctx context.Context, in *QueryRestaurant
 
 	res := make([]Restaurant, 0, len(rests))
 	for _, rest := range rests {
-
 		res = append(res, Restaurant{
 			ID:    rest.ID,
 			Name:  rest.Name,
@@ -80,12 +79,7 @@ func (ft *fakeService) QueryDishes(ctx context.Context, in *QueryDishesParam) (r
 
 	res = make([]Dish, 0, len(dishes))
 	for _, dish := range dishes {
-		res = append(res, Dish{
-			Name:  dish.Name,
-			Desc:  dish.Desc,
-			Price: dish.Price,
-			Score: dish.Score,
-		})
+		res = append(res, Dish(dish))
 	}
 
 	return res, nil

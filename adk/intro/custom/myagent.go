@@ -24,8 +24,7 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-type MyAgent struct {
-}
+type MyAgent struct{}
 
 func (m *MyAgent) Name(ctx context.Context) string {
 	return "MyAgent"

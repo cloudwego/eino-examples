@@ -33,9 +33,8 @@ import (
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 )
 
-var (
-	plannerPromptTemplate = prompt.FromMessages(schema.Jinja2,
-		schema.SystemMessage(`You are an expert planner specializing in Excel data processing tasks. Your goal is to understand user requirements and break them down into a clear, step-by-step plan.
+var plannerPromptTemplate = prompt.FromMessages(schema.Jinja2,
+	schema.SystemMessage(`You are an expert planner specializing in Excel data processing tasks. Your goal is to understand user requirements and break them down into a clear, step-by-step plan.
 
 **1. Understanding the Goal:**
 - Carefully analyze the user's request to determine the ultimate objective.
@@ -72,13 +71,12 @@ User Request: "Please calculate the average sales for each product category in t
 - Ensure that the plan is logical and achievable.
 - The final step should always be to generate a report or provide the final result.
 `),
-		schema.UserMessage(`
+	schema.UserMessage(`
 User Query: {{ user_query }}
 Current Time: {{ current_time }}
 File Preview (If file has xlsx extension, the preview will provide the specific contents of the first 20 lines, otherwise only the file path will be provided):
 {{ file_preview }}
 `),
-	)
 )
 
 func NewPlanner(ctx context.Context, op commandline.Operator) (adk.Agent, error) {

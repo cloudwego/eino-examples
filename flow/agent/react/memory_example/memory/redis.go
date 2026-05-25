@@ -55,7 +55,7 @@ func (s *RedisStore) Read(ctx context.Context, sessionID string) ([]*schema.Mess
 	return DecodeMessages(res)
 }
 
-func (s *RedisStore) Query(ctx context.Context, sessionID string, text string, limit int) ([]*schema.Message, error) {
+func (s *RedisStore) Query(ctx context.Context, sessionID, text string, limit int) ([]*schema.Message, error) {
 	msgs, err := s.Read(ctx, sessionID)
 	if err != nil {
 		return nil, err

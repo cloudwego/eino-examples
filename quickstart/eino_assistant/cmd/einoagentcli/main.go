@@ -117,9 +117,9 @@ func Init() error {
 	env.MustHasEnvs("ARK_CHAT_MODEL", "ARK_EMBEDDING_MODEL", "ARK_API_KEY")
 
 	ctx := context.Background()
-	os.MkdirAll("log", 0755)
+	os.MkdirAll("log", 0o755)
 	var f *os.File
-	f, err := os.OpenFile("log/eino.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	f, err := os.OpenFile("log/eino.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o666)
 	if err != nil {
 		return err
 	}
@@ -190,8 +190,7 @@ func Init() error {
 	return nil
 }
 
-func RunAgent(ctx context.Context, id string, msg string) (*schema.StreamReader[*schema.Message], error) {
-
+func RunAgent(ctx context.Context, id, msg string) (*schema.StreamReader[*schema.Message], error) {
 	runner, err := einoagent.BuildEinoAgent(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build agent graph: %w", err)

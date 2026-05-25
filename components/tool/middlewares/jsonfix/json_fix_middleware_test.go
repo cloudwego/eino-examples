@@ -109,6 +109,7 @@ type spyInvokable struct{}
 func (s *spyInvokable) Info(_ context.Context) (*schema.ToolInfo, error) {
 	return &schema.ToolInfo{Name: "spy", Desc: ""}, nil
 }
+
 func (s *spyInvokable) InvokableRun(_ context.Context, argumentsInJSON string, _ ...tool.Option) (string, error) {
 	return argumentsInJSON, nil
 }

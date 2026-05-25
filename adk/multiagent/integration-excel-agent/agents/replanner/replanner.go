@@ -34,9 +34,8 @@ import (
 	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/utils"
 )
 
-var (
-	replannerPromptTemplate = prompt.FromMessages(schema.Jinja2,
-		schema.SystemMessage(`You are an expert planner specializing in Excel data processing tasks. Your goal is to understand user requirements and break them down into a clear, step-by-step plan.
+var replannerPromptTemplate = prompt.FromMessages(schema.Jinja2,
+	schema.SystemMessage(`You are an expert planner specializing in Excel data processing tasks. Your goal is to understand user requirements and break them down into a clear, step-by-step plan.
 
 **1. Understanding the Goal:**
 - Carefully analyze the user's request to determine the ultimate objective.
@@ -77,7 +76,7 @@ User Request: "Please calculate the average sales for each product category in t
 - If the current plan is complete, call the 'submit_result' tool.
 - If the plan needs to be modified or extended, call the 'create_plan' tool with the new plan.
 `),
-		schema.UserMessage(`
+	schema.UserMessage(`
 User Query: {{ user_query }}
 Current Time: {{ current_time }}
 File Preview:
@@ -85,7 +84,6 @@ File Preview:
 Executed Steps: {{ executed_steps }}
 Remaining Steps: {{ remaining_steps }}
 `),
-	)
 )
 
 func NewReplanner(ctx context.Context, op commandline.Operator) (adk.Agent, error) {

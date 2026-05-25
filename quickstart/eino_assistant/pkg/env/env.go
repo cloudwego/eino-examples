@@ -28,7 +28,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("❌ [ERROR] Error loading .env file: %v", err)
 	}
-
 }
 
 func MustHasEnvs(envs ...string) {

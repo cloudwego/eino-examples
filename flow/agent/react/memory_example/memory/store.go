@@ -29,7 +29,7 @@ import (
 type MemoryStore interface {
 	Write(ctx context.Context, sessionID string, msgs []*schema.Message) error
 	Read(ctx context.Context, sessionID string) ([]*schema.Message, error)
-	Query(ctx context.Context, sessionID string, text string, limit int) ([]*schema.Message, error)
+	Query(ctx context.Context, sessionID, text string, limit int) ([]*schema.Message, error)
 }
 
 // Gob registrations for eino message types are provided by the framework; no manual registration needed here.

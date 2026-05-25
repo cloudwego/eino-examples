@@ -45,8 +45,10 @@ Your response should ALWAYS contain ONLY the poem, and nothing else.`,
 	la, err := adk.NewLoopAgent(ctx, &adk.LoopAgentConfig{
 		Name:        "Writer MultiAgent",
 		Description: "An agent that can write poems",
-		SubAgents: []adk.Agent{a,
-			&ReviewAgent{AgentName: "ReviewerAgent", AgentDesc: "An agent that can review poems"}},
+		SubAgents: []adk.Agent{
+			a,
+			&ReviewAgent{AgentName: "ReviewerAgent", AgentDesc: "An agent that can review poems"},
+		},
 	})
 	if err != nil {
 		log.Fatal(fmt.Errorf("failed to create loopagent: %w", err))

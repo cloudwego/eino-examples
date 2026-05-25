@@ -39,7 +39,7 @@ func WithDebugOutput(output *schema.Message) model.Option {
 
 // ChatModelDebugDecorator 给内部的 ChatModel 提供单次 Mock 输出的能力.
 type ChatModelDebugDecorator struct {
-	Model model.ChatModel
+	Model model.ToolCallingChatModel
 }
 
 func (c *ChatModelDebugDecorator) Generate(ctx context.Context, input []*schema.Message, opts ...model.Option) (*schema.Message, error) {
@@ -91,8 +91,12 @@ func (c *ChatModelDebugDecorator) Stream(ctx context.Context, input []*schema.Me
 	return c.Model.Stream(ctx, input, opts...)
 }
 
-func (c *ChatModelDebugDecorator) BindTools(tools []*schema.ToolInfo) error {
-	return c.Model.BindTools(tools)
+func (c *ChatModelDebugDecorator) WithTools(tools []*schema.ToolInfo) (model.ToolCallingChatModel, error) {
+	m, err := c.Model.WithTools(tools)
+	if err != nil {
+		return nil, err
+	}
+	return &ChatModelDebugDecorator{Model: m}, nil
 }
 
 // IsCallbacksEnabled 透出内部的 ChatModel 是否已埋入了回调切面.

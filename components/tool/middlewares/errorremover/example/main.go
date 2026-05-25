@@ -82,5 +82,4 @@ func main() {
 	for _, o := range outs {
 		fmt.Println("tool:", o.ToolName, "id:", o.ToolCallID, "content:", o.Content)
 	}
-
 }

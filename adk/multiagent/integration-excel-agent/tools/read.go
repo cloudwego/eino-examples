@@ -28,28 +28,26 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-var (
-	readFileToolInfo = &schema.ToolInfo{
-		Name: "read_file",
-		Desc: `This tool is used for reading file content, with parameters including the file path, starting line, and the number of lines to read. Content will be truncated if it is too long.  
+var readFileToolInfo = &schema.ToolInfo{
+	Name: "read_file",
+	Desc: `This tool is used for reading file content, with parameters including the file path, starting line, and the number of lines to read. Content will be truncated if it is too long.  
 For xlsx files, each sheet's information will be returned sequentially upon a single call. If multiple sheets' information is needed, only one call is required. The call will return the headers, merged cell information, and the first n_rows of data for each sheet.`,
-		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
-			"path": {
-				Type:     schema.String,
-				Desc:     "file absolute path",
-				Required: true,
-			},
-			"start_row": {
-				Type: schema.Integer,
-				Desc: "The starting line defaults to 1, meaning reading begins from the first line.",
-			},
-			"n_rows": {
-				Type: schema.Integer,
-				Desc: "Number of rows to read, -1 means reading from start_row to the end of the file, default is 20 rows. For xlsx, xls, and xlsm files, the default is 10 rows.",
-			},
-		}),
-	}
-)
+	ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"path": {
+			Type:     schema.String,
+			Desc:     "file absolute path",
+			Required: true,
+		},
+		"start_row": {
+			Type: schema.Integer,
+			Desc: "The starting line defaults to 1, meaning reading begins from the first line.",
+		},
+		"n_rows": {
+			Type: schema.Integer,
+			Desc: "Number of rows to read, -1 means reading from start_row to the end of the file, default is 20 rows. For xlsx, xls, and xlsm files, the default is 10 rows.",
+		},
+	}),
+}
 
 func NewReadFileTool(op commandline.Operator) tool.InvokableTool {
 	return &readFile{op: op}

@@ -166,8 +166,7 @@ func parseSheet(f *excelize.File, sheetName string) (*SingleFilePreview, error) 
 			Address: cell[0],
 			Value:   cell.GetCellValue(),
 		})
-		r := mcs[lrow]
-		r = append(r, []int{lcol, lrow, rcol, rrow})
+		mcs[lrow] = append(mcs[lrow], []int{lcol, lrow, rcol, rrow})
 	}
 
 	rowIter, err := f.Rows(sheetName)

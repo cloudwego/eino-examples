@@ -26,12 +26,12 @@ import (
 	"github.com/cloudwego/eino/components/model"
 	"github.com/cloudwego/eino/components/retriever"
 	"github.com/cloudwego/eino/flow/retriever/multiquery"
+	"github.com/cloudwego/eino/schema"
 
 	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func main() {
-
 	openAIAPIKey := os.Getenv("OPENAI_API_KEY")
 	openAIBaseURL := os.Getenv("OPENAI_BASE_URL")
 	openAIModelName := os.Getenv("OPENAI_MODEL_NAME")
@@ -54,15 +54,32 @@ func main() {
 		return
 	}
 
-	// rewrite query by llm
 	mqr, err := multiquery.NewRetriever(ctx, &multiquery.Config{
-		RewriteLLM:      llm,
-		RewriteTemplate: nil, // use default
-		QueryVar:        "",  // use default
-		LLMOutputParser: nil, // use default
-		MaxQueriesNum:   3,
-		OrigRetriever:   vk,
-		FusionFunc:      nil, // use default fusion, just deduplicate by doc id
+		RewriteHandler: func(ctx context.Context, query string) ([]string, error) {
+			out, err := llm.Generate(ctx, []*schema.Message{
+				schema.SystemMessage("Generate 3 rewritten search queries, one per line. Output plain text only."),
+				schema.UserMessage(query),
+			})
+			if err != nil {
+				return nil, err
+			}
+			if out == nil {
+				return nil, nil
+			}
+			parts := strings.Split(out.Content, "\n")
+			queries := make([]string, 0, len(parts))
+			for _, p := range parts {
+				p = strings.TrimSpace(p)
+				if p == "" {
+					continue
+				}
+				queries = append(queries, p)
+			}
+			return queries, nil
+		},
+		MaxQueriesNum: 3,
+		OrigRetriever: vk,
+		FusionFunc:    nil, // use default fusion, just deduplicate by doc id
 	})
 	if err != nil {
 		logs.Errorf("NewMultiQueryRetriever failed, err=%v", err)
@@ -100,8 +117,7 @@ func main() {
 	logs.Infof("Multi-Query Retrieve success, docs=%v", resp)
 }
 
-func newChatModel(ctx context.Context, baseURL, apiKey, modelName string) (model.ChatModel, error) {
-
+func newChatModel(ctx context.Context, baseURL, apiKey, modelName string) (model.ToolCallingChatModel, error) {
 	return openai.NewChatModel(ctx, &openai.ChatModelConfig{
 		BaseURL: baseURL,
 		APIKey:  apiKey,
@@ -110,7 +126,6 @@ func newChatModel(ctx context.Context, baseURL, apiKey, modelName string) (model
 }
 
 func newVikingDBRetriever(ctx context.Context, host, region, ak, sk string) (retriever.Retriever, error) {
-
 	baseTopK := 5
 	return volc_vikingdb.NewRetriever(ctx, &volc_vikingdb.RetrieverConfig{
 		Host:   host,

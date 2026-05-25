@@ -26,7 +26,6 @@ import (
 )
 
 func main() {
-
 	systemTpl := `你是情绪助手，你的任务是根据用户的输入，生成一段赞美的话，语句优美，韵律强。
 用户姓名：{user_name}
 用户年龄：{user_age}

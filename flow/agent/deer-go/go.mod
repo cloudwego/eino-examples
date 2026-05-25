@@ -6,14 +6,14 @@ toolchain go1.23.7
 
 require (
 	github.com/RanFeng/ilog v1.1.0
-	github.com/cloudwego/eino v0.7.29
+	github.com/cloudwego/eino v0.9.0-alpha.24
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.1.8
-	github.com/cloudwego/eino-ext/components/model/openai v0.1.8
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
+	github.com/cloudwego/eino-ext/components/model/openai v0.1.12
 	github.com/cloudwego/eino-ext/components/tool/mcp v0.0.0-20250514085234-473e80da5261
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.13
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.16
 	github.com/cloudwego/hertz v0.10.0
-	github.com/coze-dev/cozeloop-go v0.1.17
+	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/getkin/kin-openapi v0.118.0
 	github.com/hertz-contrib/cors v0.1.0
 	github.com/hertz-contrib/obs-opentelemetry/provider v0.3.0
@@ -27,8 +27,8 @@ require (
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/bytedance/gopkg v0.1.3 // indirect
-	github.com/bytedance/sonic v1.14.1 // indirect
-	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/bytedance/sonic v1.15.0 // indirect
+	github.com/bytedance/sonic/loader v0.5.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/opentelemetry v0.0.0-20250225080340-5935633151d3 // indirect
@@ -54,7 +54,7 @@ require (
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/meguminnnnnnnnn/go-openai v0.1.1 // indirect
+	github.com/meguminnnnnnnnn/go-openai v0.1.2 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect

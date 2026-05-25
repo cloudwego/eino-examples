@@ -27,10 +27,9 @@ import (
 	"github.com/cloudwego/eino/schema"
 )
 
-var (
-	bashToolInfo = &schema.ToolInfo{
-		Name: "bash",
-		Desc: `Run commands in a bash shell
+var bashToolInfo = &schema.ToolInfo{
+	Name: "bash",
+	Desc: `Run commands in a bash shell
 * When invoking this tool, the contents of the \"command\" parameter does NOT need to be XML-escaped.
 * You don't have access to the internet via this tool.
 * You do have access to a mirror of common linux and python packages via apt and pip.
@@ -38,15 +37,14 @@ var (
 * To inspect a particular line range of a file, e.g. lines 10-25, try 'sed -n 10,25p /path/to/the/file'.
 * Please avoid commands that may produce a very large amount of output.
 * Please run long lived commands in the background, e.g. 'sleep 10 &' or start a server in the background.`,
-		ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
-			"command": {
-				Type:     "string",
-				Desc:     "The command to execute",
-				Required: true,
-			},
-		}),
-	}
-)
+	ParamsOneOf: schema.NewParamsOneOfByParams(map[string]*schema.ParameterInfo{
+		"command": {
+			Type:     "string",
+			Desc:     "The command to execute",
+			Required: true,
+		},
+	}),
+}
 
 func NewBashTool(op commandline.Operator) tool.InvokableTool {
 	return &bashTool{op: op}

@@ -75,7 +75,8 @@ func init() {
 }
 
 func (g *InvokableGraphTool[I, O]) InvokableRun(ctx context.Context, input string,
-	opts ...tool.Option) (output string, err error) {
+	opts ...tool.Option,
+) (output string, err error) {
 	var (
 		checkpointStore *graphToolStore
 		inputParams     I
@@ -170,7 +171,8 @@ func (g *StreamableGraphTool[I, O]) Info(_ context.Context) (*schema.ToolInfo, e
 }
 
 func (g *StreamableGraphTool[I, O]) StreamableRun(ctx context.Context, input string,
-	opts ...tool.Option) (*schema.StreamReader[string], error) {
+	opts ...tool.Option,
+) (*schema.StreamReader[string], error) {
 	var (
 		checkpointStore *graphToolStore
 		inputParams     I
@@ -324,12 +326,12 @@ func NewInstance[T any]() T {
 		return reflect.MakeMap(typ).Interface().(T)
 	case reflect.Slice, reflect.Array:
 		return reflect.MakeSlice(typ, 0, 0).Interface().(T)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		typ = typ.Elem()
 		origin := reflect.New(typ)
 		inst := origin
 
-		for typ.Kind() == reflect.Ptr {
+		for typ.Kind() == reflect.Pointer {
 			typ = typ.Elem()
 			inst = inst.Elem()
 			inst.Set(reflect.New(typ))

@@ -83,7 +83,7 @@ func (g *GitCloneFileImpl) Invoke(ctx context.Context, req *GitCloneRequest) (re
 	repoDir = filepath.Join(g.config.BaseDir, repoDir)
 	repoPath := filepath.Join(repoDir, repoName)
 
-	if err := os.MkdirAll(g.config.BaseDir, 0755); err != nil {
+	if err := os.MkdirAll(g.config.BaseDir, 0o755); err != nil {
 		res.Error = fmt.Sprintf("Failed to create directory: %v", err)
 		return res, nil
 	}

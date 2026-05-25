@@ -56,7 +56,7 @@ func (s *InMemoryStore) Read(ctx context.Context, sessionID string) ([]*schema.M
 }
 
 // Query performs a simple substring search on message contents for the session.
-func (s *InMemoryStore) Query(ctx context.Context, sessionID string, text string, limit int) ([]*schema.Message, error) {
+func (s *InMemoryStore) Query(ctx context.Context, sessionID, text string, limit int) ([]*schema.Message, error) {
 	msgs, err := s.Read(ctx, sessionID)
 	if err != nil {
 		return nil, err
