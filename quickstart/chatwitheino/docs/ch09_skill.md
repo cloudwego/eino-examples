@@ -1,8 +1,8 @@
 ---
-title: "第九章：Skill（Console）"
+title: "第九章：Skill Middleware"
 ---
 
-本章目标：在第八章（RAG + Interrupt/Resume + Checkpoint）基础上，引入 `skill` 中间件，让 Agent 可以发现并加载一组可复用的技能文档（`SKILL.md`），并在需要时通过工具调用使用它们。
+本章目标：在第八章（RAG + Interrupt/Resume + Checkpoint）基础上，引入 `skill` 技能包，采用`skill middleware`注入和管理skills，让 Agent 可以发现并加载一组可复用的技能文档（`SKILL.md`），并在需要时通过工具调用使用它们。
 
 ## 代码位置
 
@@ -12,16 +12,11 @@ title: "第九章：Skill（Console）"
 ## 前置条件
 
 - 与第一章一致：需要配置一个可用的 ChatModel（OpenAI 或 Ark）
-- 准备好 `eino-ext` PR 提供的 skills（`eino-guide` / `eino-component` / `eino-compose` / `eino-agent`）
+- 准备好 `eino-ext` PR 提供的 skills文档（`eino-guide` / `eino-component` / `eino-compose` / `eino-agent`）
 
-为什么是这四个？
+`skill middleware` 支持各种skills的接入。本章仅以eino相关的四个skills作为示例，演示如何使用`skill middleware`接入skills。为什么是这四个？
 
-ChatWithEino 的定位是“帮用户学习 Eino 框架、并尝试用 AI 辅助写 Eino 代码”。这四个 skills 正好覆盖了这个目标所需的关键知识面：
-
-- `eino-guide`：学习入口与导航（从哪里开始、怎么快速跑起来）
-- `eino-component`：Component 接口与各类实现参考（Model/Embedding/Retriever/Tool/Callback 等）
-- `eino-compose`：编排与确定性工作流参考（Graph/Chain/Workflow 等）
-- `eino-agent`：ADK/Agent 相关参考（Agent、Runner、Middleware、Filesystem、Human-in-the-loop 等）
+ChatWithEino 的定位是“帮用户学习 Eino 框架、并尝试用 AI 辅助写 Eino 代码”。这四个 skills 文档正好覆盖了这个目标所需的关键知识面。
 
 skills 的来源可以是：
 
@@ -37,6 +32,8 @@ skills 的来源可以是：
 - **Tool** 更像“动作/能力”：读文件、跑 workflow、调用外部系统
 - **Skill** 更像“可复用的知识/指令包”：用一组 markdown（`SKILL.md` + `reference/*.md`）描述“如何做某类事”
 
+而`Skill middleware`就是负责把skills接入agent。注册skill middleware 后，Agent 才能通过 `skill` 工具按需读取某个 Skill。
+
 简单类比：
 
 - **Tool** = “能做什么”（函数/接口）
@@ -48,7 +45,7 @@ skills 的来源可以是：
 
 ### 1) 同步 eino-ext skills 到本地目录
 
-为了让 `skill` 中间件可以“发现”这些 skills，需要把它们放到一个统一目录下，并满足扫描约定：
+为了让 `skill middleware`可以“发现”这些 skills，需要把它们放到一个统一目录下，并满足扫描约定：
 
 - `EINO_EXT_SKILLS_DIR/<skillName>/SKILL.md`
 
@@ -68,7 +65,8 @@ go run ./scripts/sync_eino_ext_skills.go -src /path/to/eino-ext -dest ./skills/e
 ### 2) 启动 Chapter 9
 
 ```bash
-EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext go run ./cmd/ch09
+export EINO_EXT_SKILLS_DIR=/absolute/path/to/chatwitheino/skills/eino-ext
+go run ./cmd/ch09
 ```
 
 输出示例（节选）：
@@ -78,13 +76,13 @@ Skills dir: /.../skills/eino-ext
 Enter your message (empty line to exit):
 ```
 
-## 在 DeepAgent 中启用 Skill
+## 在 DeepAgent 中通过skill middleware使用skills
 
-本章的 “Skill 可被调用” 不是自动发生的，你需要在 Agent 构建时把 `skill` 中间件注册进去。核心就是三步：
+本章的 “Skill 可被调用” 不是自动发生的，你需要在 Agent 构建时把 `skill middleware` 注册进去。核心就是三步：
 
 1. 用本地 filesystem backend（本章用 `eino-ext/adk/backend/local`）提供文件读取/Glob 能力
 2. 用 `skill.NewBackendFromFilesystem` 把 `EINO_EXT_SKILLS_DIR` 变成一个 Skill Backend
-3. 用 `skill.NewMiddleware` 生成中间件，并把它塞进 DeepAgent 的 `Handlers`
+3. 用 `skill.NewTyped[M]` 生成泛型`skill middleware`，并把它塞进 DeepAgent 的 `Handlers`
 
 **关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch09/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)）：**
 
@@ -95,15 +93,15 @@ skillBackend, _ := skill.NewBackendFromFilesystem(ctx, &skill.BackendFromFilesys
     Backend: backend,
     BaseDir: skillsDir, // = $EINO_EXT_SKILLS_DIR
 })
-skillMiddleware, _ := skill.NewMiddleware(ctx, &skill.Config{
+skillMiddleware, _ := skill.NewTyped[M](ctx, &skill.TypedConfig[M]{
     Backend: skillBackend,
 })
 
-agent, _ := deep.New(ctx, &deep.Config{
+agent, _ := deep.NewTyped[M](ctx, &deep.TypedConfig[M]{
     ChatModel: cm,
     Backend: backend,
     StreamingShell: backend,
-    Handlers: []adk.ChatModelAgentMiddleware{
+    Handlers: []adk.TypedChatModelAgentMiddleware[M]{
         skillMiddleware,
         // ... 其他中间件，比如 approval/safeTool/retry 等
     },
@@ -133,5 +131,5 @@ Use the skill tool with skill="eino-guide" and tell me what the entry point is f
 - 当模型调用 skill 工具时，控制台会打印：
   - `[tool call] ...`
   - `[tool result] ...`（对结果做了截断展示）
-- 会话保存在 `SESSION_DIR`（默认 `./data/sessions`），支持恢复：
+- 会话默认保存在 `./data/sessions_agentic`，支持恢复：
   - `go run ./cmd/ch09 --session <id>`

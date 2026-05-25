@@ -158,7 +158,7 @@ agent, err := deep.New(ctx, &deep.Config{
     Name:           "Ch04ToolAgent",
     Description:    "ChatWithDoc agent with filesystem access via LocalBackend.",
     ChatModel:      cm,
-    Instruction:    instruction,
+    Instruction:    agentInstruction,
     Backend:        backend,        // 提供文件系统操作能力
     StreamingShell: backend,        // 提供命令执行能力
     MaxIteration:   50,
