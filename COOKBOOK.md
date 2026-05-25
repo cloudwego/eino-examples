@@ -48,6 +48,28 @@
 | [adk/multiagent/deep](https://github.com/cloudwego/eino-examples/tree/main/adk/multiagent/deep) | Deep Agents (Excel Agent) | 智能 Excel 助手，分步骤理解和处理 Excel 文件，支持 Python 代码执行 |
 | [adk/multiagent/integration-excel-agent](https://github.com/cloudwego/eino-examples/tree/main/adk/multiagent/integration-excel-agent) | Excel Agent (ADK 集成版) | ADK 集成版 Excel Agent，包含 Planner、Executor、Replanner、Reporter |
 
+### Agentic
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [adk/agentic/research_assistant](https://github.com/cloudwego/eino-examples/tree/main/adk/agentic/research_assistant) | Agentic Research Assistant | 使用 `AgenticModel` 和 `AgenticMessage` 构建研究助手，串联 server-side web_search、本地工具、filesystem middleware 和流式 ADK events |
+| [adk/agentic/retry_max_output_tokens](https://github.com/cloudwego/eino-examples/tree/main/adk/agentic/retry_max_output_tokens) | Retry Max Output Tokens | 演示模型因 `max_output_tokens` 截断时，如何通过 `ModelRetryConfig` 调大输出 token 预算并重试 |
+
+### Agent
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [adk/agent/ralph-loop](https://github.com/cloudwego/eino-examples/tree/main/adk/agent/ralph-loop) | Ralph Loop | 自主迭代模式：外部 `for` 循环配合 `Runner.Run` 实现单轮迭代，Agent 通过文件系统感知先前工作，验证门控检查 BUG 标记后才接受完成承诺 |
+
+### Cancel (取消)
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [adk/cancel/graceful-exit](https://github.com/cloudwego/eino-examples/tree/main/adk/cancel/graceful-exit) | Graceful Exit | 演示 Agent Cancel + Resume：捕获终端信号后以 `CancelAfterChatModel` + `WithRecursive` 模式取消嵌套 Agent，等待安全点保存 Checkpoint，然后恢复继续执行 |
+
+### Middlewares (中间件)
+| 目录 | 名称 | 说明 |
+|------|------|------|
+| [adk/middlewares/skill](https://github.com/cloudwego/eino-examples/tree/main/adk/middlewares/skill) | Skill 中间件 | 从文件系统加载 Agent 技能（如 log_analyzer），展示技能中间件的使用方式 |
+| [adk/middlewares/dynamictool/toolsearch](https://github.com/cloudwego/eino-examples/tree/main/adk/middlewares/dynamictool/toolsearch) | Tool Search 中间件 | 展示如何在大工具集合中动态检索并注入相关工具，减少 Agent 每轮暴露的工具数量 |
+
 ### GraphTool (图工具)
 | 目录 | 名称 | 说明 |
 |------|------|------|
@@ -98,6 +120,7 @@
 | 目录 | 名称 | 说明 |
 |------|------|------|
 | [flow/agent/react](https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react) | ReAct Agent | ReAct Agent 基础示例，餐厅推荐场景 |
+| [flow/agent/react/agentic](https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react/agentic) | Agentic ReAct Agent | 使用 `AgenticModel`、`AgenticMessage` 和 `AgenticToolsNode` 构建支持工具调用的 ReAct Agent |
 | [flow/agent/react/memory_example](https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react/memory_example) | 短期记忆 | ReAct Agent 的短期记忆实现，支持内存和 Redis 存储 |
 | [flow/agent/react/dynamic_option_example](https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react/dynamic_option_example) | 动态选项 | 运行时动态修改 Model Option，控制思考模式和工具选择 |
 | [flow/agent/react/unknown_tool_handler_example](https://github.com/cloudwego/eino-examples/tree/main/flow/agent/react/unknown_tool_handler_example) | 未知工具处理 | 处理模型幻觉产生的未知工具调用，提高 Agent 鲁棒性 |
@@ -164,6 +187,7 @@
 | [quickstart/chat](https://github.com/cloudwego/eino-examples/tree/main/quickstart/chat) | Chat 快速开始 | 最基础的 LLM 对话示例，包含模板、生成、流式输出 |
 | [quickstart/eino_assistant](https://github.com/cloudwego/eino-examples/tree/main/quickstart/eino_assistant) | Eino 助手 | 完整的 RAG 应用示例，包含知识索引、Agent 服务、Web 界面 |
 | [quickstart/todoagent](https://github.com/cloudwego/eino-examples/tree/main/quickstart/todoagent) | Todo Agent | 简单的 Todo 管理 Agent 示例 |
+| [quickstart/chatwitheino](https://github.com/cloudwego/eino-examples/tree/main/quickstart/chatwitheino) | Chat with Eino (教程) | 11 章渐进式教程，从 ChatModel → Runner → Session → Tool → Middleware → Callback → Interrupt → GraphTool → Skill → A2UI → TurnLoop，逐步构建完整 Agent 应用骨架 |
 
 ---
 

@@ -51,6 +51,7 @@ Error: rate limit exceeded (429)
 - **Middleware 可组合**：多个 Middleware 可以串联使用
 
 **简单类比：**
+
 - **Agent** = "业务逻辑"
 - **Middleware** = "AOP 切面"（日志、重试、错误处理等横切关注点）
 
@@ -134,6 +135,7 @@ type ChatModelAgentMiddleware interface {
 ```
 
 **设计理念：**
+
 - **装饰器模式**：每个 Middleware 包装原始调用，可以修改输入、输出或错误
 - **洋葱模型**：请求从外向内穿过 Middleware，响应从内向外返回
 - **可组合**：多个 Middleware 按顺序执行
@@ -175,6 +177,9 @@ func (m *safeToolMiddleware) WrapInvokableToolCall(
     return func(ctx context.Context, args string, opts ...tool.Option) (string, error) {
         result, err := endpoint(ctx, args, opts...)
         if err != nil {
+            if _, ok := compose.IsInterruptRerunError(err); ok {
+                return "", err
+            }
             // 将错误转换为字符串，而不是返回错误
             return fmt.Sprintf("[tool error] %v", err), nil
         }
@@ -221,6 +226,7 @@ agent, err := deep.New(ctx, &deep.Config{
 ```
 
 **重试策略：**
+
 - 指数退避：每次重试间隔递增
 - 可配置条件：通过 `IsRetryAble` 判断哪些错误可重试
 - 自动恢复：无需用户干预
@@ -297,16 +303,16 @@ agent, err := deep.New(ctx, &deep.Config{
         MaxRetries: 5,
         IsRetryAble: func(_ context.Context, err error) bool {
             return strings.Contains(err.Error(), "429") ||
-                strings.Contains(err.Error(), "Too Many Requests")
+                strings.Contains(err.Error(), "Too Many Requests") ||
+                strings.Contains(err.Error(), "qpm limit")
         },
     },
 })
 ```
 
-**注意**：`Handlers` 字段（在配置中）和 "Middleware"（在文档中讨论的概念）是同一回事——`Handlers` 是配置字段名，而 `ChatModelAgentMiddleware` 是接口名。
-```
+> **注意**：`Handlers` 字段（在配置中）和 "Middleware"（在文档中讨论的概念）是同一回事——`Handlers` 是配置字段名，而 `ChatModelAgentMiddleware` 是接口名。
 
-**关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch05/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch05/main.go)）：
+关键代码片段（**注意：这是简化后的代码片段，不能直接运行，完整代码请参考** [cmd/ch05/main.go](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch05/main.go)）：
 
 ```go
 // SafeToolMiddleware 捕获 Tool 错误并转换为字符串
@@ -399,11 +405,11 @@ agent, _ := deep.New(ctx, &deep.Config{
 
 **Eino 内置 Middleware：**
 
-| Middleware | 功能说明 |
-|------------|----------|
-| **reduction** | 工具输出缩减，当工具返回内容过长时自动截断并卸载到文件系统，防止上下文溢出 |
-| **summarization** | 对话历史自动摘要，当 token 数量超过阈值时自动生成摘要压缩历史 |
-| **skill** | 技能加载中间件，让 Agent 能够动态加载和执行预定义的技能 |
+| Middleware        | 功能说明                                                                   |
+| ----------------- | -------------------------------------------------------------------------- |
+| **reduction**     | 工具输出缩减，当工具返回内容过长时自动截断并卸载到文件系统，防止上下文溢出 |
+| **summarization** | 对话历史自动摘要，当 token 数量超过阈值时自动生成摘要压缩历史              |
+| **skill**         | 技能加载中间件，让 Agent 能够动态加载和执行预定义的技能                    |
 
 **Middleware 链示例：**
 
