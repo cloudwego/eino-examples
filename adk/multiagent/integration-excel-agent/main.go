@@ -77,13 +77,13 @@ func main() {
 	if env := os.Getenv("EXCEL_AGENT_INPUT_DIR"); env != "" {
 		inputFileDir = env
 	} else {
-		inputFileDir = filepath.Join(wd, "adk/multiagent/integration-excel-agent/playground/input")
+		inputFileDir = filepath.Join(wd, "playground/input")
 	}
 
 	if env := os.Getenv("EXCEL_AGENT_WORK_DIR"); env != "" {
 		workdir = filepath.Join(env, uuid)
 	} else {
-		workdir = filepath.Join(wd, "adk/multiagent/integration-excel-agent/playground", uuid)
+		workdir = filepath.Join(wd, "playground", uuid)
 	}
 
 	if err = os.Mkdir(workdir, 0o755); err != nil {

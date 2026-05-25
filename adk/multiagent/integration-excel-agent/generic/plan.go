@@ -28,6 +28,24 @@ type Step struct {
 	Desc  string `json:"desc"`
 }
 
+func (s *Step) UnmarshalJSON(data []byte) error {
+	type Alias struct {
+		Index       int    `json:"index"`
+		Desc        string `json:"desc"`
+		Instruction string `json:"instruction"`
+	}
+	alias := &Alias{}
+	if err := json.Unmarshal(data, alias); err != nil {
+		return err
+	}
+	s.Index = alias.Index
+	s.Desc = alias.Desc
+	if s.Desc == "" {
+		s.Desc = alias.Instruction
+	}
+	return nil
+}
+
 type Plan struct {
 	Steps []Step `json:"steps"`
 }
