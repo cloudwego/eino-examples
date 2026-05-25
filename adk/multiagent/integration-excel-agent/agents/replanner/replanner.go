@@ -56,13 +56,13 @@ User Request: "Please calculate the average sales for each product category in t
 {
   "steps": [
     {
-      "instruction": "Read the 'sales_data.xlsx' file into a pandas DataFrame."
+      "desc": "Read the 'sales_data.xlsx' file into a pandas DataFrame."
     },
     {
-      "instruction": "Group the DataFrame by 'Product Category' and calculate the mean of the 'Sales' column for each group."
+      "desc": "Group the DataFrame by 'Product Category' and calculate the mean of the 'Sales' column for each group."
     },
     {
-      "instruction": "Summarize the average sales for each product category and present the results in a table."
+      "desc": "Summarize the average sales for each product category and present the results in a table."
     }
   ]
 }
@@ -125,9 +125,12 @@ func replannerInputGen(ctx context.Context, in *planexecute.ExecutionContext) ([
 		return nil, fmt.Errorf("plan is not Plan type")
 	}
 
-	// remove the first step
-	plan.Steps = plan.Steps[1:]
-	planStr, err := sonic.MarshalString(plan)
+	remainingSteps := plan.Steps
+	if len(remainingSteps) > 0 {
+		remainingSteps = remainingSteps[1:]
+	}
+	remainingPlan := &generic.Plan{Steps: remainingSteps}
+	planStr, err := sonic.MarshalString(remainingPlan)
 	if err != nil {
 		return nil, err
 	}
