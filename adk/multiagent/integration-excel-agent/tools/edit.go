@@ -19,10 +19,13 @@ package tools
 import (
 	"context"
 	"encoding/json"
+	"path/filepath"
 
 	"github.com/cloudwego/eino-ext/components/tool/commandline"
 	"github.com/cloudwego/eino/components/tool"
 	"github.com/cloudwego/eino/schema"
+
+	"github.com/cloudwego/eino-examples/adk/multiagent/integration-excel-agent/params"
 )
 
 var editFileToolInfo = &schema.ToolInfo{
@@ -73,6 +76,12 @@ func (e *editFile) InvokableRun(ctx context.Context, argumentsInJSON string, opt
 	}
 	if len(input.Path) == 0 {
 		return "path can not be empty", nil
+	}
+	if !filepath.IsAbs(input.Path) {
+		wd, ok := params.GetTypedContextParams[string](ctx, params.WorkDirSessionKey)
+		if ok {
+			input.Path = filepath.Join(wd, input.Path)
+		}
 	}
 	o := tool.GetImplSpecificOptions(&options{op: e.op}, opts...)
 	err = o.op.WriteFile(ctx, input.Path, input.Content)
