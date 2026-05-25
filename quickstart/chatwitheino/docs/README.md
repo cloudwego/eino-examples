@@ -37,7 +37,9 @@ export OPENAI_MODEL="gpt-4.1-mini"
 go run ./cmd/ch01 -- "用一句话解释 Eino 的 Component 设计解决了什么问题？"
 ```
 
-### 2) 最终 Web（A2UI）
+示例默认使用 `*schema.AgenticMessage`，可以直接运行。
+
+### 2) Web 版（A2UI + TurnLoop）
 
 ```bash
 go run .
@@ -59,11 +61,15 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 - `./skills/` 目录默认被 `.gitignore` 忽略，避免把同步出来的 skills 误提交
 - 如需验证 Skill 是否生效，可运行 [第九章示例](https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/cmd/ch09/main.go)
 
+## AgenticMessage
+
+本 Quickstart 的所有章节默认使用 `*schema.AgenticMessage`。会话默认保存在 `./data/sessions_agentic`；如需调整目录，可以设置 `SESSION_DIR_AGENTIC`。
+
 ## 学习路线（章节导航）
 
 | 章节 | 主题 | 入口 |
 |------|------|------|
-| 第一章 | ChatModel 与 Message（Console） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch01_chatmodel_agent_console.md |
+| 第一章 | ChatModel 与 AgenticMessage（Console） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch01_chatmodel_agent_console.md |
 | 第二章 | Agent 与 Runner（Console 多轮） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch02_chatmodel_agent_runner_console.md |
 | 第三章 | Memory 与 Session（持久化对话） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch03_memory_session_jsonl.md |
 | 第四章 | Tool 与文件系统访问 | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch04_tool_backend_filesystem.md |
@@ -72,7 +78,8 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 | 第七章 | Interrupt/Resume（中断与恢复） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch07_interrupt_resume.md |
 | 第八章 | Graph Tool（复杂工作流） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch08_graph_tool.md |
 | 第九章 | Skill（Console） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch09_skill.md |
-| 最终章 | A2UI（Web） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch10_a2ui.md |
+| 第十章 | A2UI 协议（流式 UI 组件） | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch10_a2ui.md |
+| 第十一章 | TurnLoop — 抢占、中止与多轮生命周期 | https://github.com/cloudwego/eino-examples/blob/main/quickstart/chatwitheino/docs/ch11_turnloop.md |
 
 ## 最终交付：一个可扩展的端到端 Agent 应用骨架
 
@@ -85,10 +92,10 @@ EINO_EXT_SKILLS_DIR="$(pwd)/skills/eino-ext" go run .
 - 确定性编排：compose（graph/chain/workflow）把复杂业务流程组织为可维护、可复用的执行图
 - UI 交付：用 A2UI 把 Agent 的事件流映射为可增量渲染的 UI 组件树（SSE 推送）
 
-其中 A2UI 的边界需要明确：它不是 Eino 框架本身的一部分，而是业务层的 UI 协议/渲染方案。本 Quickstart 用它来展示“Agent 能力如何以产品形态呈现给用户”，具体实现与协议细节以最终章为准。
+其中 A2UI 的边界需要明确：它不是 Eino 框架本身的一部分，而是业务层的 UI 协议/渲染方案。本 Quickstart 用它来展示“Agent 能力如何以产品形态呈现给用户”，具体实现与协议细节以第十章为准。
 
 ## 下一步探索（从 Quickstart 到真实业务）
 
 - 想系统理解 Eino 的组件抽象与用法：从第一章的 Component 入门开始，再按章节逐步补齐 Tool/Graph/Callback/Interrupt 等能力
 - 想复用更大规模的知识与指令：对接 `eino-ext` 的 skills，并通过 Skill 中间件按需加载
-- 想把 Agent 做成业务产品：参考最终章（A2UI/Web）把事件流、状态与交互打通，再替换为你自己的 UI 形态与协议
+- 想把 Agent 做成业务产品：参考第十章（A2UI/Web）与第十一章（TurnLoop）把事件流、状态、抢占与中止打通，再替换为你自己的 UI 形态与协议
