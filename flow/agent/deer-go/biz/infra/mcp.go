@@ -25,6 +25,7 @@ import (
 
 	"github.com/RanFeng/ilog"
 	"github.com/mark3labs/mcp-go/client"
+	mcptransport "github.com/mark3labs/mcp-go/client/transport"
 	"github.com/mark3labs/mcp-go/mcp"
 
 	"github.com/cloudwego/eino-examples/flow/agent/deer-go/conf"
@@ -132,7 +133,7 @@ func CreateMCPClients() (map[string]client.MCPClient, error) {
 		if server.Config.GetType() == transportSSE {
 			sseConfig := server.Config.(SSEServerConfig)
 
-			options := []client.ClientOption{}
+			options := []mcptransport.ClientOption{}
 
 			if sseConfig.Headers != nil {
 				// Parse headers from the conf
@@ -148,12 +149,13 @@ func CreateMCPClients() (map[string]client.MCPClient, error) {
 				options = append(options, client.WithHeaders(headers))
 			}
 
-			mcpClient, err = client.NewSSEMCPClient(
+			sseClient, err := client.NewSSEMCPClient(
 				sseConfig.Url,
 				options...,
 			)
 			if err == nil {
-				err = mcpClient.(*client.SSEMCPClient).Start(context.Background())
+				err = sseClient.Start(context.Background())
+				mcpClient = sseClient
 			}
 		} else {
 			stdioConfig := server.Config.(STDIOServerConfig)

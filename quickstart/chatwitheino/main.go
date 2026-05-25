@@ -26,10 +26,12 @@ import (
 	clc "github.com/cloudwego/eino-ext/callbacks/cozeloop"
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/callbacks"
+	"github.com/cloudwego/eino/schema"
 	"github.com/coze-dev/cozeloop-go"
 
 	adkstore "github.com/cloudwego/eino-examples/adk/common/store"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/mem"
+	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/msgops"
 	"github.com/cloudwego/eino-examples/quickstart/chatwitheino/server"
 )
 
@@ -56,28 +58,32 @@ func main() {
 		callbacks.AppendGlobalHandlers(clc.NewLoopHandler(client))
 	}
 
-	agent, err := buildAgent(ctx)
+	switch msgops.KindFromEnv() {
+	case msgops.KindAgentic:
+		runTyped[*schema.AgenticMessage](ctx)
+	default:
+		runTyped[*schema.Message](ctx)
+	}
+}
+
+func runTyped[M adk.MessageType](ctx context.Context) {
+	agent, err := buildAgentTyped[M](ctx)
 	if err != nil {
 		log.Fatalf("failed to build agent: %v", err)
 	}
 
-	runner := adk.NewRunner(ctx, adk.RunnerConfig{
-		Agent:           agent,
-		EnableStreaming: true,
-		CheckPointStore: adkstore.NewInMemoryStore(),
-	})
+	checkpointStore := adkstore.NewInMemoryStore()
 
-	sessionDir := os.Getenv("SESSION_DIR")
-	if sessionDir == "" {
-		sessionDir = "./data/sessions"
-	}
+	sessionDir := msgops.DefaultSessionDir(msgops.KindOf[M]())
+	log.Printf("message kind: %s", msgops.KindOf[M]())
+	log.Printf("session dir: %s", sessionDir)
 
 	workspaceDir := os.Getenv("WORKSPACE_DIR")
 	if workspaceDir == "" {
 		workspaceDir = "./data/workspace"
 	}
 
-	store, err := mem.NewStore(sessionDir)
+	store, err := mem.NewStore[M](sessionDir)
 	if err != nil {
 		log.Fatalf("failed to create session store: %v", err)
 	}
@@ -116,13 +122,14 @@ func main() {
 	}
 	log.Printf("examples dir: %s", examplesDir)
 
-	srv := server.New(server.Config{
-		Runner:       runner,
-		Store:        store,
-		WorkspaceDir: workspaceDir,
-		ProjectRoot:  projectRoot,
-		ExamplesDir:  examplesDir,
-		Port:         port,
+	srv := server.New[M](server.Config[M]{
+		Agent:           agent,
+		CheckPointStore: checkpointStore,
+		Store:           store,
+		WorkspaceDir:    workspaceDir,
+		ProjectRoot:     projectRoot,
+		ExamplesDir:     examplesDir,
+		Port:            port,
 	})
 
 	log.Printf("starting server on http://localhost:%s", port)
