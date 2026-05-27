@@ -213,6 +213,25 @@ GenResume: func(ctx context.Context, loop *adk.TurnLoop[*ChatItem, *schema.Messa
 
 相比 Runner 的 `ResumeWithParams()`，声明式 checkpoint 让业务层不需要管理"正常执行 vs 恢复执行"的分支——TurnLoop 根据 checkpoint 是否存在自动选择走 `GenInput` 还是 `GenResume`。
 
+## 自定义 Session Timeline 事件
+
+应用可以把自己的时间线事件写入普通 Session 事件日志。自定义事件使用 `SessionEvent.Extension`，并且 `Kind` 必须使用 `x.*` 命名空间，例如 `x.outcome.started` 或 `x.ticket.updated`。这些事件会像内置 Session 事件一样被存储和加载，但默认不会参与模型上下文重建。
+
+在一个正在运行的 Runner turn 内，推荐通过 `TypedSendEvent` 发送自定义事件，让 Runner 统一分配 `EventID`、`Timestamp`、`TurnID`，并进入同一条有序持久化队列：
+
+```go
+err := adk.TypedSendEvent(ctx, &adk.TypedAgentEvent[*schema.Message]{
+    SessionEvent: &adk.SessionEvent[*schema.Message]{
+        Kind: adk.SessionEventKind("x.outcome.grading"),
+        Extension: &adk.SessionExtensionEvent{
+            Data: json.RawMessage(`{"outcome_name":"code_review","attempt":1}`),
+        },
+    },
+})
+```
+
+如果 Runner 的 `AsyncIterator` 已经完全消费完毕，Runner 内部的 Session 持久化队列也已经 flush，此时应用可以直接使用 `SessionStore.AppendEvents` 追加一个排在已完成 turn 之后的自定义事件。不要在活跃 Runner turn 内绕过 `TypedSendEvent` 直接写 `SessionStore`，否则可能与 Runner 的异步持久化队列发生顺序竞争。
+
 ## 本章小结
 
 - **TurnLoop** 是一个持久运行的多轮执行循环，生命周期与用户会话绑定
