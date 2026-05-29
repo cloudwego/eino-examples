@@ -5,14 +5,14 @@ go 1.23.0
 toolchain go1.24.1
 
 require (
-	github.com/cloudwego/eino v0.9.0-alpha.24
+	github.com/cloudwego/eino v0.9.0-beta.1
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.0
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.2.3
 	github.com/cloudwego/eino-ext/callbacks/langfuse v0.0.0-20250117061805-cd80d1780d76
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.65
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
 	github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c
 	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260323112355-f061db7e8419
-	github.com/cloudwego/eino-ext/devops v0.1.8
+	github.com/cloudwego/eino-ext/devops v0.1.9
 	github.com/cloudwego/hertz v0.9.5
 	github.com/coze-dev/cozeloop-go v0.1.20
 	github.com/google/uuid v1.6.0
@@ -81,7 +81,7 @@ require (
 	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/volcengine/volc-sdk-golang v1.0.23 // indirect
-	github.com/volcengine/volcengine-go-sdk v1.2.9 // indirect
+	github.com/volcengine/volcengine-go-sdk v1.2.27 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/runtime v0.59.0 // indirect
