@@ -6,20 +6,20 @@ require (
 	github.com/alicebob/miniredis/v2 v2.35.0
 	github.com/bytedance/sonic v1.15.0
 	github.com/chromedp/chromedp v0.9.5
-	github.com/cloudwego/eino v0.9.0-beta.1
-	github.com/cloudwego/eino-ext/adk/backend/local v0.2.1
-	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.3.0-beta.1
-	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1
-	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1
+	github.com/cloudwego/eino v0.9.1
+	github.com/cloudwego/eino-ext/adk/backend/local v0.2.4
+	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.3.0
+	github.com/cloudwego/eino-ext/components/document/parser/html v0.0.0-20260528094956-1e3c3a5387eb
+	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20260528094956-1e3c3a5387eb
+	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.3
+	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.1
 	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.6
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
-	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20251120060928-25485ef519b5
-	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20251117090452-bd6375a0b3cf
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20251117090452-bd6375a0b3cf
+	github.com/cloudwego/eino-ext/components/retriever/volc_vikingdb v0.0.0-20260528094956-1e3c3a5387eb
+	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20260528094956-1e3c3a5387eb
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260528094956-1e3c3a5387eb
 	github.com/cloudwego/eino-ext/components/tool/mcp/officialmcp v0.1.0
 	github.com/cloudwego/eino-ext/devops v0.1.9
 	github.com/coze-dev/cozeloop-go v0.1.20
@@ -54,12 +54,11 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20240202021202-6d0b6a386732 // indirect
 	github.com/chromedp/sysutil v1.0.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
-	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.17 // indirect
+	github.com/cloudwego/eino-ext/libs/acl/openai v0.1.18-0.20260527084435-846f52bd97c6 // indirect
 	github.com/cohesion-org/deepseek-go v1.3.4 // indirect
 	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/coze-dev/cozeloop-go/spec v0.1.8 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
-	github.com/dslipak/pdf v0.0.2 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/eino-contrib/ollama v0.1.0 // indirect
 	github.com/evanphx/json-patch v0.5.2 // indirect
@@ -76,6 +75,7 @@ require (
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/matoous/go-nanoid v1.5.1 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

@@ -77,7 +77,7 @@ func main() {
 
 	opts := []einoModel.Option{einoModel.WithMaxTokens(initialMaxTokens)}
 	if provider == providerOpenAI {
-		opts = append(opts, agenticopenai.WithStore(true))
+		opts = append(opts, agenticopenai.WithResponsesStore(true))
 	}
 
 	iter := runner.Run(ctx,
@@ -143,7 +143,7 @@ func newAgenticModel(ctx context.Context, provider string) (einoModel.AgenticMod
 			return nil, nil, "", err
 		}
 		timeout := defaultRequestTimeout
-		m, err := agenticopenai.New(ctx, &agenticopenai.Config{
+		m, err := agenticopenai.NewResponsesModel(ctx, &agenticopenai.ResponsesConfig{
 			APIKey:  apiKey,
 			Model:   modelID,
 			BaseURL: os.Getenv("OPENAI_BASE_URL"),

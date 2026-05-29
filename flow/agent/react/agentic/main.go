@@ -48,16 +48,17 @@ func main() {
 	}
 	defer cli.Close(ctx)
 
+	serverTools := []*agenticark.ServerToolConfig{
+		{
+			WebSearch: &responses.ToolWebSearch{
+				Type: responses.ToolType_web_search,
+			},
+		},
+	}
+
 	am, err := agenticark.New(ctx, &agenticark.Config{
 		Model:  os.Getenv("ARK_MODEL_ID"),
 		APIKey: os.Getenv("ARK_API_KEY"),
-		ServerTools: []*agenticark.ServerToolConfig{
-			{
-				WebSearch: &responses.ToolWebSearch{
-					Type: responses.ToolType_web_search,
-				},
-			},
-		},
 	})
 	if err != nil {
 		log.Fatalf("failed to create agentic model, err=%v", err)
@@ -101,6 +102,7 @@ func main() {
 	sr, err := r.Stream(ctx, input,
 		WithComposeOptions(
 			compose.WithChatModelOption(model.WithTools(toolInfos)),
+			compose.WithChatModelOption(agenticark.WithServerTools(serverTools)),
 			compose.WithCallbacks(cb, clc.NewLoopHandler(cli)),
 			compose.WithCallbacks(cb),
 		))

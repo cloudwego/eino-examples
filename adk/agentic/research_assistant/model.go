@@ -80,7 +80,7 @@ func newOpenAIAgenticModel(ctx context.Context) (einoModel.AgenticModel, error) 
 		return nil, err
 	}
 
-	return agenticopenai.New(ctx, &agenticopenai.Config{
+	return agenticopenai.NewResponsesModel(ctx, &agenticopenai.ResponsesConfig{
 		APIKey:  apiKey,
 		Model:   model,
 		BaseURL: os.Getenv("OPENAI_BASE_URL"),
@@ -131,13 +131,13 @@ func arkRunOptions() []einoModel.Option {
 func openAIRunOptions() []einoModel.Option {
 	return []einoModel.Option{
 		einoModel.WithMaxTokens(8192),
-		agenticopenai.WithReasoning(&openaiResponses.ReasoningParam{
+		agenticopenai.WithResponsesReasoning(&openaiResponses.ReasoningParam{
 			Effort:  openaiResponses.ReasoningEffortLow,
 			Summary: openaiResponses.ReasoningSummaryDetailed,
 		}),
-		agenticopenai.WithMaxToolCalls(6),
-		agenticopenai.WithParallelToolCalls(false),
-		agenticopenai.WithServerTools([]*agenticopenai.ServerToolConfig{
+		agenticopenai.WithResponsesMaxToolCalls(6),
+		agenticopenai.WithResponsesParallelToolCalls(false),
+		agenticopenai.WithResponsesServerTools([]*agenticopenai.ResponsesServerToolConfig{
 			{
 				WebSearch: &openaiResponses.WebSearchToolParam{
 					Type: openaiResponses.WebSearchToolTypeWebSearch,
