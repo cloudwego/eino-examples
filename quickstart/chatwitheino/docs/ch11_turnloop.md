@@ -230,7 +230,7 @@ err := adk.TypedSendEvent(ctx, &adk.TypedAgentEvent[*schema.Message]{
 })
 ```
 
-如果 Runner 的 `AsyncIterator` 已经完全消费完毕，Runner 内部的 Session 持久化队列也已经 flush，此时应用可以直接使用 `SessionStore.AppendEvents` 追加一个排在已完成 turn 之后的自定义事件。不要在活跃 Runner turn 内绕过 `TypedSendEvent` 直接写 `SessionStore`，否则可能与 Runner 的异步持久化队列发生顺序竞争。
+如果 Runner 的 `AsyncIterator` 已经完全消费完毕，Runner 内部的 Session 持久化队列也已经 flush，此时应用可以通过配置的 `SessionService.AppendEvents` 追加一个排在已完成 turn 之后的 typed 自定义事件。不要在活跃 Runner turn 内绕过 `TypedSendEvent` 直接写 `SessionService`，否则可能与 Runner 的异步持久化队列发生顺序竞争。
 
 ## 本章小结
 
