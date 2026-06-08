@@ -91,6 +91,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -123,6 +124,20 @@ func sysMsgf(color, format string, args ...any) {
 	fmt.Printf("\n%s"+format+"%s\n", append([]any{color}, append(args, colorReset)...)...)
 }
 
+func messageTypeLabel(role schema.RoleType) string {
+	if role == schema.Tool {
+		return "tool result"
+	}
+	if role == "" {
+		return "message"
+	}
+	return string(role)
+}
+
+func printEventHeader(eventNum int, mode, agentName, role string) {
+	fmt.Printf("\n%s********event-%d(%s) [%s] [%s] *******%s\n", colorDim, eventNum, mode, agentName, role, colorReset)
+}
+
 const checkpointID = "graceful-exit-demo"
 
 // --- Mock tools for the nested agent topology ---
@@ -143,6 +158,14 @@ type analyzeInput struct {
 type summarizeInput struct {
 	Findings []string `json:"findings" jsonschema:"description=List of findings to summarize"`
 }
+
+type runStatus int
+
+const (
+	runCompleted runStatus = iota
+	runCanceled
+	runFailed
+)
 
 func searchWeb(_ context.Context, input *searchInput) (string, error) {
 	// Simulate a slow network call — gives the user time to press Ctrl-C.
@@ -165,6 +188,47 @@ func summarizeFindings(_ context.Context, input *summarizeInput) (string, error)
 	return fmt.Sprintf("[Summary of %d findings]: "+
 		"Multiple independent analyses confirm the signal's artificial nature. "+
 		"Recommended action: escalate to priority observation queue.", len(input.Findings)), nil
+}
+
+func shouldReturnToolArgumentError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	msg := err.Error()
+	return strings.Contains(msg, "failed to unmarshal arguments") ||
+		strings.Contains(msg, "failed to unmarshal arguments in json") ||
+		strings.Contains(msg, "invalid type")
+}
+
+func toolArgumentErrorAsResult(ctx context.Context, in *compose.ToolInput, err error) string {
+	return fmt.Sprintf("tool execution failed for %q due to invalid arguments; please fix the arguments to satisfy the tool schema and try again: %v",
+		in.Name, err)
+}
+
+func returnArgumentErrorsAsToolResults() compose.ToolMiddleware {
+	return compose.ToolMiddleware{
+		Invokable: func(next compose.InvokableToolEndpoint) compose.InvokableToolEndpoint {
+			return func(ctx context.Context, in *compose.ToolInput) (*compose.ToolOutput, error) {
+				out, err := next(ctx, in)
+				if err == nil || !shouldReturnToolArgumentError(err) {
+					return out, err
+				}
+				return &compose.ToolOutput{Result: toolArgumentErrorAsResult(ctx, in, err)}, nil
+			}
+		},
+		Streamable: func(next compose.StreamableToolEndpoint) compose.StreamableToolEndpoint {
+			return func(ctx context.Context, in *compose.ToolInput) (*compose.StreamToolOutput, error) {
+				out, err := next(ctx, in)
+				if err == nil || !shouldReturnToolArgumentError(err) {
+					return out, err
+				}
+				return &compose.StreamToolOutput{
+					Result: schema.StreamReaderFromArray([]string{toolArgumentErrorAsResult(ctx, in, err)}),
+				}, nil
+			}
+		},
+	}
 }
 
 func main() {
@@ -201,13 +265,16 @@ func main() {
 			"1. Use analyze_data to analyze the content.\n" +
 			"2. Use summarize_findings to produce a final summary.\n" +
 			"Always use BOTH tools before giving your answer.",
-		Model: chatModel,
-		ToolsConfig: adk.ToolsConfig{
-			ToolsNodeConfig: compose.ToolsNodeConfig{
-				Tools: []einotool.BaseTool{analyzeTool, summarizeTool},
+			Model: chatModel,
+			ToolsConfig: adk.ToolsConfig{
+				ToolsNodeConfig: compose.ToolsNodeConfig{
+					Tools: []einotool.BaseTool{analyzeTool, summarizeTool},
+					ToolCallMiddlewares: []compose.ToolMiddleware{
+						returnArgumentErrorsAsToolResults(),
+					},
+				},
 			},
-		},
-	})
+		})
 	if err != nil {
 		log.Fatalf("create analyst agent: %v", err)
 	}
@@ -299,12 +366,17 @@ func main() {
 	}()
 
 	// Consume the event stream.
-	canceled := drainEvents(iter)
+	initialStatus := drainEvents(iter)
 
 	// Stop listening for signals — Phase 2 should not be interrupted.
 	signal.Stop(sigCh)
 
-	if !canceled {
+	if initialStatus == runFailed {
+		sysMsg(colorRed, "Phase 1 failed before cancellation or completion.")
+		return
+	}
+
+	if initialStatus != runCanceled {
 		sysMsg(colorGreen, "Agent completed without cancellation.")
 		return
 	}
@@ -334,20 +406,29 @@ func main() {
 		log.Fatalf("resume failed: %v", err)
 	}
 
-	drainEvents(resumeIter)
+	resumeStatus := drainEvents(resumeIter)
 
 	fmt.Println()
-	sysMsg(colorGreen, "✓ Done — agent resumed and completed successfully.")
+	if resumeStatus == runCompleted {
+		sysMsg(colorGreen, "✓ Done — agent resumed and completed successfully.")
+		return
+	}
+	if resumeStatus == runCanceled {
+		sysMsg(colorYellow, "Resume stopped by cancellation before completion.")
+		return
+	}
+	sysMsg(colorRed, "Resume failed before completion.")
 }
 
 // drainEvents consumes all events from the iterator, printing output and
-// detecting CancelError. Returns true if a CancelError was encountered.
-// Events are prefixed with the agent name to distinguish top-level vs nested output.
-func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
+// detecting terminal status.
+// Each visible event gets a numbered header showing stream mode, agent, and role.
+func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) runStatus {
+	eventNum := 0
 	for {
 		event, ok := iter.Next()
 		if !ok {
-			return false
+			return runCompleted
 		}
 
 		if event.Err != nil {
@@ -358,19 +439,20 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
 				sysMsgf(colorYellow, "    Mode:      %v", cancelErr.Info.Mode)
 				sysMsgf(colorYellow, "    Escalated: %v", cancelErr.Info.Escalated)
 				sysMsg(colorDim, "────────────────────────────────────────────────────────────")
-				return true
+				return runCanceled
 			}
 			log.Printf("unexpected error: %v", event.Err)
-			return false
+			return runFailed
 		}
-
-		// Determine display prefix based on which agent emitted the event.
-		prefix := fmt.Sprintf("[%s] ", event.AgentName)
 
 		// Print streamed/non-streamed message content.
 		if event.Output != nil && event.Output.MessageOutput != nil {
 			if s := event.Output.MessageOutput.MessageStream; s != nil {
-				first := true
+				var content strings.Builder
+				toolCallArgs := make(map[int]*strings.Builder)
+				toolCallNames := make(map[int]string)
+				contentRole := schema.Assistant
+				hasRole := false
 				for {
 					chunk, recvErr := s.Recv()
 					if recvErr != nil {
@@ -380,26 +462,54 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) bool {
 						// StreamCanceledError is expected when CancelImmediate fires.
 						break
 					}
-					if first {
-						fmt.Print(colorDim + prefix + colorReset + colorCyan)
-						first = false
+					if !hasRole {
+						contentRole = chunk.Role
+						hasRole = true
 					}
-					fmt.Print(chunk.Content)
+					for _, tc := range chunk.ToolCalls {
+						idx := 0
+						if tc.Index != nil {
+							idx = *tc.Index
+						}
+						if _, ok := toolCallArgs[idx]; !ok {
+							toolCallArgs[idx] = &strings.Builder{}
+						}
+						if tc.Function.Name != "" {
+							toolCallNames[idx] = tc.Function.Name
+						}
+						toolCallArgs[idx].WriteString(tc.Function.Arguments)
+					}
+					content.WriteString(chunk.Content)
 				}
-				if !first {
-					fmt.Print(colorReset + "\n")
+
+				if content.Len() == 0 && len(toolCallArgs) == 0 {
+					continue
+				}
+
+				eventNum++
+				printEventHeader(eventNum, "stream", event.AgentName, messageTypeLabel(contentRole))
+				if content.Len() > 0 {
+					fmt.Printf("%s%s%s\n", colorCyan, content.String(), colorReset)
+				}
+				for idx := 0; idx < len(toolCallArgs); idx++ {
+					args, ok := toolCallArgs[idx]
+					if !ok {
+						continue
+					}
+					fmt.Printf("%s[tool call] %s(%s)%s\n", colorDim, toolCallNames[idx], args.String(), colorReset)
 				}
 			} else if m := event.Output.MessageOutput.Message; m != nil {
+				if m.Content == "" && len(m.ToolCalls) == 0 {
+					continue
+				}
+
+				eventNum++
+				printEventHeader(eventNum, "non-stream", event.AgentName, messageTypeLabel(m.Role))
 				if m.Content != "" {
-					fmt.Printf("%s%s%s%s%s%s\n", colorDim, prefix, colorReset, colorCyan, m.Content, colorReset)
+					fmt.Printf("%s%s%s\n", colorCyan, m.Content, colorReset)
 				}
-				// Show tool call invocations for visibility.
 				for _, tc := range m.ToolCalls {
-					sysMsgf(colorDim, "%s  → tool call: %s(%s)", prefix, tc.Function.Name, tc.Function.Arguments)
-				}
-				// Show tool results.
-				if m.Role == schema.Tool {
-					sysMsgf(colorDim, "%s  ← tool result: %.100s...", prefix, m.Content)
+					fmt.Printf("%s[tool call] %s(%s)%s\n", colorDim, tc.Function.Name, tc.Function.Arguments, colorReset)
 				}
 			}
 		}
