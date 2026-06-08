@@ -89,8 +89,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"maps"
 	"os"
 	"os/signal"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -139,6 +141,16 @@ func printEventHeader(eventNum int, mode, agentName, role string) {
 }
 
 const checkpointID = "graceful-exit-demo"
+
+// Eino local tool wrappers currently report argument/schema failures using these
+// stable error prefixes in components/tool/utils/{invokable,streamable}_func.go.
+const (
+	localFuncUnmarshalPrefix       = "[LocalFunc] failed to unmarshal arguments"
+	localFuncUnmarshalJSONPrefix   = "[LocalFunc] failed to unmarshal arguments in json"
+	localFuncInvalidTypePrefix     = "[LocalFunc] invalid type"
+	localStreamUnmarshalPrefix     = "[LocalStreamFunc] failed to unmarshal arguments"
+	localStreamUnmarshalJSONPrefix = "[LocalStreamFunc] failed to unmarshal arguments in json"
+)
 
 // --- Mock tools for the nested agent topology ---
 // The root agent uses search_web, then delegates to the analyst AgentTool.
@@ -196,14 +208,22 @@ func shouldReturnToolArgumentError(err error) bool {
 	}
 
 	msg := err.Error()
-	return strings.Contains(msg, "failed to unmarshal arguments") ||
-		strings.Contains(msg, "failed to unmarshal arguments in json") ||
-		strings.Contains(msg, "invalid type")
+	return strings.Contains(msg, localFuncUnmarshalJSONPrefix) ||
+		strings.Contains(msg, localFuncUnmarshalPrefix) ||
+		strings.Contains(msg, localFuncInvalidTypePrefix) ||
+		strings.Contains(msg, localStreamUnmarshalJSONPrefix) ||
+		strings.Contains(msg, localStreamUnmarshalPrefix)
 }
 
 func toolArgumentErrorAsResult(ctx context.Context, in *compose.ToolInput, err error) string {
 	return fmt.Sprintf("tool execution failed for %q due to invalid arguments; please fix the arguments to satisfy the tool schema and try again: %v",
 		in.Name, err)
+}
+
+func sortedToolCallIndexes(toolCallArgs map[int]*strings.Builder) []int {
+	indexes := slices.Collect(maps.Keys(toolCallArgs))
+	slices.Sort(indexes)
+	return indexes
 }
 
 func returnArgumentErrorsAsToolResults() compose.ToolMiddleware {
@@ -459,8 +479,13 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) runStatus {
 						if recvErr == io.EOF {
 							break
 						}
-						// StreamCanceledError is expected when CancelImmediate fires.
-						break
+						var streamCanceledErr *adk.StreamCanceledError
+						if errors.As(recvErr, &streamCanceledErr) {
+							// StreamCanceledError is expected when CancelImmediate fires.
+							break
+						}
+						log.Printf("unexpected stream recv error: %v", recvErr)
+						return runFailed
 					}
 					if !hasRole {
 						contentRole = chunk.Role
@@ -491,7 +516,7 @@ func drainEvents(iter *adk.AsyncIterator[*adk.AgentEvent]) runStatus {
 				if content.Len() > 0 {
 					fmt.Printf("%s%s%s\n", colorCyan, content.String(), colorReset)
 				}
-				for idx := 0; idx < len(toolCallArgs); idx++ {
+				for _, idx := range sortedToolCallIndexes(toolCallArgs) {
 					args, ok := toolCallArgs[idx]
 					if !ok {
 						continue
