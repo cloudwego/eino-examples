@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/RanFeng/ilog v1.1.0
-	github.com/cloudwego/eino v0.9.2
+	github.com/cloudwego/eino v0.9.4
 	github.com/cloudwego/eino-ext/callbacks/apmplus v0.0.1
 	github.com/cloudwego/eino-ext/callbacks/cozeloop v0.3.0
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
