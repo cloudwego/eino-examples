@@ -136,7 +136,12 @@ func runTyped[M adk.MessageType](ctx context.Context) {
 		examplesDir:  examplesDir,
 	}
 
-	h := hserver.Default(hserver.WithHostPorts(":" + port))
+	host := os.Getenv("HOST")
+	if host == "" {
+		// This example has no authentication; bind locally unless explicitly overridden.
+		host = "127.0.0.1"
+	}
+	h := hserver.Default(hserver.WithHostPorts(host + ":" + port))
 
 	h.GET("/", func(_ context.Context, c *app.RequestContext) {
 		data, err := os.ReadFile("static/index.html")
@@ -198,7 +203,7 @@ func runTyped[M adk.MessageType](ctx context.Context) {
 		srv.handleUpload(c)
 	})
 
-	log.Printf("starting server on http://localhost:%s", port)
+	log.Printf("starting server on http://%s:%s", host, port)
 	h.Spin()
 }
 

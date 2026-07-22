@@ -54,8 +54,14 @@ func main() {
 		port = "8080"
 	}
 
+	host := os.Getenv("HOST")
+	if host == "" {
+		// This demo has no authentication; bind locally unless explicitly overridden.
+		host = "127.0.0.1"
+	}
+
 	// 创建 Hertz 服务器
-	h := server.Default(server.WithHostPorts(":" + port))
+	h := server.Default(server.WithHostPorts(host + ":" + port))
 
 	h.Use(LogMiddleware())
 
@@ -72,7 +78,7 @@ func main() {
 			provider.WithResourceAttribute(attribute.String("apmplus.business_type", "llm")),
 		)
 		tracer, cfg := hertztracing.NewServerTracer()
-		h = server.Default(server.WithHostPorts(":"+port), tracer)
+		h = server.Default(server.WithHostPorts(host+":"+port), tracer)
 		h.Use(LogMiddleware(), hertztracing.ServerMiddleware(cfg))
 	}
 

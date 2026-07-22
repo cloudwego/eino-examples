@@ -41,6 +41,9 @@ go run ./cmd/ch10/
 starting server on http://localhost:8080
 ```
 
+该示例未提供认证，服务默认只监听 `127.0.0.1`。仅在已配置认证、网络隔离
+和访问控制后，才通过 `HOST=<受控监听地址>` 显式对外提供服务。
+
 ### （可选）启用 ch09 的 skills 能力
 
 最终 Web 版使用的 Agent 构建逻辑与 Chapter 9 对齐：当 `EINO_EXT_SKILLS_DIR` 指向一个合法 skills 目录时，会自动注册 `skill` 中间件，模型就能按需调用 `skill` 工具加载 `eino-guide` / `eino-component` / `eino-compose` / `eino-agent`。

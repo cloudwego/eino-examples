@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"os"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
@@ -58,14 +59,19 @@ func main() {
 		Agent:           agent,
 	})
 
-	h := server.Default(server.WithHostPorts(":8080"))
+	host := os.Getenv("HOST")
+	if host == "" {
+		// This demo has no authentication; keep it reachable only from localhost by default.
+		host = "127.0.0.1"
+	}
+	h := server.Default(server.WithHostPorts(host + ":8080"))
 
 	h.GET("/chat", func(ctx context.Context, c *app.RequestContext) {
 		handleChat(ctx, c, runner)
 	})
 
-	log.Println("Server starting on http://localhost:8080")
-	log.Println("Try: curl -N 'http://localhost:8080/chat?query=tell me a short story'")
+	log.Printf("Server starting on http://%s:8080", host)
+	log.Printf("Try: curl -N 'http://%s:8080/chat?query=tell me a short story'", host)
 	h.Spin()
 }
 

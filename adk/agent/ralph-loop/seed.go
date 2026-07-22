@@ -264,15 +264,21 @@ const mainGo = `package main
 import (
     "fmt"
     "net/http"
+    "os"
 )
 
 func main() {
     store := shortener.NewURLStore()
     handler := &shortener.Handler{Store: store}
 
-    fmt.Println("Server starting on :8080")
+    host := os.Getenv("HOST")
+    if host == "" {
+        // Keep this generated demo local by default; set HOST explicitly to expose it.
+        host = "127.0.0.1"
+    }
+    fmt.Printf("Server starting on %s:8080\n", host)
     // BUG: No graceful shutdown.
-    http.ListenAndServe(":8080", handler)
+    http.ListenAndServe(host+":8080", handler)
 }
 `
 

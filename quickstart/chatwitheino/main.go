@@ -132,6 +132,10 @@ func runTyped[M adk.MessageType](ctx context.Context) {
 		Port:            port,
 	})
 
-	log.Printf("starting server on http://localhost:%s", port)
+	host := os.Getenv("HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
+	log.Printf("starting server on http://%s:%s", host, port)
 	srv.Spin()
 }

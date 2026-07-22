@@ -180,7 +180,12 @@ func (s *Server[M]) startLoopCleanup(ts *sessionTurnState[M], loop *adk.TurnLoop
 
 // Spin starts the HTTP server (blocking).
 func (s *Server[M]) Spin() {
-	h := hserver.Default(hserver.WithHostPorts(":" + s.cfg.Port))
+	host := os.Getenv("HOST")
+	if host == "" {
+		// The Web quickstart has no authentication; keep it local by default.
+		host = "127.0.0.1"
+	}
+	h := hserver.Default(hserver.WithHostPorts(host + ":" + s.cfg.Port))
 
 	h.GET("/", func(ctx context.Context, c *app.RequestContext) {
 		data, err := os.ReadFile("static/index.html")

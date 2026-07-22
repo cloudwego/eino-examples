@@ -71,9 +71,15 @@ func runServer() {
 	}()
 	infra.InitCozeLoopTracing()
 
-	h := server.Default(server.WithHostPorts(":8000"))
+	host := os.Getenv("HOST")
+	if host == "" {
+		// Keep this demo local by default; configure HOST explicitly when exposing it.
+		host = "127.0.0.1"
+	}
+	addr := host + ":8000"
+	h := server.Default(server.WithHostPorts(addr))
 	if tracer.F != nil && cfg != nil {
-		h = server.Default(server.WithHostPorts(":8000"), tracer)
+		h = server.Default(server.WithHostPorts(addr), tracer)
 		h.Use(hertztracing.ServerMiddleware(cfg))
 	}
 
