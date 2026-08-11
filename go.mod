@@ -13,7 +13,7 @@ require (
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1
 	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.68
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.69
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13
@@ -31,7 +31,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.0.0
 	github.com/openai/openai-go/v3 v3.35.0
 	github.com/redis/go-redis/v9 v9.17.2
-	github.com/volcengine/volcengine-go-sdk v1.2.28
+	github.com/volcengine/volcengine-go-sdk v1.2.45
 	github.com/wk8/go-ordered-map/v2 v2.1.8
 	github.com/xuri/excelize/v2 v2.10.0
 	golang.org/x/sync v0.17.0
@@ -75,6 +75,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
+	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/matoous/go-nanoid v1.5.1 // indirect
