@@ -36,7 +36,8 @@ func NewBookTicketTool() tool.InvokableTool {
 		"this tool can book ticket of the specific location",
 		func(ctx context.Context, input bookInput) (string, error) {
 			return "success", nil
-		})
+		},
+	)
 	if err != nil {
 		log.Fatal(err)
 	}
