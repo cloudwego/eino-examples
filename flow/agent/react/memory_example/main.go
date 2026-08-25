@@ -54,7 +54,7 @@ func main() {
 	dishTool := tools.GetDishTool()
 
 	agent, err := react.NewAgent(ctx, &react.AgentConfig{
-		Model: model,
+		ToolCallingModel: model,
 		ToolsConfig: compose.ToolsNodeConfig{
 			Tools:               []tool.BaseTool{restaurantTool, dishTool},
 			ToolCallMiddlewares: []compose.ToolMiddleware{errorremover.Middleware()},

@@ -34,7 +34,7 @@ func newHost(ctx context.Context, baseURL, apiKey, modelName string) (*host.Host
 	}
 
 	return &host.Host{
-		ChatModel:    chatModel,
-		SystemPrompt: "You can read and write journal on behalf of the user. When user asks a question, always answer with journal content.",
+		ToolCallingModel: chatModel,
+		SystemPrompt:     "You can read and write journal on behalf of the user. When user asks a question, always answer with journal content.",
 	}, nil
 }

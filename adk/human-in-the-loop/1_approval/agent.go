@@ -44,7 +44,8 @@ func NewTicketBookingAgent() adk.Agent {
 		"this tool can book ticket of the specific location",
 		func(ctx context.Context, input bookInput) (output string, err error) {
 			return "success", nil
-		})
+		},
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

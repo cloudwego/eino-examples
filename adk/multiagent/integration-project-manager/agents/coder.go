@@ -53,7 +53,8 @@ func NewCodeAgent(ctx context.Context, tcm model.ToolCallingChatModel) (adk.Agen
 					"Q: What is dependency injection and why is it useful?\nA: Dependency injection is a design pattern where an object receives its dependencies from an external source rather than creating them itself. It promotes loose coupling, easier testing, and better code maintainability.",
 				},
 			}, nil
-		})
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
