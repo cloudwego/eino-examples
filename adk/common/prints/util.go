@@ -24,8 +24,6 @@ import (
 
 	"github.com/cloudwego/eino/adk"
 	"github.com/cloudwego/eino/schema"
-
-	"github.com/cloudwego/eino-examples/internal/logs"
 )
 
 func Event(event *adk.AgentEvent) {
@@ -46,7 +44,7 @@ func Event(event *adk.AgentEvent) {
 				}
 			}
 		} else if s := event.Output.MessageOutput.MessageStream; s != nil {
-			toolMap := map[int][]*schema.Message{}
+			var toolMessages []*schema.Message
 			var contentStart bool
 			charNumOfOneRow := 0
 			maxCharNumOfOneRow := 120
@@ -81,11 +79,7 @@ func Event(event *adk.AgentEvent) {
 
 				if len(chunk.ToolCalls) > 0 {
 					for _, tc := range chunk.ToolCalls {
-						index := tc.Index
-						if index == nil {
-							logs.Fatalf("index is nil")
-						}
-						toolMap[*index] = append(toolMap[*index], &schema.Message{
+						toolMessages = append(toolMessages, &schema.Message{
 							Role: chunk.Role,
 							ToolCalls: []schema.ToolCall{
 								{
@@ -103,14 +97,16 @@ func Event(event *adk.AgentEvent) {
 				}
 			}
 
-			for _, msgs := range toolMap {
-				m, err := schema.ConcatMessages(msgs)
+			if len(toolMessages) > 0 {
+				m, err := schema.ConcatMessages(toolMessages)
 				if err != nil {
 					log.Fatalf("ConcatMessage failed: %v", err)
 					return
 				}
-				fmt.Printf("\ntool name: %s", m.ToolCalls[0].Function.Name)
-				fmt.Printf("\narguments: %s", m.ToolCalls[0].Function.Arguments)
+				for _, tc := range m.ToolCalls {
+					fmt.Printf("\ntool name: %s", tc.Function.Name)
+					fmt.Printf("\narguments: %s", tc.Function.Arguments)
+				}
 			}
 		}
 	}
