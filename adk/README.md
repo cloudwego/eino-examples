@@ -37,6 +37,7 @@ This directory provides examples for Eino ADK:
   - `middlewares`
     - `skill`: loads Agent skills from filesystem.
     - `dynamictool/toolsearch`: dynamically retrieves and injects relevant tools from a large tool set.
+    - `team`: how to create agent teams from scratch.
   - `common`
     - `tool/graphtool`: wraps Graph/Chain/Workflow as Agent tools.
     - `model`, `prints`, `store`, `trace`: shared helpers used by examples.
