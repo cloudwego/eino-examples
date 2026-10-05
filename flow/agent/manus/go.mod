@@ -11,7 +11,7 @@ require (
 	github.com/cloudwego/eino-ext/components/model/openai v0.0.0-20250422100419-a2ef28c59573
 	github.com/cloudwego/eino-ext/components/tool/browseruse v0.0.0-20250421090053-2091919102c7
 	github.com/cloudwego/eino-ext/components/tool/commandline v0.0.0-20250421090053-2091919102c7
-	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250416093724-5f53a5d6cc28
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260612103359-5b10d0299532
 	github.com/coze-dev/cozeloop-go v0.1.9
 	github.com/google/uuid v1.6.0
 )
@@ -19,6 +19,8 @@ require (
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/PuerkitoBio/goquery v1.10.3 // indirect
+	github.com/andybalholm/cascadia v1.3.3 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
@@ -30,8 +32,10 @@ require (
 	github.com/chromedp/chromedp v0.13.3 // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
+	github.com/cloudwego/eino-ext/components/tool/duckduckgo v0.0.0-20250416093724-5f53a5d6cc28 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/langfuse v0.0.0-20250415073426-726b929afbc2 // indirect
 	github.com/cloudwego/eino-ext/libs/acl/openai v0.0.0-20250422100419-a2ef28c59573 // indirect
+	github.com/corpix/uarand v0.2.0 // indirect
 	github.com/coze-dev/cozeloop-go/spec v0.1.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
 	github.com/docker/docker v28.0.4+incompatible // indirect
@@ -85,12 +89,12 @@ require (
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	golang.org/x/arch v0.12.0 // indirect
 	golang.org/x/exp v0.0.0-20240404231335-c0f41cb1a7a0 // indirect
-	golang.org/x/net v0.34.0 // indirect
+	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 	golang.org/x/text v0.26.0 // indirect
-	google.golang.org/grpc v1.71.1 // indirect
+	google.golang.org/grpc v1.72.3 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
