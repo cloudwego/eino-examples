@@ -63,7 +63,7 @@ func PreviewPath(path string) ([]*PreviewFile, error) {
 			if ext := filepath.Ext(fp); ext != ".xlsx" { // .xls not support
 				pf = &PreviewFile{FilePath: fp}
 			} else {
-				pf, e = previewExcelDocument(path)
+				pf, e = previewExcelDocument(fp)
 			}
 			if e != nil {
 				return e
