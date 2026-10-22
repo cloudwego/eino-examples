@@ -7,6 +7,8 @@ updates:
       - dependency-name: github.com/cloudwego/eino
       - dependency-name: github.com/cloudwego/eino-ext/callbacks/cozeloop
       - dependency-name: github.com/cloudwego/eino-ext/components/model/ark
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/agenticark
+      - dependency-name: github.com/cloudwego/eino-ext/components/model/agenticopenai
       - dependency-name: github.com/cloudwego/eino-ext/components/model/deepseek
       - dependency-name: github.com/cloudwego/eino-ext/components/model/ollama
       - dependency-name: github.com/cloudwego/eino-ext/components/model/openai
@@ -20,3 +22,4 @@ updates:
       - /
       - /flow/agent/deer-go
       - /quickstart/eino_assistant
+      - /quickstart/chatwitheino
