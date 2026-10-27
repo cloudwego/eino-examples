@@ -32,10 +32,17 @@ import (
 func ApplyMessageModelRetry[M adk.MessageType](cfg *deep.TypedConfig[M]) {
 	cfg.ModelRetryConfig = &adk.TypedModelRetryConfig[M]{
 		MaxRetries: 5,
-		IsRetryAble: func(_ context.Context, err error) bool {
-			return strings.Contains(err.Error(), "429") ||
-				strings.Contains(err.Error(), "Too Many Requests") ||
-				strings.Contains(err.Error(), "qpm limit")
+		ShouldRetry: func(_ context.Context, retryCtx *adk.TypedRetryContext[M]) *adk.TypedRetryDecision[M] {
+			if retryCtx.Err == nil {
+				return nil
+			}
+
+			errMsg := retryCtx.Err.Error()
+			return &adk.TypedRetryDecision[M]{
+				Retry: strings.Contains(errMsg, "429") ||
+					strings.Contains(errMsg, "Too Many Requests") ||
+					strings.Contains(errMsg, "qpm limit"),
+			}
 		},
 	}
 }
