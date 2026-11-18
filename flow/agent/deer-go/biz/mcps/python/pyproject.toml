@@ -5,5 +5,5 @@ description = "用于执行python代码的mcp server"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    'mcp==1.8.1',
+    "mcp>=1.13.0",
 ]
