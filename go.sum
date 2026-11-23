@@ -151,8 +151,8 @@ github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1 h1:EYrfR
 github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1/go.mod h1:dx+o4e/wfAmCNXIOTsXl+NiKokz2iU5P1f7eQClffnQ=
 github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1 h1:H8ZburEEWVJbvdXWGbvI7OecxREXBcp1prW95nL6ubE=
 github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1/go.mod h1:aUmCsYjxXp6pkjDThNWmmEKnVEAFwv0XN1Qi2gdBByA=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.72 h1:799xxlevtdObOzfegH2ndfXQEjUpB6hnZZRTzSg27zE=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.72/go.mod h1:1yEbE7jLOMZ+pic7NOSK12+hwsGNWCTKjIdgxdrN8Ng=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.73 h1:AvliSuHsMr/RkHb7cK9Ucx5Negy80AQE78nn4SgAKi0=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.73/go.mod h1:1yEbE7jLOMZ+pic7NOSK12+hwsGNWCTKjIdgxdrN8Ng=
 github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7 h1:V+u0hA/E4E/CMABqkR3D0IOM/RxtKhN/HyMXMWm+Xto=
 github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7/go.mod h1:YVjkAAxwLqk/dyA7AfVksaxPMG7snikx0hjje8iIZBE=
 github.com/cloudwego/eino-ext/components/model/ollama v0.1.9 h1:+eZbquy5lF3WHvK9+T7UUqI0CTRqDEniP7fzL85lJuk=

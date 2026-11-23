@@ -13,7 +13,7 @@ require (
 	github.com/cloudwego/eino-ext/components/document/parser/pdf v0.0.0-20251117090452-bd6375a0b3cf
 	github.com/cloudwego/eino-ext/components/model/agenticark v0.2.0-beta.1
 	github.com/cloudwego/eino-ext/components/model/agenticopenai v0.2.0-beta.1
-	github.com/cloudwego/eino-ext/components/model/ark v0.1.72
+	github.com/cloudwego/eino-ext/components/model/ark v0.1.73
 	github.com/cloudwego/eino-ext/components/model/deepseek v0.1.7
 	github.com/cloudwego/eino-ext/components/model/ollama v0.1.9
 	github.com/cloudwego/eino-ext/components/model/openai v0.1.13

@@ -58,8 +58,8 @@ github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1 h1:PM/+XAvJtrBqFlB
 github.com/cloudwego/eino-ext/components/embedding/ark v0.1.1/go.mod h1:6O6x0fHfM3uCLr3lX1DnB/my7fC3WRUA5hpkCkrkZrg=
 github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250225083118-fd27d80f189c h1:58ajRmwJaTSBmDTNWAreZ4ZVQE8bEw0mM+Z5PlwIjLo=
 github.com/cloudwego/eino-ext/components/indexer/redis v0.0.0-20250225083118-fd27d80f189c/go.mod h1:KDaN8oztE3Cu2ZcV0zHufVBa13BhJVbbG5RDzXKYaoc=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.72 h1:799xxlevtdObOzfegH2ndfXQEjUpB6hnZZRTzSg27zE=
-github.com/cloudwego/eino-ext/components/model/ark v0.1.72/go.mod h1:1yEbE7jLOMZ+pic7NOSK12+hwsGNWCTKjIdgxdrN8Ng=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.73 h1:AvliSuHsMr/RkHb7cK9Ucx5Negy80AQE78nn4SgAKi0=
+github.com/cloudwego/eino-ext/components/model/ark v0.1.73/go.mod h1:1yEbE7jLOMZ+pic7NOSK12+hwsGNWCTKjIdgxdrN8Ng=
 github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c h1:/WS9PynViCEdBK+zUUteFRxqx82fvPOVcjmtNrqxJmU=
 github.com/cloudwego/eino-ext/components/retriever/redis v0.0.0-20250225083118-fd27d80f189c/go.mod h1:iU/5QoRRQK1GyldawI6BbogyuIqOPLDJct3zDIVWqJ8=
 github.com/cloudwego/eino-ext/components/tool/duckduckgo/v2 v2.0.0-20260323112355-f061db7e8419 h1:DHE9vtPBnec0hSre/IRa823TgeCEO1z8FUcT0m0q8jE=
