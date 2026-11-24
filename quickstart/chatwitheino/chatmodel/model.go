@@ -87,7 +87,7 @@ func newAgenticModel(ctx context.Context) (einomodel.AgenticModel, error) {
 		})
 	}
 
-	return agenticopenai.New(ctx, &agenticopenai.Config{
+	return agenticopenai.NewResponsesModel(ctx, &agenticopenai.ResponsesConfig{
 		APIKey:  os.Getenv("OPENAI_API_KEY"),
 		Model:   firstEnv("OPENAI_MODEL", "OPENAI_MODEL_ID"),
 		BaseURL: os.Getenv("OPENAI_BASE_URL"),
