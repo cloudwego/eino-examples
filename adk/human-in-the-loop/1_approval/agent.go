@@ -39,7 +39,7 @@ func NewTicketBookingAgent() adk.Agent {
 		PassengerPhoneNumber string `json:"passenger_phone_number" jsonschema:"type=string"`
 	}
 
-	getWeather, err := utils.InferTool(
+	bookTicket, err := utils.InferTool(
 		"BookTicket",
 		"this tool can book ticket of the specific location",
 		func(ctx context.Context, input bookInput) (output string, err error) {
@@ -67,7 +67,7 @@ Strict rules you must follow without exception:
 		ToolsConfig: adk.ToolsConfig{
 			ToolsNodeConfig: compose.ToolsNodeConfig{
 				Tools: []tool.BaseTool{
-					&tool2.InvokableApprovableTool{InvokableTool: getWeather},
+					&tool2.InvokableApprovableTool{InvokableTool: bookTicket},
 				},
 			},
 		},
